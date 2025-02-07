@@ -3,29 +3,29 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Profiles (extends Supabase auth)
 CREATE TABLE public.profiles (
-    id uuid REFERENCES auth.users ON DELETE CASCADE,
-    username text UNIQUE,
-    created_at timestamptz DEFAULT NOW(),
+    id UUID REFERENCES auth.users ON DELETE CASCADE,
+    username TEXT UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (id)
 );
 
 -- Cafes
 CREATE TABLE public.cafes (
-    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-    name text NOT NULL,
-    address text NOT NULL,
-    created_at timestamptz DEFAULT NOW(),
-    updated_at timestamptz DEFAULT NOW()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Reviews
 CREATE TABLE public.reviews (
-    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-    cafe_id uuid REFERENCES public.cafes ON DELETE CASCADE,
-    user_id uuid REFERENCES auth.users ON DELETE CASCADE,
-    content text NOT NULL,
-    rating numeric(2,1) CHECK (rating >= 0 AND rating <= 5),
-    created_at timestamptz DEFAULT NOW(),
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    cafe_id UUID REFERENCES public.cafes ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    rating NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(cafe_id, user_id)  -- One review per cafe per user
 );
 
@@ -37,7 +37,7 @@ ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone"
     ON public.profiles FOR SELECT
-    USING (true);
+    USING (TRUE);
 
 CREATE POLICY "Users can insert their own profile"
     ON public.profiles FOR INSERT
@@ -50,12 +50,12 @@ CREATE POLICY "Users can update own profile"
 -- Cafes policies
 CREATE POLICY "Cafes are viewable by everyone"
     ON public.cafes FOR SELECT
-    USING (true);
+    USING (TRUE);
 
 -- Reviews policies
 CREATE POLICY "Reviews are viewable by everyone"
     ON public.reviews FOR SELECT
-    USING (true);
+    USING (TRUE);
 
 CREATE POLICY "Authenticated users can create reviews"
     ON public.reviews FOR INSERT
