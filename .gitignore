@@ -42,6 +42,9 @@ next-env.d.ts
 
 # Supabase
 .supabase/
+supabase/.branches
+supabase/.temp
+.env.keys
 
 # Logs
 logs
@@ -54,6 +57,12 @@ logs
 # Production builds
 build/
 dist/
+packages/*/dist/
+
+# Package specific
+packages/api/build/
+packages/web/.next/
+packages/web/out/
 
 # OS generated files
 .DS_Store
@@ -63,3 +72,10 @@ dist/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local development
+*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
