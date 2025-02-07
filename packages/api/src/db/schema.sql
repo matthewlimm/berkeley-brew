@@ -1,67 +1,67 @@
 -- Enable UUID generation
-create extension if not exists "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Profiles (extends Supabase auth)
-create table public.profiles (
-    id uuid references auth.users on delete cascade,
-    username text unique,
-    created_at timestamptz default now(),
-    primary key (id)
+CREATE TABLE public.profiles (
+    id uuid REFERENCES auth.users ON DELETE CASCADE,
+    username text UNIQUE,
+    created_at timestamptz DEFAULT NOW(),
+    PRIMARY KEY (id)
 );
 
 -- Cafes
-create table public.cafes (
-    id uuid default uuid_generate_v4() primary key,
-    name text not null,
-    address text not null,
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
+CREATE TABLE public.cafes (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name text NOT NULL,
+    address text NOT NULL,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 -- Reviews
-create table public.reviews (
-    id uuid default uuid_generate_v4() primary key,
-    cafe_id uuid references public.cafes on delete cascade,
-    user_id uuid references auth.users on delete cascade,
-    content text not null,
-    rating numeric(2,1) check (rating >= 0 and rating <= 5),
-    created_at timestamptz default now(),
-    unique(cafe_id, user_id)  -- One review per cafe per user
+CREATE TABLE public.reviews (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    cafe_id uuid REFERENCES public.cafes ON DELETE CASCADE,
+    user_id uuid REFERENCES auth.users ON DELETE CASCADE,
+    content text NOT NULL,
+    rating numeric(2,1) CHECK (rating >= 0 AND rating <= 5),
+    created_at timestamptz DEFAULT NOW(),
+    UNIQUE(cafe_id, user_id)  -- One review per cafe per user
 );
 
 -- Basic RLS (Row Level Security)
-alter table public.profiles enable row level security;
-alter table public.cafes enable row level security;
-alter table public.reviews enable row level security;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
-create policy "Public profiles are viewable by everyone"
-    on public.profiles for select
-    using (true);
+CREATE POLICY "Public profiles are viewable by everyone"
+    ON public.profiles FOR SELECT
+    USING (true);
 
-create policy "Users can insert their own profile"
-    on public.profiles for insert
-    with check (auth.uid() = id);
+CREATE POLICY "Users can insert their own profile"
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
 
-create policy "Users can update own profile"
-    on public.profiles for update
-    using (auth.uid() = id);
+CREATE POLICY "Users can update own profile"
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
 
 -- Cafes policies
-create policy "Cafes are viewable by everyone"
-    on public.cafes for select
-    using (true);
+CREATE POLICY "Cafes are viewable by everyone"
+    ON public.cafes FOR SELECT
+    USING (true);
 
 -- Reviews policies
-create policy "Reviews are viewable by everyone"
-    on public.reviews for select
-    using (true);
+CREATE POLICY "Reviews are viewable by everyone"
+    ON public.reviews FOR SELECT
+    USING (true);
 
-create policy "Authenticated users can create reviews"
-    on public.reviews for insert
-    to authenticated
-    with check (auth.uid() = user_id);
+CREATE POLICY "Authenticated users can create reviews"
+    ON public.reviews FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
 
-create policy "Users can update own reviews"
-    on public.reviews for update
-    using (auth.uid() = user_id);
+CREATE POLICY "Users can update own reviews"
+    ON public.reviews FOR UPDATE
+    USING (auth.uid() = user_id);
