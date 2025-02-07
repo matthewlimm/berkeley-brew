@@ -20,8 +20,7 @@ A hyperlocal coffee app designed for the UC Berkeley community, providing commun
 
 ### Backend
 - Node.js (Express.js)
-- PostgreSQL (Supabase)
-- Firebase Auth
+- Supabase (PostgreSQL and Auth)
 - Cloudinary
 
 ### Infrastructure
