@@ -1,15 +1,15 @@
-# Berkeley Brew 
+# Berkeley Brew 🐻☕️
 
 A hyperlocal coffee app designed for the UC Berkeley community, providing community-driven ratings, real-time updates, and personalized coffee recommendations.
 
 ## Features
 
-- Golden Bear Score - Overall quality rating
-- Grindability - Study-friendliness metrics
-- Radical Score - Social justice and sustainability commitment
-- Vibes - Aesthetic and ambiance ratings
-- Real-time updates for crowd levels and Wi-Fi availability
-- AI-powered personalized recommendations
+- 🐻 Golden Bear Score - Overall quality rating
+- 📖 Grindability - Study-friendliness metrics
+- ✊ Radical Score - Social justice and sustainability commitment
+- 🎨 Vibes - Aesthetic and ambiance ratings
+- 🔥 Real-time updates for crowd levels and Wi-Fi availability
+- 🤖 AI-powered personalized recommendations
 
 ## Tech Stack
 
