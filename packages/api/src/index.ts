@@ -1,3 +1,6 @@
+// Load environment variables first
+import './config/env'
+
 // Server setup concepts
 // 1. Create Express app
 // 2. Add middleware (like json parser)
