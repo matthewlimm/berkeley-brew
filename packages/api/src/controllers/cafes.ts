@@ -9,6 +9,8 @@ import { AppError } from '../middleware/errorHandler'
 const app = express();
 type Cafe = Database['public']['Tables']['cafes']['Row']
 
+//functionality for getting all cafes
+
 const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { data: cafes, error } = await supabase
@@ -52,7 +54,7 @@ const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
         }
     })
 
-    const maxRatedCafes : Cafe[] = cafes.filter(cafe => cafe.rating == 5)
+    const maxRatedCafes : Cafe[] = cafes.filter(cafe => cafe.rating == maxRating)
 
     res.json({
         status: 'success',
