@@ -10,12 +10,14 @@ CREATE TABLE public.profiles (
 );
 
 -- Cafes
+-- need to change this for the things we specified in the design doc
 CREATE TABLE public.cafes (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
+    --need to add image, 
 );
 
 -- Reviews
@@ -28,6 +30,21 @@ CREATE TABLE public.reviews (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(cafe_id, user_id)  -- One review per cafe per user
 );
+
+-- Posts
+CREATE TABLE public.coffeePost (
+    id UUID DEFAULT uuid_generate_v4 PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL, -- maybe like a caption
+    type text not null check (type in ('recipe', 'guide')),
+    author_id UUID REFERENCES auth.users not null, 
+    brew_method text, 
+    difficulty_level NUMERIC(2,1) CHECK (rating >= 0 and rating <= 5), 
+    prep_time integer, 
+    ingredients TEXT[], 
+    created_at TIMESTAMPTZ DEFAULT NOW(), 
+)
+
 
 -- Basic RLS (Row Level Security)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
