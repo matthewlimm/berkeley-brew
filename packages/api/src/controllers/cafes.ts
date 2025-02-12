@@ -8,6 +8,7 @@ import { AppError } from '../middleware/errorHandler'
 
 const app = express();
 type Cafe = Database['public']['Tables']['cafes']['Row']
+type Review = Database['public']['Tables']['reviews']['Row']
 
 //functionality for getting all cafes
 
