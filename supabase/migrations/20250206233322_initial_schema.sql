@@ -1,8 +1,8 @@
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Profiles (extends Supabase auth)
-CREATE TABLE public.profiles (
+-- Users (extends Supabase auth)
+CREATE TABLE public.users (
     id UUID REFERENCES auth.users ON DELETE CASCADE,
     username TEXT UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -47,23 +47,23 @@ CREATE TABLE public.coffeePost (
 
 
 -- Basic RLS (Row Level Security)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coffeePost ENABLE ROW LEVEL SECURITY;
 
 
--- Profiles policies
-CREATE POLICY "Public profiles are viewable by everyone"
-    ON public.profiles FOR SELECT
+-- Users policies
+CREATE POLICY "Public users are viewable by everyone"
+    ON public.users FOR SELECT
     USING (TRUE);
 
 CREATE POLICY "Users can insert their own profile"
-    ON public.profiles FOR INSERT
+    ON public.users FOR INSERT
     WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile"
-    ON public.profiles FOR UPDATE
+    ON public.users FOR UPDATE
     USING (auth.uid() = id);
 
 -- Cafes policies
