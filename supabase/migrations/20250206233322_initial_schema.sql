@@ -50,6 +50,8 @@ CREATE TABLE public.coffeePost (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coffeePost ENABLE ROW LEVEL SECURITY;
+
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone"
@@ -72,6 +74,12 @@ CREATE POLICY "Cafes are viewable by everyone"
 -- Reviews policies
 CREATE POLICY "Reviews are viewable by everyone"
     ON public.reviews FOR SELECT
+    USING (TRUE);
+
+-- Coffee Posts policies
+-- Might want to modify this for just followers in the future
+CREATE POLICY "Posts are viewable by everyone"
+    ON public.coffeePost FOR SELECT
     USING (TRUE);
 
 CREATE POLICY "Authenticated users can create reviews"
