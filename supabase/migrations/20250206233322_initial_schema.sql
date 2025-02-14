@@ -20,6 +20,27 @@ CREATE TABLE public.cafes (
     --need to add image, 
 );
 
+-- Create enum for amenity types
+CREATE TYPE public.amenity_type AS ENUM (
+    'wifi',
+    'outlets',
+    'seating',
+    'noise_level',
+    'bathroom',
+    'parking'
+);
+
+-- Crowdsourced Amenity Ratings
+CREATE TABLE public.amenity_ratings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    cafe_id UUID REFERENCES public.cafes ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+    amenity amenity_type NOT NULL,
+    rating NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(cafe_id, user_id, amenity)  -- One rating per amenity type per cafe per user
+);
+
 -- Reviews
 CREATE TABLE public.reviews (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -35,6 +56,7 @@ CREATE TABLE public.reviews (
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.amenity_ratings ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Public users are viewable by everyone"
@@ -66,4 +88,17 @@ CREATE POLICY "Authenticated users can create reviews"
 
 CREATE POLICY "Users can update own reviews"
     ON public.reviews FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Amenity ratings are viewable by everyone"
+    ON public.amenity_ratings FOR SELECT
+    USING (TRUE);
+
+CREATE POLICY "Authenticated users can create amenity ratings"
+    ON public.amenity_ratings FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own amenity ratings"
+    ON public.amenity_ratings FOR UPDATE
     USING (auth.uid() = user_id);
