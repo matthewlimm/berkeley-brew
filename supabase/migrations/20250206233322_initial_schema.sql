@@ -31,27 +31,10 @@ CREATE TABLE public.reviews (
     UNIQUE(cafe_id, user_id)  -- One review per cafe per user
 );
 
--- Posts
-CREATE TABLE public.coffeePost (
-    id UUID DEFAULT uuid_generate_v4 PRIMARY KEY,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL, -- maybe like a caption
-    type text not null check (type in ('recipe', 'guide')),
-    author_id UUID REFERENCES auth.users not null, 
-    brew_method text, 
-    difficulty_level NUMERIC(2,1) CHECK (rating >= 0 and rating <= 5), 
-    prep_time integer, 
-    ingredients TEXT[], 
-    created_at TIMESTAMPTZ DEFAULT NOW(), 
-)
-
-
 -- Basic RLS (Row Level Security)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.coffeePost ENABLE ROW LEVEL SECURITY;
-
 
 -- Users policies
 CREATE POLICY "Public users are viewable by everyone"
@@ -74,12 +57,6 @@ CREATE POLICY "Cafes are viewable by everyone"
 -- Reviews policies
 CREATE POLICY "Reviews are viewable by everyone"
     ON public.reviews FOR SELECT
-    USING (TRUE);
-
--- Coffee Posts policies
--- Might want to modify this for just followers in the future
-CREATE POLICY "Posts are viewable by everyone"
-    ON public.coffeePost FOR SELECT
     USING (TRUE);
 
 CREATE POLICY "Authenticated users can create reviews"

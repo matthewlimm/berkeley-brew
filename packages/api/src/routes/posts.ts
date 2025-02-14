@@ -7,7 +7,7 @@ import {makeCoffeePost} from '../controllers/posts'
 const router = Router()
 
 // Types from database
-type coffeePost = Database['public']['Tables']['coffee_posts']['Row']
+type Post = Database['public']['Tables']['coffee_posts']['Row']
 
 router.post('/', makeCoffeePost)
 

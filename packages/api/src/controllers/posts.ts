@@ -6,7 +6,7 @@ import { validationResult } from 'express-validator';
 
 //can check this later with matt
 const app = express();
-type coffeePost = Database['public']['Tables']['coffee_posts']['Row']
+type Post = Database['public']['Tables']['coffee_posts']['Row']
 
 
 //need to make a validation schema for posts
