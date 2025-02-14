@@ -20,26 +20,25 @@ CREATE TABLE public.cafes (
     --need to add image, 
 );
 
--- Create enum for amenity types
+--Create enum for level types for crowdsourced data 
 CREATE TYPE public.amenity_type AS ENUM (
-    'wifi',
-    'outlets',
-    'seating',
-    'noise_level',
-    'bathroom',
-    'parking'
+    'low', 
+    'medium',
+    'high'
 );
 
--- Crowdsourced Amenity Ratings
-CREATE TABLE public.amenity_ratings (
+
+--Cafe information with crowd-sourced data
+CREATE TABLE public.cafes_realtime_data(
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    cafe_id UUID REFERENCES public.cafes ON DELETE CASCADE,
+    cafe_id UUID REFERENCES cafes.cafe_id on DEFAULT CASCADE, 
     user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-    amenity amenity_type NOT NULL,
-    rating NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(cafe_id, user_id, amenity)  -- One rating per amenity type per cafe per user
-);
+    wifi_availability amenity_type not null,
+    outlet_availability amenity_type not null, 
+    seating amenity_type not null, 
+    seating amenity_type not null DEFAULT 'medium'
+)
+
 
 -- Reviews
 CREATE TABLE public.reviews (
@@ -56,7 +55,6 @@ CREATE TABLE public.reviews (
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.amenity_ratings ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Public users are viewable by everyone"
@@ -88,17 +86,4 @@ CREATE POLICY "Authenticated users can create reviews"
 
 CREATE POLICY "Users can update own reviews"
     ON public.reviews FOR UPDATE
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Amenity ratings are viewable by everyone"
-    ON public.amenity_ratings FOR SELECT
-    USING (TRUE);
-
-CREATE POLICY "Authenticated users can create amenity ratings"
-    ON public.amenity_ratings FOR INSERT
-    TO authenticated
-    WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own amenity ratings"
-    ON public.amenity_ratings FOR UPDATE
     USING (auth.uid() = user_id);
