@@ -6,7 +6,7 @@ import { validationResult } from 'express-validator';
 
 //can check this later with matt
 const app = express();
-type Post = Database['public']['Tables']['coffee_posts']['Row']
+type Post = Database['public']['Tables']['posts']['Row']
 
 
 //need to make a validation schema for posts
@@ -37,7 +37,7 @@ const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) =
         }
 
         const {error: postingError} = await supabase 
-        .from('coffeePost')
+        .from('posts')
         .insert({
             user_id, 
             title, 
