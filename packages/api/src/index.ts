@@ -5,11 +5,13 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import { errorHandler } from './middleware/errorHandler'
+import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
 
 const app = express()
-const port = process.env.PORT || 3001 // Changed from 3000 to avoid conflict with Next.js
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3001
+const maxRetries = 3
+let currentPort = port
 
 // Middleware
 app.use(cors({
@@ -39,6 +41,35 @@ app.use((req, res) => {
   })
 })
 
-app.listen(port, () => {
-  console.log(`🚀 API server running on port ${port}`)
-})
+const startServer = async () => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const server = app.listen(currentPort, () => {
+          console.log(`🚀 API server running on port ${currentPort}`)
+          resolve(true)
+        })
+        
+        server.on('error', (error: any) => {
+          if (error.code === 'EADDRINUSE') {
+            console.log(`Port ${currentPort} is in use, trying ${currentPort + 1}`)
+            currentPort++
+            server.close()
+            reject(error)
+          } else {
+            reject(error)
+          }
+        })
+      })
+      return // Server started successfully
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        console.error(`Failed to start server after ${maxRetries} attempts`)
+        process.exit(1)
+      }
+      // Continue to next attempt
+    }
+  }
+}
+
+startServer()

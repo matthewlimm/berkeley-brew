@@ -51,10 +51,26 @@ CREATE TABLE public.reviews (
     UNIQUE(cafe_id, user_id)  -- One review per cafe per user
 );
 
+-- Posts
+CREATE TABLE public.posts (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('recipe', 'guide')),
+    brew_method TEXT NOT NULL,
+    difficulty_level INTEGER CHECK (difficulty_level >= 0 AND difficulty_level <= 5),
+    prep_time INTEGER NOT NULL,
+    ingredients TEXT[],
+    author_id UUID REFERENCES auth.users ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Basic RLS (Row Level Security)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cafes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Public users are viewable by everyone"
@@ -73,6 +89,24 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Cafes are viewable by everyone"
     ON public.cafes FOR SELECT
     USING (TRUE);
+
+-- Posts policies
+CREATE POLICY "Posts are viewable by everyone"
+    ON public.posts FOR SELECT
+    USING (TRUE);
+
+CREATE POLICY "Authenticated users can create posts"
+    ON public.posts FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = author_id);
+
+CREATE POLICY "Users can update own posts"
+    ON public.posts FOR UPDATE
+    USING (auth.uid() = author_id);
+
+CREATE POLICY "Users can delete own posts"
+    ON public.posts FOR DELETE
+    USING (auth.uid() = author_id);
 
 -- Reviews policies
 CREATE POLICY "Reviews are viewable by everyone"

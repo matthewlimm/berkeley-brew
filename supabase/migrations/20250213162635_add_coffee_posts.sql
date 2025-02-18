@@ -1,4 +1,7 @@
 -- Create posts table
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+
 CREATE TABLE public.post (
     id UUID DEFAULT (uuid_generate_v4()) PRIMARY KEY,
     title TEXT NOT NULL,

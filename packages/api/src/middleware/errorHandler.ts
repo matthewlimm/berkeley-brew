@@ -1,4 +1,4 @@
-export default class AppError extends Error {
+export class AppError extends Error {
     statusCode: number;
     status: string;
     isOperational: boolean;
@@ -13,7 +13,7 @@ export default class AppError extends Error {
     }
   }
   
-  export const errorHandler = (err: any, req: any, res: any, next: any) => {
+  export function errorHandler(err: any, req: any, res: any, next: any) {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
   
@@ -24,5 +24,4 @@ export default class AppError extends Error {
     });
   };
 
-
-  
+  export default errorHandler;

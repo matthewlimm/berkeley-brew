@@ -1,66 +1,64 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { z } from 'zod'
 import { supabase, type Database } from '../db'
-import AppError from '../middleware/errorHandler';
-import { validationResult } from 'express-validator';
+import { AppError } from '../middleware/errorHandler';
 
-//can check this later with matt
-const app = express();
-type Post = Database['public']['Tables']['posts']['Row']
+type Post = Database['public']['Tables']['post']['Row']
 
-
-//need to make a validation schema for posts
+// Validation schema for posts
 const postSchema = z.object({
     title: z.string().min(1),
     content: z.string().min(1),
+    type: z.enum(['recipe', 'guide']),
     brew_method: z.string().min(1),
     difficulty_level: z.number().min(0).max(5),
     prep_time: z.number(), 
     ingredients: z.array(z.string()).optional()
 })
 
-
 const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) => {
     try {
-
+        // Validate request body
         const validation = postSchema.safeParse(req.body)
         if (!validation.success) {
-            return next(new AppError('Invalid post data', 400))
+            return next(new AppError('Invalid post data: ' + validation.error.message, 400))
         }
 
-        const {id: coffee_id} = req.params
-        const {title, content, brew_method, difficulty_level, prep_time, ingredients} = validation.data
+        const { title, content, type, brew_method, difficulty_level, prep_time, ingredients } = validation.data
         
-        const user_id = req.user?.id
-        if (!user_id) {
+        // Get user ID from Supabase auth context
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
             return next(new AppError('Authentication required', 401))
         }
 
-        const {error: postingError} = await supabase 
-        .from('posts')
-        .insert({
-            user_id, 
-            title, 
-            content, 
-            brew_method,
-            difficulty_level, 
-            prep_time, 
-            ingredients
-        })   
+        // Insert post
+        const { data: post, error: postError } = await supabase 
+            .from('post')
+            .insert({
+                title, 
+                content, 
+                type, 
+                brew_method,
+                difficulty_level, 
+                prep_time, 
+                ingredients: ingredients || null, 
+                author_id: user.id
+            })
+            .select()
+            .single()
 
-        if (postingError) {
-          return next(new AppError(`Failed to create review: ${postingError.message}`, 500))
+        if (postError) {
+            return next(new AppError('Failed to create post: ' + postError.message, 500))
         }
 
         res.status(201).json({
-            status: 'success', 
-            message: 'post created with no issues'
+            status: 'success',
+            data: { post }
         })
-    }
-    catch (error) {
-        next(error)
+    } catch (err) {
+        next(new AppError('An error occurred while creating the post', 500))
     }
 }
 
-
-export {makeCoffeePost}
+export { makeCoffeePost }
