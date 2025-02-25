@@ -29,6 +29,7 @@ CREATE TYPE public.amenity_type AS ENUM (
 
 
 --Cafe information with crowd-sourced data
+-- use this for grindability 
 CREATE TABLE public.cafes_realtime_data(
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     cafe_id UUID REFERENCES cafes.cafe_id on DEFAULT CASCADE, 

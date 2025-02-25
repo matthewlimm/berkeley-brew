@@ -43,3 +43,19 @@ export async function createReview(cafeId: string, data: { content: string; rati
   }
   return res.json()
 }
+
+export async function createPost(data: { title: string; content: string; type: string, brewMethod: string, difficultyLevel: number, prepTime: number; ingredients: string[]}): Promise<ApiResponse<void>> {
+  const res = await fetch(`${API_URL}/api/post`, {
+    method: 'POST', 
+    headers: {
+      'Content-Type': 'application/json',
+    }, 
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.message || 'Failed to create post')
+  }
+  return res.json()
+}
+
