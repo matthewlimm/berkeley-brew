@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { supabase, type Database } from '../db'
 import { AppError } from '../middleware/errorHandler';
 
-type Post = Database['public']['Tables']['post']['Row']
+type Post = Database['public']['Tables']['posts']['Row']
 
 // Validation schema for posts
 const postSchema = z.object({
@@ -16,7 +16,7 @@ const postSchema = z.object({
     ingredients: z.array(z.string()).optional()
 })
 
-const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) => {
+const addPost = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Validate request body
         const validation = postSchema.safeParse(req.body)
@@ -34,7 +34,7 @@ const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) =
 
         // Insert post
         const { data: post, error: postError } = await supabase 
-            .from('post')
+            .from('posts')
             .insert({
                 title, 
                 content, 
@@ -61,4 +61,4 @@ const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) =
     }
 }
 
-export { makeCoffeePost }
+export { addPost }

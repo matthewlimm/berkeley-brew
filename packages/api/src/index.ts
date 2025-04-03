@@ -9,7 +9,7 @@ import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
 
 const app = express()
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3001
+const port = process.env.PORT || '3001'
 const maxRetries = 3
 let currentPort = port
 
@@ -45,15 +45,16 @@ const startServer = async () => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       await new Promise((resolve, reject) => {
-        const server = app.listen(currentPort, () => {
+        const server = app.listen(currentPort as number, () => {
           console.log(`🚀 API server running on port ${currentPort}`)
           resolve(true)
         })
         
         server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
-            console.log(`Port ${currentPort} is in use, trying ${currentPort + 1}`)
-            currentPort++
+            const nextPort = parseInt(currentPort as string) + 1
+            console.log(`Port ${currentPort} is in use, trying ${nextPort}`)
+            currentPort = nextPort.toString()
             server.close()
             reject(error)
           } else {
