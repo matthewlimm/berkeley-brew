@@ -7,6 +7,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
+import postsRouter from './routes/posts'
 
 const app = express()
 const port = process.env.PORT || '3001'
@@ -24,6 +25,7 @@ app.use(express.json())
 
 // Routes
 app.use('/api/cafes', cafeRouter)
+app.use('/api/posts', postsRouter)
 
 // Health check
 app.get('/health', (req, res) => {
