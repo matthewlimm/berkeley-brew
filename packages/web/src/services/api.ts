@@ -46,8 +46,8 @@ export async function createReview(cafeId: string, data: { content: string; rati
   return res.json()
 }
 
-export async function createPost(data: { title: string, content: string, type: string, author_id: UUID, brew_method: string, difficulty_level: number, prep_time: number, ingredients: [] }): Promise<ApiResponse<void>> {
-  const res = await fetch('${API_URL}/api/posts', {
+export async function createPost(data: { title: string, content: string, type: string, author_id: UUID, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
+  const res = await fetch(`${API_URL}/api/posts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -59,5 +59,4 @@ export async function createPost(data: { title: string, content: string, type: s
     throw new Error(error.message || 'Failed to create a post')
   }
   return res.json()
-
 }
