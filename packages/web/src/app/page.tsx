@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
 import { ReviewForm } from "../components/ReviewForm";
 import { CafeReviews } from "../components/CafeReviews";
+import { PostCreator } from "../components/PostCreator";
 
 // Helper function to format rating display
 function formatRating(rating: number | null): string {

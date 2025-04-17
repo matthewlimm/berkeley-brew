@@ -3,11 +3,19 @@
 import React, { useState } from "react";
 import { createPost } from "../services/api";
 import type { Database } from "@berkeley-brew/api/src/db";
+import { calculateSizeAdjustValues } from "next/dist/server/font-utils";
 import { IngredientsInput } from "./IngredientsInput";
 
 type Post = Database["public"]["Tables"]["posts"]["Row"];
 
 interface PostProp {
+  title: string;
+  content: string;
+  type: string;
+  brew_method: string;
+  difficulty_level: number;
+  prep_time: number;
+  ingredients: string[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -19,7 +27,7 @@ export function PostCreator({ onSuccess, onCancel }: PostProp) {
   const [brew_method, setBrewMethod] = useState("");
   const [difficulty_level, setDifficultyLevel] = useState(5);
   const [prep_time, setPrepTime] = useState(10);
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -90,6 +98,17 @@ export function PostCreator({ onSuccess, onCancel }: PostProp) {
         </select>
       </div>
 
+      {/* <label className="block text-sm font-medium text-gray-700 mb-1">
+          Type
+        </label>
+        <select
+          value = {type}
+          onChange={(e) => setType()}
+
+        ></select>
+        <
+      <div> */}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Brew Method
@@ -123,46 +142,37 @@ export function PostCreator({ onSuccess, onCancel }: PostProp) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Prep Time (minutes)
+          Prep Time
         </label>
         <input
-          type="number"
-          min="1"
           value={prep_time}
+          type="number"
           onChange={(e) => setPrepTime(Number(e.target.value))}
           className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+        ></input>
       </div>
 
-      <IngredientsInput 
-        ingredients={ingredients} 
-        onChange={setIngredients} 
-      />
+      <IngredientsInput ingredients={ingredients} onChange={setIngredients} />
 
-      {error && (
-        <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
-          {error}
-        </div>
-      )}
+      {error && <p className="text-sm tect-red-600">{error}</p>}
 
-      <div className="flex justify-end space-x-4 pt-4">
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Review"}
+        </button>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            disabled={isSubmitting}
+            className="flex-1 bg-gray-50 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             Cancel
           </button>
         )}
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Creating..." : "Create Post"}
-        </button>
       </div>
     </form>
   );

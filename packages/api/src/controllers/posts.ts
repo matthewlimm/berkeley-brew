@@ -16,6 +16,46 @@ const postSchema = z.object({
     ingredients: z.array(z.string()).optional()
 })
 
+const getAllPosts = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {data: posts, error} = await supabase
+        .from('posts')
+        .select(`
+        id, 
+        title, 
+        content, 
+        type, 
+        brew_method,
+        difficulty_level,
+        ingredients,
+        author_id,
+        created_at,
+        updated_at
+        `)
+        
+        if (error) {
+            return next(new AppError('Failed to fetch posts:' + error.message, 500))
+        }
+        
+        if (!posts) {
+            return next(new AppError('No posts found', 404))
+        }
+       
+        res.status(200).json({
+            status: 'success',
+            data: {
+                posts
+            }
+        })
+    } catch (err) {
+        next(new AppError('An error occurred while fetching posts', 500))
+
+    }
+
+    
+
+}
+
 const deletePost = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const {id} = req.params
@@ -92,4 +132,4 @@ const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) =
 
 
 
-export { makeCoffeePost, deletePost }
+export { makeCoffeePost, deletePost, getAllPosts}
