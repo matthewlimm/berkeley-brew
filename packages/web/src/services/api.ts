@@ -61,4 +61,11 @@ export async function createPost(id: string, data: { title: string, content: str
   return res.json()
 }
 
-export async function 
+export async function getPosts(data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
+  const res = await fetch(`${API_URL}/api/posts`)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error (error.message || 'Failed to get posts')
+  }
+  return res.json()
+}

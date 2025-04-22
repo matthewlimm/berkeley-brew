@@ -35,9 +35,10 @@ export function PostCreator({ onSuccess, onCancel }: PostProp) {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
+    const tsx_id: string = crypto.randomUUID();
 
     try {
-      await createPost({
+      await createPost(tsx_id, {
         title,
         content,
         type,
