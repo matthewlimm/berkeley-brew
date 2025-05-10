@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
 import { ReviewForm } from "../components/ReviewForm";
 import { CafeReviews } from "../components/CafeReviews";
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 
 // Helper function to format rating display
 function formatRating(rating: number | null): string {
@@ -16,11 +18,16 @@ export default function Home() {
   const [error, setError] = useState<string>();
   const [selectedCafeId, setSelectedCafeId] = useState<string | null>(null);
   const [expandedCafeId, setExpandedCafeId] = useState<string | null>(null);
+  const { user, signOut } = useAuth();
 
   // Load cafes on mount
   useEffect(() => {
     getCafes()
-      .then((response) => setCafes(response.data.cafes))
+      .then((response) => {
+        if (response?.data?.cafes) {
+          setCafes(response.data.cafes);
+        }
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load cafes"));
   }, []);
 
@@ -28,7 +35,9 @@ export default function Home() {
     // Refresh cafes to show updated ratings
     try {
       const response = await getCafes();
-      setCafes(response.data.cafes);
+      if (response?.data?.cafes) {
+        setCafes(response.data.cafes);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to refresh cafes");
     }
@@ -52,7 +61,33 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">Berkeley Brew</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">Berkeley Brew</h1>
+          
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="text-sm">
+                <span className="font-medium text-gray-700">{user.email}</span>
+                <span className="text-xs text-gray-500 block">ID: {user.id.substring(0, 8)}...</span>
+                <button
+                  onClick={() => signOut()}
+                  className="ml-4 px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <Link href="/auth/login" className="text-amber-600 hover:text-amber-500 mr-4">
+                Login
+              </Link>
+              <Link href="/auth/signup" className="text-amber-600 hover:text-amber-500">
+                Sign up
+              </Link>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cafes.map((cafe) => (
             <div

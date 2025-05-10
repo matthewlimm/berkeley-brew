@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { getCafe } from '../services/api';
 import type { Database } from '@berkeley-brew/api/src/db';
 
-type Review = Database['public']['Tables']['reviews']['Row'];
+// Extend the base Review type to include the user property
+type Review = Database['public']['Tables']['reviews']['Row'] & {
+  user?: {
+    id: string;
+    username: string;
+  };
+};
 
 interface CafeReviewsProps {
   cafeId: string;
@@ -55,17 +61,12 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
         >
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-sm text-blue-600">
-                  {review.user_id.slice(0, 2).toUpperCase()}
-                </span>
-              </div>
               <div>
                 <div className="text-sm font-medium text-gray-900">
-                  User {review.user_id.slice(0, 6)}
+                  {review.user?.username || 'Anonymous User'}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {new Date(review.created_at).toLocaleDateString()}
+                  {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Unknown date'}
                 </div>
               </div>
             </div>
