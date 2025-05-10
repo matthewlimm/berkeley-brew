@@ -5,7 +5,6 @@ import { AppError } from '../middleware/errorHandler'
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
-type CafeRealtimeData = Database['public']['Tables']['cafes_realtime_data']['Row']
 
 // Validation schema for reviews
 const reviewSchema = z.object({

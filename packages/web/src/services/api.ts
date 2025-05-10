@@ -1,5 +1,10 @@
 import type { Database } from '@berkeley-brew/api/src/db'
+<<<<<<< HEAD
 import { supabase } from '@/lib/supabase'
+=======
+import { UUID } from 'crypto'
+import { resolveSoa } from 'dns'
+>>>>>>> a3918bd2c4e912bcc6db85db12f5cd97c27b62a1
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
@@ -67,6 +72,30 @@ export async function createReview(cafeId: string, data: { content: string; rati
   if (!res.ok) {
     const error = await res.json()
     throw new Error(error.message || 'Failed to create review')
+  }
+  return res.json()
+}
+
+export async function createPost(id: string, data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
+  const res = await fetch(`${API_URL}/api/posts/${id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.message || 'Failed to create a post')
+  }
+  return res.json()
+}
+
+export async function getPosts(data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
+  const res = await fetch(`${API_URL}/api/posts`)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error (error.message || 'Failed to get posts')
   }
   return res.json()
 }

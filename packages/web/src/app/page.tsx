@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
 import { ReviewForm } from "../components/ReviewForm";
 import { CafeReviews } from "../components/CafeReviews";
+<<<<<<< HEAD
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+=======
+import { PostCreator } from "../components/PostCreator";
+>>>>>>> a3918bd2c4e912bcc6db85db12f5cd97c27b62a1
 
 // Helper function to format rating display
 function formatRating(rating: number | null): string {

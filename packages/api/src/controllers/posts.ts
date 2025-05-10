@@ -16,7 +16,76 @@ const postSchema = z.object({
     ingredients: z.array(z.string()).optional()
 })
 
-const addPost = async (req: Request, res: Response, next: NextFunction) => {
+const getAllPosts = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {data: posts, error} = await supabase
+        .from('posts')
+        .select(`
+        id, 
+        title, 
+        content, 
+        type, 
+        brew_method,
+        difficulty_level,
+        ingredients,
+        author_id,
+        created_at,
+        updated_at
+        `)
+        
+        if (error) {
+            return next(new AppError('Failed to fetch posts:' + error.message, 500))
+        }
+        
+        if (!posts) {
+            return next(new AppError('No posts found', 404))
+        }
+       
+        res.status(200).json({
+            status: 'success',
+            data: {
+                posts
+            }
+        })
+    } catch (err) {
+        next(new AppError('An error occurred while fetching posts', 500))
+
+    }
+
+    
+
+}
+
+const deletePost = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {id} = req.params
+        if (!id) {
+            return next(new AppError('Invalid ID', 400))
+        }
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+            return next(new AppError('Authentication required', 401))
+        }
+
+        //delete user using the ID
+        const {data: post, error: postError} = await supabase 
+            .from('posts')
+            .delete()
+            .eq('id',id)
+
+        if (postError) {
+            return next(new AppError('Failed to delete post: ' + postError.message, 500))
+        }
+        res.status(201).json({
+            status: 'success'
+        })
+    } catch (err) {
+        return next(new AppError('Error deleting post: ', 500))
+
+    }
+}
+
+const makeCoffeePost = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Validate request body
         const validation = postSchema.safeParse(req.body)
@@ -61,4 +130,6 @@ const addPost = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-export { addPost }
+
+
+export { makeCoffeePost, deletePost, getAllPosts}
