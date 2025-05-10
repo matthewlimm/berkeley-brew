@@ -1,10 +1,6 @@
 import type { Database } from '@berkeley-brew/api/src/db'
-<<<<<<< HEAD
 import { supabase } from '@/lib/supabase'
-=======
 import { UUID } from 'crypto'
-import { resolveSoa } from 'dns'
->>>>>>> a3918bd2c4e912bcc6db85db12f5cd97c27b62a1
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
