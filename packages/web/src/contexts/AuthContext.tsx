@@ -87,8 +87,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error
       }
       
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Redirect to home page
+      router.push('/')
     } catch (error) {
       console.error('Error signing in:', error)
       throw error

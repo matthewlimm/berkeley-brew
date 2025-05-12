@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/contexts/AuthContext'
+import './globals.css'
 
 export default function RootLayout({
   children,
