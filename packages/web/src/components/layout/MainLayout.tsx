@@ -3,8 +3,14 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import UserProfileMenu from '../UserProfileMenu';
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+interface MainLayoutProps {
+  children: React.ReactNode;
+  isDashboardLayout?: boolean;
+}
+
+export default function MainLayout({ children, isDashboardLayout = false }: MainLayoutProps) {
   const { user, signOut } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,7 +24,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
     
-    return () => {
+    return () => {  
       window.removeEventListener('resize', checkIfMobile);
     };
   }, []);
@@ -71,37 +77,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             {/* User authentication */}
             <div className="ml-6 flex items-center">
               {user ? (
-                <div className="relative ml-3">
-                  <div>
-                    <button
-                      type="button"
-                      className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-                      id="user-menu"
-                      aria-expanded="false"
-                      aria-haspopup="true"
-                    >
-                      <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-amber-200 flex items-center justify-center text-amber-800 font-medium">
-                        {user.email?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                    </button>
-                  </div>
-                  {/* Dropdown menu, show/hide based on menu state */}
-                  <div className="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
-                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Dashboard
-                    </Link>
-                    <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Profile
-                    </Link>
-                    <button
-                      onClick={() => signOut()}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
+                <UserProfileMenu />
               ) : (
                 <div className="flex space-x-4">
                   <Link href="/auth/login" className="text-amber-600 hover:text-amber-500 font-medium">

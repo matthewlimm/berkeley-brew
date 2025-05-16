@@ -17,3 +17,11 @@ export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey)
 
 // Re-export the Database type - allows our app to import both the client and types from a single location
 export type { Database }
+
+export interface User {
+  id: string;
+  username: string;
+  full_name: string; // Add this line
+  created_at: string;
+  updated_at: string; // Add this line
+}

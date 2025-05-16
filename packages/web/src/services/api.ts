@@ -87,11 +87,68 @@ export async function createPost(id: string, data: { title: string, content: str
   return res.json()
 }
 
-export async function getPosts(data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
-  const res = await fetch(`${API_URL}/api/posts`)
+export async function getPosts(): Promise<ApiResponse<{ posts: any[] }>> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API_URL}/api/posts`, { headers })
   if (!res.ok) {
     const error = await res.json()
-    throw new Error (error.message || 'Failed to get posts')
+    throw new Error(error.message || 'Failed to get posts')
   }
   return res.json()
+}
+
+export async function getUserReviews(): Promise<ApiResponse<{ reviews: (Review & { cafe_name: string })[] }>> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API_URL}/api/user/reviews`, { headers })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.message || 'Failed to fetch user reviews')
+  }
+  return res.json()
+}
+
+export async function updateUserProfile(data: { username?: string; full_name?: string; name?: string; avatar_url?: string }): Promise<ApiResponse<{ user: any }>> {
+  const headers = await getAuthHeader()
+  
+  // Make sure we have the correct field names for the backend
+  const apiData = {
+    username: data.username,
+    full_name: data.full_name || data.name, // Use name as fallback for full_name
+    avatar_url: data.avatar_url
+  }
+  
+  // Debug request data and headers
+  console.log('Profile update request data (original):', data)
+  console.log('Profile update request data (modified for API):', apiData)
+  console.log('Profile update headers:', {
+    'Content-Type': 'application/json',
+    ...headers
+  })
+  
+  try {
+    const res = await fetch(`${API_URL}/api/user/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      body: JSON.stringify(apiData),
+      credentials: 'include'
+    })
+    
+    console.log('Profile update response status:', res.status)
+    
+    if (!res.ok) {
+      const errorData = await res.json()
+      console.error('Profile update error response:', errorData)
+      throw new Error(errorData.message || `Failed to update user profile: ${res.status}`)
+    }
+    
+    const responseData = await res.json()
+    console.log('Profile update success response:', responseData)
+    return responseData
+  } catch (error) {
+    console.error('Profile update fetch error:', error)
+    throw error
+  }
 }
