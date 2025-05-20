@@ -10,11 +10,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 // Helper function to get auth headers
 async function getAuthHeader(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession()
-  
+
   // Debug authentication
   console.log('Auth session exists:', !!data.session)
   console.log('Auth token exists:', !!data.session?.access_token)
-  
+
   return data.session?.access_token ? {
     'Authorization': `Bearer ${data.session.access_token}`
   } : {}
@@ -48,13 +48,13 @@ export async function getCafe(id: string): Promise<ApiResponse<{ cafe: Cafe & { 
 
 export async function createReview(cafeId: string, data: { content: string; rating: number }): Promise<ApiResponse<void>> {
   const authHeaders = await getAuthHeader()
-  
+
   // Debug request headers
   console.log('Review submission headers:', {
     'Content-Type': 'application/json',
     ...authHeaders
   })
-  
+
   const res = await fetch(`${API_URL}/api/cafes/${cafeId}/reviews`, {
     method: 'POST',
     headers: {
@@ -91,7 +91,7 @@ export async function getPosts(data: { title: string, content: string, type: str
   const res = await fetch(`${API_URL}/api/posts`)
   if (!res.ok) {
     const error = await res.json()
-    throw new Error (error.message || 'Failed to get posts')
+    throw new Error(error.message || 'Failed to get posts')
   }
   return res.json()
 }
