@@ -5,12 +5,16 @@ import { AppError } from '../middleware/errorHandler'
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
+type RealTime = Database['public']['Tables']['cafes_realtime_data']['Row']
+
 
 // Validation schema for reviews
 const reviewSchema = z.object({
     content: z.string().min(1),
     rating: z.number().min(0).max(5)
 })
+
+
 
 // Get all cafes with their average rating
 const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
@@ -95,20 +99,20 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
         if (!cafe) {
             return next(new AppError('Cafe not found', 404))
         }
-        
+
         // If there are reviews, fetch the user information for each review
         if (cafe.reviews && cafe.reviews.length > 0) {
             // Get all unique user IDs from the reviews
             const userIds = cafe.reviews
                 .map(review => review.user_id)
                 .filter((id): id is string => id !== null && id !== undefined)
-            
+
             // Fetch user information for these IDs
             const { data: users, error: userError } = await supabase
                 .from('users')
                 .select('id, username')
                 .in('id', userIds)
-            
+
             if (userError) {
                 console.error('Error fetching user data:', userError)
                 // Continue without user data rather than failing the whole request
@@ -120,12 +124,12 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                     }
                     return map
                 }, {} as Record<string, any>)
-                
+
                 // Add user data to each review
                 cafe.reviews = cafe.reviews.map(review => ({
                     ...review,
-                    user: review.user_id && userMap[review.user_id] 
-                        ? userMap[review.user_id] 
+                    user: review.user_id && userMap[review.user_id]
+                        ? userMap[review.user_id]
                         : { username: 'Unknown User' }
                 }))
             }
@@ -138,19 +142,19 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
             ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
             : 0
 
-        // Add placeholder for realtime data (removed from query)
-        const realtimeData = {
-            wifi_availability: null,
-            outlet_availability: null,
-            seating: null
-        }
+        // // Add placeholder for realtime data (removed from query)
+        // const realtimeData = {
+        //     wifi_availability: null,
+        //     outlet_availability: null,
+        //     seating: null
+        // }
 
         res.status(200).json({
             status: 'success',
             data: {
                 cafe: {
                     ...cafe,
-                    realtime: [realtimeData], // Match the original structure expected by frontend
+                    // realtime: [realtimeData], // Match the original structure expected by frontend
                     average_rating: avgRating,
                     review_count: reviews.length
                 }
@@ -165,7 +169,7 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
 const addCafeReview = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id: cafeId } = req.params
-        
+
         // Validate request body
         const validation = reviewSchema.safeParse(req.body)
         if (!validation.success) {
@@ -176,11 +180,11 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
 
         // Get user from request (set by auth middleware)
         const user = req.user
-        
+
         if (!user) {
             return next(new AppError('Authentication required', 401))
         }
-        
+
         // Debug user info
         console.log('User from request:', user.id, user.email)
 
@@ -213,7 +217,7 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             .select('id')
             .eq('id', user.id)
             .single();
-            
+
         // If user doesn't exist in public schema, create them
         if (!existingUser) {
             // Get name from user metadata if available
@@ -227,27 +231,27 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
                     full_name: fullName,
                     updated_at: new Date().toISOString()
                 });
-                
+
             if (createUserError) {
                 return next(new AppError('Failed to create user profile: ' + createUserError.message, 500));
             }
         }
-        
+
         // Add the review directly to the database
         console.log('Attempting to insert review with user_id:', user.id, 'for cafe_id:', cafeId)
-        
+
         try {
             // The issue is that we're using the service role key, which bypasses RLS
             // But we need to tell Supabase which user we're acting on behalf of
-            
+
             // Get the JWT token from the request
             const token = req.headers.authorization?.split(' ')[1] || '';
-            
+
             // Create a new Supabase client with the anon key
             const { createClient } = await import('@supabase/supabase-js');
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
             const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-            
+
             // Create a client with the auth header already set
             const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
                 global: {
@@ -256,17 +260,17 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
                     }
                 }
             });
-            
+
             // Verify the session is valid
             const { data: authData, error: authError } = await anonClient.auth.getUser();
-            
+
             if (authError) {
                 console.error('Auth session error:', authError);
                 return next(new AppError('Authentication error: ' + authError.message, 401));
             }
-            
+
             console.log('Auth user verified successfully:', !!authData.user);
-            
+
             // Now insert the review with the client that respects RLS
             const { error } = await anonClient
                 .from('reviews')
@@ -281,7 +285,7 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
                 console.error('Review insert error:', error)
                 return next(new AppError('Failed to create review: ' + error.message, 500))
             }
-            
+
             console.log('Review created successfully with proper authentication')
         } catch (err) {
             console.error('Unexpected error during review creation:', err)

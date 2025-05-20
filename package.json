@@ -9,7 +9,8 @@
     "build": "pnpm -r build",
     "start": "pnpm --filter web start",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "generate": "npx supabase gen types typescript --project-id vbtvfxvthhsjanfeojjt > packages/api/src/types/database.types.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
