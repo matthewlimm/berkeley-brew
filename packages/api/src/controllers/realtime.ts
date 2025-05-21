@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { supabase, type Database } from '../db'
 import { AppError } from '../middleware/errorHandler'
 import { selectFields } from 'express-validator/lib/field-selection';
+import { subMinutes } from 'date-fns';
+
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type RealTime = Database['public']['Tables']['cafes_realtime_data']['Row']
@@ -14,9 +16,7 @@ export const amenityTypeSchema = z.enum(['low', 'medium', 'high']);
 const realSchema = z.object({
     cafe_id: z.string().uuid(),
     user_id: z.string().uuid(),
-    wifi_availability: amenityTypeSchema,
-    outlet_availability: amenityTypeSchema,
-    seating: amenityTypeSchema.optional()
+    amenity_type: amenityTypeSchema,
 })
 
 const getDataByCafe = async (req: Request, res: Response, next: NextFunction) => {
@@ -27,9 +27,7 @@ const getDataByCafe = async (req: Request, res: Response, next: NextFunction) =>
             .select(`
                 cafe_id,
                 user_id,
-                wifi_availability,
-                outlet_availability,
-                seating
+                ameenity_type
             `)
             .eq('cafe_id', id)
             .single()
@@ -64,7 +62,7 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
             return next(new AppError('Invalid review data: ' + validation.error.message, 400))
         }
 
-        const {cafe_id, user_id, wifi_availability, outlet_availability, seating} = validation.data
+        const {cafe_id, user_id, amenity_type} = validation.data
         //so the steps are to first validate the request with the validation schema
         //then we want to set the data and verify the user
         const user = req.user
@@ -107,7 +105,7 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
         }
 
         //can finally update realtime data, which I first have to extract and then take the weighted average of
-        
+
         
 
 

@@ -12,16 +12,17 @@ CREATE TYPE public.amenity_type AS ENUM (
 );
 
 -- Create the fixed cafes_realtime_data table
+
+
 CREATE TABLE public.cafes_realtime_data (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    cafe_id UUID REFERENCES public.cafes(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-    wifi_availability amenity_type NOT NULL,
-    outlet_availability amenity_type NOT NULL,
-    seating amenity_type NOT NULL DEFAULT 'medium',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  cafe_id UUID REFERENCES public.cafes(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  type TEXT CHECK (type IN ('wifi_availability', 'outlet_availability', 'seating')),
+  value amenity_type NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
 
 -- Add RLS policies
 ALTER TABLE public.cafes_realtime_data ENABLE ROW LEVEL SECURITY;
