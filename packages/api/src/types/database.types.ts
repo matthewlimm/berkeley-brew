@@ -38,31 +38,25 @@ export type Database = {
           cafe_id: string | null
           created_at: string | null
           id: string
-          outlet_availability: Database["public"]["Enums"]["amenity_type"]
-          seating: Database["public"]["Enums"]["amenity_type"]
-          updated_at: string | null
+          type: 'wifi_availability' | 'outlet_availability' | 'seating' | null
           user_id: string | null
-          wifi_availability: Database["public"]["Enums"]["amenity_type"]
+          value: Database["public"]["Enums"]["amenity_type"]
         }
         Insert: {
           cafe_id?: string | null
           created_at?: string | null
           id?: string
-          outlet_availability: Database["public"]["Enums"]["amenity_type"]
-          seating?: Database["public"]["Enums"]["amenity_type"]
-          updated_at?: string | null
+          type?: 'wifi_availability' | 'outlet_availability' | 'seating' | null
           user_id?: string | null
-          wifi_availability: Database["public"]["Enums"]["amenity_type"]
+          value: Database["public"]["Enums"]["amenity_type"]
         }
         Update: {
           cafe_id?: string | null
           created_at?: string | null
           id?: string
-          outlet_availability?: Database["public"]["Enums"]["amenity_type"]
-          seating?: Database["public"]["Enums"]["amenity_type"]
-          updated_at?: string | null
+          type?: 'wifi_availability' | 'outlet_availability' | 'seating' | null
           user_id?: string | null
-          wifi_availability?: Database["public"]["Enums"]["amenity_type"]
+          value?: Database["public"]["Enums"]["amenity_type"]
         }
         Relationships: [
           {
@@ -129,6 +123,7 @@ export type Database = {
           created_at: string | null
           id: string
           rating: number | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -137,6 +132,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -145,6 +141,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -165,9 +162,6 @@ export type Database = {
           id: string
           updated_at: string | null
           username: string | null
-          full_name: string | null
-          avatar_url: string | null
-          updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -176,9 +170,6 @@ export type Database = {
           id: string
           updated_at?: string | null
           username?: string | null
-          full_name?: string | null
-          avatar_url?: string | null
-          updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -187,9 +178,6 @@ export type Database = {
           id?: string
           updated_at?: string | null
           username?: string | null
-          full_name?: string | null
-          avatar_url?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -217,6 +205,7 @@ export type Database = {
   }
 }
 
+// Rest of your utility types remain the same...
 type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<

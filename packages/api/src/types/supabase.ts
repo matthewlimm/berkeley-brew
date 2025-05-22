@@ -38,31 +38,25 @@ export type Database = {
           cafe_id: string | null
           created_at: string | null
           id: string
-          outlet_availability: Database["public"]["Enums"]["amenity_type"]
-          seating: Database["public"]["Enums"]["amenity_type"]
-          updated_at: string | null
+          type: string | null
           user_id: string | null
-          wifi_availability: Database["public"]["Enums"]["amenity_type"]
+          value: Database["public"]["Enums"]["amenity_type"]
         }
         Insert: {
           cafe_id?: string | null
           created_at?: string | null
           id?: string
-          outlet_availability: Database["public"]["Enums"]["amenity_type"]
-          seating?: Database["public"]["Enums"]["amenity_type"]
-          updated_at?: string | null
+          type?: string | null
           user_id?: string | null
-          wifi_availability: Database["public"]["Enums"]["amenity_type"]
+          value: Database["public"]["Enums"]["amenity_type"]
         }
         Update: {
           cafe_id?: string | null
           created_at?: string | null
           id?: string
-          outlet_availability?: Database["public"]["Enums"]["amenity_type"]
-          seating?: Database["public"]["Enums"]["amenity_type"]
-          updated_at?: string | null
+          type?: string | null
           user_id?: string | null
-          wifi_availability?: Database["public"]["Enums"]["amenity_type"]
+          value?: Database["public"]["Enums"]["amenity_type"]
         }
         Relationships: [
           {
@@ -129,6 +123,7 @@ export type Database = {
           created_at: string | null
           id: string
           rating: number | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -137,6 +132,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -145,6 +141,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [

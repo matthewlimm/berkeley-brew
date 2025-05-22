@@ -216,20 +216,16 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             .from('users')
             .select('id')
             .eq('id', user.id)
-            .single();
+            .single()
 
         // If user doesn't exist in public schema, create them
         if (!existingUser) {
-            // Get name from user metadata if available
-            const fullName = user.user_metadata?.name || user.user_metadata?.full_name || '';
-            
             const { error: createUserError } = await supabase
                 .from('users')
                 .insert({
                     id: user.id,
-                    username: user.user_metadata?.username || user.email?.split('@')[0] || 'user',
-                    full_name: fullName,
-                    updated_at: new Date().toISOString()
+                    username: user.email?.split('@')[0] || 'user',
+                    email: user.email
                 });
 
             if (createUserError) {

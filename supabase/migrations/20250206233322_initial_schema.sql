@@ -28,16 +28,18 @@ CREATE TYPE public.amenity_type AS ENUM (
 );
 
 
---Cafe information with crowd-sourced data
-CREATE TABLE public.cafes_realtime_data(
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    cafe_id UUID REFERENCES cafes.cafe_id on DEFAULT CASCADE, 
-    user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-    wifi_availability amenity_type not null,
-    outlet_availability amenity_type not null, 
-    seating amenity_type not null, 
-    seating amenity_type not null DEFAULT 'medium'
-)
+-- --Cafe information with crowd-sourced data
+-- CREATE TABLE public.cafes_realtime_data(
+--     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+--     cafe_id UUID REFERENCES cafes.cafe_id on DEFAULT CASCADE, 
+--     user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+--     wifi_availability amenity_type not null,
+--     outlet_availability amenity_type not null, 
+--     seating amenity_type not null, 
+--     seating amenity_type not null DEFAULT 'medium'
+-- )
+
+
 
 
 -- Reviews

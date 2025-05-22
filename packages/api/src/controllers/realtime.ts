@@ -4,6 +4,7 @@ import { supabase, type Database } from '../db'
 import { AppError } from '../middleware/errorHandler'
 import { selectFields } from 'express-validator/lib/field-selection';
 import { subMinutes } from 'date-fns';
+import { inflateRaw } from 'zlib';
 
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
@@ -105,9 +106,27 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
         }
 
         //can finally update realtime data, which I first have to extract and then take the weighted average of
+        //gte = greater or equal to
+        const timeLimit = subMinutes(new Date(), 60) // last hour
+        const {data: mostRecent, error: dataError} = await supabase 
+        .from('cafes_realtime_data')
+        .select(`
+        type,
+        value
+        `)
+        .eq('cafe_id', cafeId)
+        .gte('created_at', timeLimit.toISOString())
 
-        
+        if (dataError) {
+            return next(new AppError('realtime data not found', 404))
+        }
 
+        const result = {
+            wifi_availability: {},
+            outlet_availability: {},
+            seating: {}
+        }
 
+       
     }
 }
