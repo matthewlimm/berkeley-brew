@@ -72,6 +72,23 @@ export async function createReview(cafeId: string, data: { content: string; rati
   return res.json()
 }
 
+export async function editReview(reviewId: string, data: { content?: string; rating?: number }): Promise<ApiResponse<void>> {
+  const headers = await getAuthHeader();
+  const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to update review');
+  }
+  return res.json();
+}
+
 export async function createPost(id: string, data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
   const res = await fetch(`${API_URL}/api/posts/${id}`, {
     method: 'POST',

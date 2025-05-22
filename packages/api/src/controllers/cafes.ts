@@ -82,6 +82,7 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                     content,
                     rating,
                     created_at,
+                    updated_at,
                     user_id
                 )
             `)

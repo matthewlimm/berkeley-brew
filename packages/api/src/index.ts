@@ -9,6 +9,7 @@ import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
 import postsRouter from './routes/posts'
 import userRouter from './routes/users'
+import reviewsRouter from './routes/reviews'
 
 const app = express()
 const port = process.env.PORT || '3001'
@@ -28,6 +29,7 @@ app.use(express.json())
 app.use('/api/cafes', cafeRouter)
 app.use('/api/posts', postsRouter)
 app.use('/api/user', userRouter)
+app.use('/api/reviews', reviewsRouter)
 
 // Health check
 app.get('/health', (req, res) => {

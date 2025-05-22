@@ -46,7 +46,7 @@ export default function Home() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const handleReviewSuccess = async () => {
+  const handleReviewSuccess = async (cafeId: string) => {
     // Refresh cafes to show updated ratings
     try {
       setIsLoading(true);
@@ -54,7 +54,6 @@ export default function Home() {
       if (response?.data?.cafes) {
         const allCafes = response.data.cafes;
         setCafes(allCafes);
-        
         // Update trending cafes
         const trending = [...allCafes]
           .filter(cafe => cafe.average_rating !== null)
@@ -62,6 +61,7 @@ export default function Home() {
           .slice(0, 4);
         setTrendingCafes(trending);
       }
+      setExpandedCafeId(cafeId); // Expand reviews for the cafe just reviewed
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to refresh cafes");
     } finally {
@@ -218,14 +218,14 @@ export default function Home() {
 
                   {expandedCafeId === cafe.id && (
                     <div className="mb-4">
-                      <CafeReviews cafeId={cafe.id} />
+                      <CafeReviews cafeId={cafe.id} currentUserId={user?.id} key={cafe.id + '-' + (selectedCafeId === cafe.id ? 'refresh' : 'normal')} />
                     </div>
                   )}
 
                   {selectedCafeId === cafe.id ? (
                     <ReviewForm
                       cafeId={cafe.id}
-                      onSuccess={handleReviewSuccess}
+                      onSuccess={() => handleReviewSuccess(cafe.id)}
                       onCancel={() => setSelectedCafeId(null)}
                     />
                   ) : (
