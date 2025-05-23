@@ -11,13 +11,15 @@ type Cafe = Database['public']['Tables']['cafes']['Row']
 type RealTime = Database['public']['Tables']['cafes_realtime_data']['Row']
 type quantity = Database['public']['Enums']['amenity_type']
 
+export const qualityTypeSchema = z.enum(['wifi_availability', 'outlet_availability', 'seating']);
 export const amenityTypeSchema = z.enum(['low', 'medium', 'high']);
 
 //Validaton schema for realtime data input objects
 const realSchema = z.object({
     cafe_id: z.string().uuid(),
     user_id: z.string().uuid(),
-    amenity_type: amenityTypeSchema,
+    type: amenityTypeSchema,
+    value: amenityTypeSchema
 })
 
 const getDataByCafe = async (req: Request, res: Response, next: NextFunction) => {
@@ -63,7 +65,7 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
             return next(new AppError('Invalid review data: ' + validation.error.message, 400))
         }
 
-        const {cafe_id, user_id, amenity_type} = validation.data
+        const {cafe_id, user_id, type, value} = validation.data
         //so the steps are to first validate the request with the validation schema
         //then we want to set the data and verify the user
         const user = req.user
@@ -105,8 +107,46 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
             }
         }
 
-        //can finally update realtime data, which I first have to extract and then take the weighted average of
-        //gte = greater or equal to
+        try {
+            //service-role but not RLS
+            const token = req.headers.authorization?.split(' ')[1] || '';
+            //need to create a new client
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+            //anonymous client with authorization
+            const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            })
+
+            //verify session is valid
+            const { data: authData, error: authError } = await anonClient.auth.getUser();
+
+            if (authError) {
+                console.error('Auth session error:', authError);
+                return next(new AppError('Authentication error: ' + authError.message, 401));
+            }
+
+
+            console.log('Auth user verified successfully:', !!authData.user);
+            const { error } = await anonClient
+                .from('cafes_realtime_data')
+                .insert({
+                    cafe_id: cafeId,
+                    user_id: user.id,
+                    type: type,
+                    value: value
+                }) 
+        }
+    
+        // can finally update realtime data, which I first have to extract and then take the weighted average of
+        // gte = greater or equal to
+        // need to figure out a way to aggregate later
         const timeLimit = subMinutes(new Date(), 60) // last hour
         const {data: mostRecent, error: dataError} = await supabase 
         .from('cafes_realtime_data')
@@ -122,11 +162,44 @@ const postRealtime = async (req: Request, res: Response, next: NextFunction) => 
         }
 
         const result = {
-            wifi_availability: {},
-            outlet_availability: {},
-            seating: {}
+            wifi_availability: 0,
+            outlet_availability: 0,
+            seating: 0
         }
 
+
+
+        mostRecent.forEach((item) => {
+            switch (item.type) {
+                case ("wifi_availability"):
+                    if (item.value == 'high') {
+                        result["wifi_availability"] = result["wifi_availability"] + 1
+                    }
+                    else if (item.value == 'low') {
+                        result["wifi_availability"] = result["wifi_availability"] - 1
+                    }
+                    
+                case ("outlet_availability"):
+                    if (item.value == 'high') {
+                        result["outlet_availability"] = result["outlet_availability"] + 1
+                    }
+                    else if (item.value == 'low') {
+                        result["outlet_availability"] = result["outlet_availability"] - 1
+                    }
+                case ("seating"):
+                    if (item.value == 'high') {
+                        result["seating"] = result["seating"] + 1
+                    }
+                    else if (item.value == 'low') {
+                        result["seating"] = result["seating"] - 1
+                    }
+            }
+        })
+
+        
+
+
+         
        
     }
 }
