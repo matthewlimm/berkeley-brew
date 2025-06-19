@@ -65,9 +65,6 @@ const UserProfileMenu = () => {
           <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
             Profile
           </Link>
-          <Link href="/dashboard/favorites" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
-            Favorites
-          </Link>
           <Link href="/dashboard/reviews" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
             My Reviews
           </Link>

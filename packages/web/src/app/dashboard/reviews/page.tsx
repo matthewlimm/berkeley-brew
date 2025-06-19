@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { getUserReviews } from '@/services/api';
+import { getUserReviews, updateReview, deleteReview } from '@/services/api';
 
 interface Review {
   id: string;
   cafe_id: string | null;
   cafe_name: string;
-  rating: number | null;
+  golden_bear_score: number | null;
+  grindability_score: number | null;
+  student_friendliness_score: number | null;
+  coffee_quality_score: number | null;
+  vibe_score: number | null;
   content: string;
   created_at: string | null;
   user_id?: string | null;
@@ -20,27 +24,125 @@ export default function MyReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentReview, setCurrentReview] = useState<Review | null>(null);
+  // Removed golden_bear_score as it's calculated on the backend
+  const [editFormData, setEditFormData] = useState({
+    content: '',
+    grindability_score: 5,
+    student_friendliness_score: 5,
+    coffee_quality_score: 5,
+    vibe_score: 5
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        const response = await getUserReviews();
-        if (response?.data?.reviews) {
-          setReviews(response.data.reviews);
-        }
-      } catch (err) {
-        console.error('Error fetching reviews:', err);
-        setError('Failed to load your reviews. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchReviews();
   }, [user]);
+  
+  const fetchReviews = async () => {
+    if (!user) {
+      console.log('No user found, skipping review fetch');
+      return;
+    }
+    
+    console.log('Fetching reviews for user:', user);
+    
+    try {
+      setIsLoading(true);
+      setError(null); // Clear any previous errors
+      
+      const response = await getUserReviews();
+      console.log('Reviews response:', response);
+      
+      if (response?.data?.reviews) {
+        console.log('Setting reviews:', response.data.reviews);
+        setReviews(response.data.reviews);
+      } else {
+        console.warn('No reviews found in response:', response);
+        setReviews([]);
+      }
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      setError('Failed to load your reviews. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleEditClick = (review: Review) => {
+    setCurrentReview(review);
+    setEditFormData({
+      content: review.content,
+      grindability_score: review.grindability_score || 5,
+      student_friendliness_score: review.student_friendliness_score || 5,
+      coffee_quality_score: review.coffee_quality_score || 5,
+      vibe_score: review.vibe_score || 5
+    });
+    setIsEditModalOpen(true);
+  };
+  
+  const handleDeleteClick = (review: Review) => {
+    setCurrentReview(review);
+    setIsDeleteModalOpen(true);
+  };
+  
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentReview) {
+      console.error('No current review selected for editing');
+      return;
+    }
+    
+    console.log('Submitting edit for review:', currentReview.id);
+    console.log('Edit form data:', editFormData);
+    
+    try {
+      setIsSubmitting(true);
+      setError(null); // Clear any previous errors
+      
+      console.log('Calling updateReview with ID:', currentReview.id);
+      const response = await updateReview(currentReview.id, editFormData);
+      console.log('Update review response:', response);
+      
+      setIsEditModalOpen(false);
+      // Refresh reviews list
+      await fetchReviews();
+    } catch (err) {
+      console.error('Error updating review:', err);
+      setError('Failed to update review. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleDeleteConfirm = async () => {
+    if (!currentReview) {
+      console.error('No current review selected for deletion');
+      return;
+    }
+    
+    console.log('Confirming deletion for review:', currentReview.id);
+    
+    try {
+      setIsSubmitting(true);
+      setError(null); // Clear any previous errors
+      
+      console.log('Calling deleteReview with ID:', currentReview.id);
+      const response = await deleteReview(currentReview.id);
+      console.log('Delete review response:', response);
+      
+      setIsDeleteModalOpen(false);
+      // Refresh reviews list
+      await fetchReviews();
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      setError('Failed to delete review. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -70,6 +172,34 @@ export default function MyReviewsPage() {
       </div>
     );
   };
+  
+  // Helper function to render rating input
+  const renderRatingInput = (name: string, label: string, value: number) => {
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <div className="mt-1 flex items-center">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => setEditFormData({ ...editFormData, [name]: star })}
+              className="focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-6 w-6 ${star <= Number(editFormData[name as keyof typeof editFormData]) ? 'text-amber-500' : 'text-gray-300'}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   if (!user) {
     return (
@@ -87,13 +217,13 @@ export default function MyReviewsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="md:flex md:items-center md:justify-between mb-6">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-              My Reviews
-            </h2>
-          </div>
+      <div className="md:flex md:items-center md:justify-between mb-6">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+            My Reviews
+          </h2>
         </div>
+      </div>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -129,8 +259,22 @@ export default function MyReviewsPage() {
                     <div className="mt-2 flex justify-between">
                       <div className="sm:flex">
                         <div className="mr-6 flex items-center text-sm text-gray-500">
-                          {renderStars(review.rating || 0)}
+                          {renderStars(review.golden_bear_score || 0)}
                         </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditClick(review)}
+                          className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-amber-700 bg-amber-100 hover:bg-amber-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(review)}
+                          className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                     <div className="mt-2">
@@ -142,6 +286,87 @@ export default function MyReviewsPage() {
             </ul>
           </div>
         )}
-      </div>
+      
+      {/* Edit Review Modal */}
+      {isEditModalOpen && currentReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Review</h3>
+            <form onSubmit={handleEditSubmit}>
+              {/* Rating inputs - Overall Rating (golden_bear_score) is calculated on the backend */}
+              <div className="mb-4">
+                <p className="block text-sm font-medium text-gray-700">Overall Rating (Auto-calculated)</p>
+                <div className="mt-1">
+                  {renderStars(currentReview.golden_bear_score || 0)}
+                </div>
+              </div>
+              {renderRatingInput('grindability_score', 'Grindability', editFormData.grindability_score)}
+              {renderRatingInput('vibe_score', 'Vibe', editFormData.vibe_score)}
+              {renderRatingInput('coffee_quality_score', 'Coffee Quality', editFormData.coffee_quality_score)}
+              {renderRatingInput('student_friendliness_score', 'Friendliness', editFormData.student_friendliness_score)}
+              
+              {/* Content textarea */}
+              <div className="mb-4">
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700">Review</label>
+                <textarea
+                  id="content"
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                  value={editFormData.content}
+                  onChange={(e) => setEditFormData({ ...editFormData, content: e.target.value })}
+                  required
+                />
+              </div>
+              
+              {/* Action buttons */}
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:col-start-2 sm:text-sm"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && currentReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Review</h3>
+            <p className="text-sm text-gray-500 mb-4">Are you sure you want to delete your review for {currentReview?.cafe_name}? This action cannot be undone.</p>
+            
+            <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={isSubmitting}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

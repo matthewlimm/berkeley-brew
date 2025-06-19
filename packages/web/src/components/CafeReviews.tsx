@@ -53,30 +53,48 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {reviews.map((review) => (
-        <div
-          key={review.id}
-          className="p-4 bg-gray-50 rounded-lg"
-        >
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center gap-2">
-              <div>
-                <div className="text-sm font-medium text-gray-900">
-                  {review.user?.username || 'Anonymous User'}
+    <div>
+      {/* Review count badge */}
+      <div className="flex items-center mb-4">
+        <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2 py-1 rounded-full">
+          {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}
+        </span>
+      </div>
+      
+      {/* Reviews list */}
+      <div className="space-y-4">
+        {reviews.map((review) => (
+          <div
+            key={review.id}
+            className="p-4 bg-gray-50 rounded-lg"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {review.user?.username || 'Anonymous User'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Unknown date'}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Unknown date'}
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="px-2 py-1 bg-amber-50 rounded-full text-xs font-medium text-amber-700 mb-1">
+                  {review.golden_bear_score?.toFixed(1) || 'N/A'} ★
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                  <div className="text-blue-700">Grindability: {review.grindability_score?.toFixed(1) || 'N/A'}</div>
+                  <div className="text-pink-700">Vibe: {review.vibe_score?.toFixed(1) || 'N/A'}</div>
+                  <div className="text-purple-700">Coffee: {review.coffee_quality_score?.toFixed(1) || 'N/A'}</div>
+                  <div className="text-green-700">Friendliness: {review.student_friendliness_score?.toFixed(1) || 'N/A'}</div>
                 </div>
               </div>
             </div>
-            <div className="px-2 py-1 bg-white rounded-full text-xs font-medium text-gray-600">
-              {review.rating} ★
-            </div>
+            <p className="text-gray-700 text-sm">{review.content}</p>
           </div>
-          <p className="text-gray-700 text-sm">{review.content}</p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

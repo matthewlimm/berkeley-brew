@@ -1,0 +1,6 @@
+- info bar in high-level cafe card next to subscores and golden bear score to show how it's calculated and how to rate it
+- fix login button frontend margin
+- current location functionality
+- sort by rating, subscores, and distance
+- crowdmeter
+- my reviews page

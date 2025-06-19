@@ -316,26 +316,44 @@ export const getUserReviews = async (req: Request, res: Response, next: NextFunc
             return next(new AppError('Authentication required', 401));
         }
         
+        console.log('Fetching reviews for user:', user.id);
+        
         // Get user reviews from database
         const { data, error } = await serviceRoleClient
             .from('reviews')
             .select(`
                 *,
-                coffee_shops:coffee_shop_id (id, name, location)
+                cafes:cafe_id (id, name, address)
             `)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
             
         if (error) {
+            console.error('Error fetching user reviews:', error);
             return next(new AppError('Failed to fetch user reviews: ' + error.message, 500));
         }
         
+        // Transform the data to match the expected format
+        const transformedReviews = data.map(review => ({
+            ...review,
+            cafe_name: review.cafes?.name || 'Unknown Cafe',
+            // Use existing score fields or default to null
+            golden_bear_score: review.golden_bear_score,
+            grindability_score: review.grindability_score,
+            student_friendliness_score: review.student_friendliness_score,
+            coffee_quality_score: review.coffee_quality_score,
+            vibe_score: review.vibe_score
+        }));
+        
+        console.log(`Found ${transformedReviews.length} reviews for user`);
+        
         return res.status(200).json({
             status: 'success',
-            results: data.length,
-            data: { reviews: data }
+            results: transformedReviews.length,
+            data: { reviews: transformedReviews }
         });
     } catch (err) {
+        console.error('Unexpected error in getUserReviews:', err);
         next(err);
     }
 };

@@ -63,7 +63,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        {/* <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900">My Coffee Posts</h3>
             <div className="mt-3 text-sm text-gray-500">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
-        </div>
+        </div> */}
         
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">

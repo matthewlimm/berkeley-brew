@@ -16,6 +16,19 @@ export type Database = {
           id: string
           name: string
           updated_at: string | null
+          image_url: string | null
+          grindability_score: number | null
+          student_friendliness_score: number | null
+          coffee_quality_score: number | null
+          vibe_score: number | null
+          golden_bear_score: number | null
+          review_count: number | null
+          realtime?: {
+            seating_availability: number | null
+            noise_level: number | null
+            wifi_speed: number | null
+            updated_at: string | null
+          }
         }
         Insert: {
           address: string
@@ -23,6 +36,10 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string | null
+          image_url?: string | null
+          grindability_score?: number | null
+          radical_score?: number | null
+          vibe_score?: number | null
         }
         Update: {
           address?: string
@@ -30,6 +47,10 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+          image_url?: string | null
+          grindability_score?: number | null
+          radical_score?: number | null
+          vibe_score?: number | null
         }
         Relationships: []
       }
@@ -87,7 +108,11 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
-          rating: number | null
+          golden_bear_score: number | null
+          grindability_score: number | null
+          student_friendliness_score: number | null
+          coffee_quality_score: number | null
+          vibe_score: number | null
           user_id: string | null
         }
         Insert: {
@@ -95,7 +120,11 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
-          rating?: number | null
+          golden_bear_score?: number | null
+          grindability_score?: number | null
+          student_friendliness_score?: number | null
+          coffee_quality_score?: number | null
+          vibe_score?: number | null
           user_id?: string | null
         }
         Update: {
@@ -103,7 +132,11 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
-          rating?: number | null
+          golden_bear_score?: number | null
+          grindability_score?: number | null
+          student_friendliness_score?: number | null
+          coffee_quality_score?: number | null
+          vibe_score?: number | null
           user_id?: string | null
         }
         Relationships: [

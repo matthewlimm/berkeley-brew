@@ -6,7 +6,6 @@ A hyperlocal coffee app designed for the UC Berkeley community, providing commun
 
 - 🐻 Golden Bear Score - Overall quality rating
 - 📖 Grindability - Study-friendliness metrics
-- ✊ Radical Score - Social justice and sustainability commitment
 - 🎨 Vibes - Aesthetic and ambiance ratings
 - 🔥 Real-time updates for crowd levels and Wi-Fi availability
 - 🤖 AI-powered personalized recommendations

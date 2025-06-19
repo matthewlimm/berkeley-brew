@@ -5,19 +5,32 @@ import { UUID } from 'crypto'
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005'
 
 // Helper function to get auth headers
 async function getAuthHeader(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession()
-  
-  // Debug authentication
-  console.log('Auth session exists:', !!data.session)
-  console.log('Auth token exists:', !!data.session?.access_token)
-  
-  return data.session?.access_token ? {
-    'Authorization': `Bearer ${data.session.access_token}`
-  } : {}
+  try {
+    console.log('Getting auth header...');
+    // Use the imported supabase client instead of dynamic import
+    const session = await supabase.auth.getSession();
+    console.log('Session data available:', !!session?.data);
+    
+    const token = session?.data?.session?.access_token;
+    console.log('Token available:', !!token);
+    
+    if (!token) {
+      console.warn('No authentication token found!');
+      return {};
+    }
+    
+    console.log('Auth token (first 10 chars):', token.substring(0, 10) + '...');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  } catch (error) {
+    console.error('Error getting auth header:', error);
+    return {};
+  }
 }
 
 interface ApiResponse<T> {
@@ -46,7 +59,23 @@ export async function getCafe(id: string): Promise<ApiResponse<{ cafe: Cafe & { 
   return res.json()
 }
 
-export async function createReview(cafeId: string, data: { content: string; rating: number }): Promise<ApiResponse<void>> {
+export async function createReview(cafeId: string, data: { 
+  content: string; 
+  grindability_score: number; 
+  student_friendliness_score: number; 
+  coffee_quality_score: number; 
+  vibe_score: number; 
+}): Promise<ApiResponse<void>> {
+  // Calculate golden_bear_score as the average of all subscores
+  const reviewData = {
+    ...data,
+    golden_bear_score: (
+      data.grindability_score + 
+      data.student_friendliness_score + 
+      data.coffee_quality_score + 
+      data.vibe_score
+    ) / 4
+  };
   const authHeaders = await getAuthHeader()
   
   // Debug request headers
@@ -61,7 +90,7 @@ export async function createReview(cafeId: string, data: { content: string; rati
       'Content-Type': 'application/json',
       ...authHeaders
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(reviewData),
     // Add credentials to include cookies
     credentials: 'include'
   })
@@ -98,13 +127,103 @@ export async function getPosts(): Promise<ApiResponse<{ posts: any[] }>> {
 }
 
 export async function getUserReviews(): Promise<ApiResponse<{ reviews: (Review & { cafe_name: string })[] }>> {
-  const headers = await getAuthHeader()
-  const res = await fetch(`${API_URL}/api/user/reviews`, { headers })
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.message || 'Failed to fetch user reviews')
+  try {
+    console.log('Fetching user reviews...');
+    const headers = await getAuthHeader();
+    console.log('Auth headers:', headers);
+    console.log('API URL:', `${API_URL}/api/user/reviews`);
+    
+    const res = await fetch(`${API_URL}/api/user/reviews`, { headers });
+    console.log('Response status:', res.status);
+    
+    if (!res.ok) {
+      const error = await res.json();
+      console.error('Error response:', error);
+      throw new Error(error.message || 'Failed to fetch user reviews');
+    }
+    
+    const data = await res.json();
+    console.log('User reviews data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in getUserReviews:', error);
+    throw error;
   }
-  return res.json()
+}
+
+export async function updateReview(reviewId: string, data: {
+  content: string;
+  // golden_bear_score is now calculated on the backend
+  grindability_score: number;
+  student_friendliness_score: number;
+  coffee_quality_score: number;
+  vibe_score: number;
+}): Promise<ApiResponse<{ review: any }>> {
+  try {
+    console.log('Updating review:', reviewId, data);
+    const headers = await getAuthHeader();
+    console.log('Auth headers:', headers);
+    
+    // The correct endpoint URL based on the backend routes
+    const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
+    console.log('Update review URL:', url);
+    
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      body: JSON.stringify(data)
+    });
+    
+    console.log('Update review response status:', res.status);
+    
+    if (!res.ok) {
+      const error = await res.json();
+      console.error('Error updating review:', error);
+      throw new Error(error.message || 'Failed to update review');
+    }
+    
+    const result = await res.json();
+    console.log('Update review result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in updateReview:', error);
+    throw error;
+  }
+}
+
+export async function deleteReview(reviewId: string): Promise<ApiResponse<null>> {
+  try {
+    console.log('Deleting review:', reviewId);
+    const headers = await getAuthHeader();
+    console.log('Auth headers:', headers);
+    
+    // The correct endpoint URL based on the backend routes
+    const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
+    console.log('Delete review URL:', url);
+    
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers
+    });
+    
+    console.log('Delete review response status:', res.status);
+    
+    if (!res.ok) {
+      const error = await res.json();
+      console.error('Error deleting review:', error);
+      throw new Error(error.message || 'Failed to delete review');
+    }
+    
+    const result = await res.json();
+    console.log('Delete review result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in deleteReview:', error);
+    throw error;
+  }
 }
 
 export async function updateUserProfile(data: { username?: string; full_name?: string; name?: string; avatar_url?: string }): Promise<ApiResponse<{ user: any }>> {
