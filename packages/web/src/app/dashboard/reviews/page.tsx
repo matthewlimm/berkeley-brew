@@ -295,7 +295,7 @@ export default function MyReviewsPage() {
             <form onSubmit={handleEditSubmit}>
               {/* Rating inputs - Overall Rating (golden_bear_score) is calculated on the backend */}
               <div className="mb-4">
-                <p className="block text-sm font-medium text-gray-700">Overall Rating (Auto-calculated)</p>
+                <p className="block text-sm font-medium text-gray-700">Golden Bear Score (Auto-calculated)</p>
                 <div className="mt-1">
                   {renderStars(currentReview.golden_bear_score || 0)}
                 </div>

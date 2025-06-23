@@ -106,6 +106,7 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                     coffee_quality_score,
                     vibe_score,
                     created_at,
+                    updated_at,
                     user_id
                 )
             `)
@@ -148,6 +149,7 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                 // Add user data to each review
                 cafe.reviews = (cafe.reviews as any[]).map((review: any) => ({
                     ...review,
+                    updated_at: review.updated_at, // Ensure updated_at is present
                     user: review.user_id && userMap[review.user_id] 
                         ? userMap[review.user_id] 
                         : { username: 'Unknown User' }
@@ -327,30 +329,30 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
 
 // Update a review
 const updateReview = async (req: Request, res: Response, next: NextFunction) => {
+    console.log('updateReview route hit');
     try {
         console.log('Update review request received');
-        console.log('Review ID:', req.params.reviewId);
+        const { reviewId } = req.params;
+        const user = req.user;
+        console.log('Review ID:', reviewId);
         console.log('Request body:', req.body);
-        console.log('User from request:', req.user?.id);
-        
-        const { reviewId } = req.params
-        const userId = req.user?.id
-        
-        if (!userId) {
-            console.log('No authenticated user found');
-            return next(new AppError('You must be logged in to update a review', 401))
+        if (!user) {
+            console.error('No authenticated user found in request.');
+            return next(new AppError('You must be logged in to update a review', 401));
         }
-        
+        const userId = user.id;
+        console.log('User from request:', userId);
         // First check if the review exists and belongs to the user
         const { data: existingReview, error: findError } = await supabase
             .from('reviews')
             .select('*')
             .eq('id', reviewId)
             .eq('user_id', userId)
-            .single()
-            
+            .single();
+        console.log('Pre-update fetch result:', existingReview, 'Error:', findError);
         if (findError || !existingReview) {
-            return next(new AppError('Review not found or you do not have permission to update it', 404))
+            console.error('Review not found or not owned by user. reviewId:', reviewId, 'userId:', userId);
+            return next(new AppError('Review not found or you do not have permission to update it', 404));
         }
         
         // Validate the request body
@@ -380,22 +382,52 @@ const updateReview = async (req: Request, res: Response, next: NextFunction) => 
         
         console.log('Calculated golden_bear_score:', golden_bear_score);
         
-        // Update the review
-        const { data: updatedReview, error: updateError } = await supabase
+        console.log('Preparing to update review...');
+        console.log('Review id:', reviewId);
+        console.log('User id:', userId);
+        const updatePayload = {
+            ...validatedData,
+            golden_bear_score: parseFloat(golden_bear_score.toFixed(1)),
+            updated_at: new Date().toISOString(),
+            cafe_id: existingReview.cafe_id,
+            user_id: existingReview.user_id
+        };
+        console.log('Update payload:', updatePayload);
+
+        // Create a per-request Supabase client with the user's JWT for authenticated update
+        const { createClient } = require('@supabase/supabase-js');
+        const userAccessToken = req.headers.authorization?.replace('Bearer ', '');
+        const supabaseWithAuth = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY,
+            {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${userAccessToken}`,
+                    },
+                },
+            }
+        );
+        // Update review using authenticated client
+        const { data: updated, error: updateError } = await supabaseWithAuth
             .from('reviews')
-            .update({
-                ...validatedData,
-                golden_bear_score: parseFloat(golden_bear_score.toFixed(1)), // Round to 1 decimal place
-                updated_at: new Date().toISOString()
-            })
+            .update(updatePayload)
             .eq('id', reviewId)
             .eq('user_id', userId)
-            .select()
-            .single()
-            
+            .select('*');
+        console.log('Review update result:', updated, updateError);
+        
         if (updateError) {
-            return next(new AppError('Failed to update review: ' + updateError.message, 500))
+            return next(new AppError('Failed to update review: ' + updateError.message, 500));
         }
+        
+        if (!updated || (Array.isArray(updated) && updated.length === 0)) {
+            console.error('No rows updated. id:', reviewId, 'user_id:', userId);
+            return next(new AppError('No review updated (not found or not owned by user)', 404));
+        }
+        
+        // Always use the first updated review (should only ever be one)
+        const updatedReview = Array.isArray(updated) ? updated[0] : updated;
         
         // Recalculate cafe scores after review update
         if (existingReview.cafe_id) {
