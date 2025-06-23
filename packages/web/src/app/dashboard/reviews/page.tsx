@@ -16,6 +16,7 @@ interface Review {
   vibe_score: number | null;
   content: string;
   created_at: string | null;
+  updated_at?: string | null;
   user_id?: string | null;
 }
 
@@ -154,6 +155,26 @@ export default function MyReviewsPage() {
     }).format(date);
   };
 
+  // Helper function to format relative timestamp
+  const formatRelativeTimestamp = (dateString: string, nowString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date(nowString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffSec < 60) return "Just now";
+    if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+    if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+    if (diffDay < 7) return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   // Helper function to render stars based on rating
   const renderStars = (rating: number) => {
     return (
@@ -250,11 +271,24 @@ export default function MyReviewsPage() {
                       <Link href={`/cafes/${review.cafe_id || ''}`} className="text-lg font-medium text-amber-600 truncate hover:underline">
                         {review.cafe_name}
                       </Link>
-                      <div className="ml-2 flex-shrink-0 flex">
-                        <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-                          {formatDate(review.created_at)}
-                        </p>
-                      </div>
+                      <div className="ml-2 flex-shrink-0 flex flex-col items-end gap-0.5">
+  <span className="flex items-center gap-0.5 text-xs text-gray-500" title={review.created_at ? new Date(review.created_at).toLocaleString() : undefined}>
+    <svg aria-label="Published" className="w-3 h-3 text-amber-400 mr-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
+    <span>Published</span>
+    <span className="ml-0.5">
+      {review.created_at ? formatRelativeTimestamp(review.created_at, new Date().toISOString()) : 'Unknown date'}
+    </span>
+  </span>
+  {review.updated_at && review.updated_at !== review.created_at && (
+    <span className="flex items-center gap-0.5 text-xs text-gray-400" title={new Date(review.updated_at).toLocaleString()}>
+      <svg aria-label="Edited" className="w-3 h-3 text-blue-300 mr-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.293-6.293a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414L11 15H7v-4z"/></svg>
+      <span>Edited</span>
+      <span className="ml-0.5">
+        {formatRelativeTimestamp(review.updated_at, new Date().toISOString())}
+      </span>
+    </span>
+  )}
+</div>
                     </div>
                     <div className="mt-2 flex justify-between">
                       <div className="sm:flex">
@@ -314,7 +348,6 @@ export default function MyReviewsPage() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
                   value={editFormData.content}
                   onChange={(e) => setEditFormData({ ...editFormData, content: e.target.value })}
-                  required
                 />
               </div>
               

@@ -78,6 +78,8 @@ const calculateGoldenBearScore = (cafe: Database['public']['Tables']['cafes']['R
 // Extended cafe type to include API response fields
 type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   average_rating?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   review_count?: number | null;
   reviews?: any[];
 };
@@ -89,6 +91,10 @@ export default function Home() {
   const [selectedCafeId, setSelectedCafeId] = useState<string | null>(null);
   const [expandedCafeId, setExpandedCafeId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<
+    'distance' | 'rating' | 'mostReviewed' | 'grindability' | 'vibe' | 'studentFriendliness' | 'coffeeQuality'
+  >('distance');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { user } = useAuth();
 
   // Load cafes on mount
@@ -123,6 +129,96 @@ export default function Home() {
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load cafes"))
       .finally(() => setIsLoading(false));
   }, []);
+
+  // Ask for location if sorting by distance
+  useEffect(() => {
+    if (sortBy === 'distance' && !userLocation) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          (err) => setUserLocation(null)
+        );
+      }
+    }
+  }, [sortBy, userLocation]);
+
+  // Sorting logic
+  let sortedCafes = [...cafes];
+  function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371e3;
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+  if (sortBy === 'distance' && userLocation) {
+    sortedCafes.sort((a, b) => {
+      const aLat = a.latitude != null ? Number(a.latitude) : null;
+      const aLng = a.longitude != null ? Number(a.longitude) : null;
+      const bLat = b.latitude != null ? Number(b.latitude) : null;
+      const bLng = b.longitude != null ? Number(b.longitude) : null;
+      if (aLat == null || aLng == null || bLat == null || bLng == null || isNaN(aLat) || isNaN(aLng) || isNaN(bLat) || isNaN(bLng)) return 0;
+      const distA = haversineDistance(userLocation.lat, userLocation.lng, aLat, aLng);
+      const distB = haversineDistance(userLocation.lat, userLocation.lng, bLat, bLng);
+      return distA - distB;
+    });
+  } else if (sortBy === 'mostReviewed') {
+    sortedCafes.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
+  } else if (sortBy === 'grindability') {
+    sortedCafes.sort((a, b) => {
+      const aScore = getScoreValue(a, 'grindability_score');
+      const bScore = getScoreValue(b, 'grindability_score');
+      const aValid = typeof aScore === 'number' && !isNaN(aScore) && aScore > 0;
+      const bValid = typeof bScore === 'number' && !isNaN(bScore) && bScore > 0;
+      if (aValid && bValid) return bScore - aScore;
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    console.log('Sorted by grindability:', sortedCafes.map(c => ({ name: c.name, grindability_score: getScoreValue(c, 'grindability_score'), type: typeof getScoreValue(c, 'grindability_score') })));
+  } else if (sortBy === 'vibe') {
+    sortedCafes.sort((a, b) => {
+      const aScore = getScoreValue(a, 'vibe_score');
+      const bScore = getScoreValue(b, 'vibe_score');
+      const aValid = typeof aScore === 'number' && !isNaN(aScore) && aScore > 0;
+      const bValid = typeof bScore === 'number' && !isNaN(bScore) && bScore > 0;
+      if (aValid && bValid) return bScore - aScore;
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  } else if (sortBy === 'studentFriendliness') {
+    sortedCafes.sort((a, b) => {
+      const aScore = getScoreValue(a, 'student_friendliness_score');
+      const bScore = getScoreValue(b, 'student_friendliness_score');
+      const aValid = typeof aScore === 'number' && !isNaN(aScore) && aScore > 0;
+      const bValid = typeof bScore === 'number' && !isNaN(bScore) && bScore > 0;
+      if (aValid && bValid) return bScore - aScore;
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  } else if (sortBy === 'coffeeQuality') {
+    sortedCafes.sort((a, b) => {
+      const aScore = getScoreValue(a, 'coffee_quality_score');
+      const bScore = getScoreValue(b, 'coffee_quality_score');
+      const aValid = typeof aScore === 'number' && !isNaN(aScore) && aScore > 0;
+      const bValid = typeof bScore === 'number' && !isNaN(bScore) && bScore > 0;
+      if (aValid && bValid) return bScore - aScore;
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  } else {
+    // Default: golden bear score or average_rating
+    sortedCafes.sort((a, b) => (b.golden_bear_score || b.average_rating || 0) - (a.golden_bear_score || a.average_rating || 0));
+  }
 
   const handleReviewSuccess = async (reviewData: { 
     grindability_score: number;
@@ -235,14 +331,39 @@ export default function Home() {
       {/* All Cafes Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">All Cafes</h2>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Rating
-            </button>
-            <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-              Distance
-            </button>
+
+          <div className="mb-6 w-full">
+            <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
+              <div className="flex flex-col">
+                <label htmlFor="sort-dropdown" className="text-sm font-semibold text-amber-700 mb-1">Sort & Explore Cafes</label>
+                <span className="text-xs text-gray-500">Choose how to order the list below.</span>
+              </div>
+              <div className="relative w-full sm:w-auto">
+                <select
+                  id="sort-dropdown"
+                  className="border border-amber-400 rounded-lg px-4 py-2 text-sm bg-gradient-to-r from-amber-50 to-yellow-100 focus:ring-amber-400 focus:border-amber-500 shadow-sm transition-all duration-150 ease-in-out hover:border-amber-600 hover:bg-amber-100 appearance-none pr-10"
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as any)}
+                  style={{ minWidth: 180 }}
+                >
+                  <option value="distance">Closest</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="mostReviewed">Most Reviewed</option>
+                  <option value="grindability">Grindability</option>
+                  <option value="vibe">Vibe</option>
+                  <option value="studentFriendliness">Student Friendliness</option>
+                  <option value="coffeeQuality">Coffee Quality</option>
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+              {sortBy === 'distance' && !userLocation && (
+                <span className="text-xs text-red-500 ml-2">Allow location access to sort by distance</span>
+              )}
+            </div>
           </div>
         </div>
         
@@ -252,7 +373,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
-            {cafes.map((cafe) => (
+            {sortedCafes.map((cafe) => (
               <div
                 key={cafe.id}
                 className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-auto"
@@ -287,8 +408,40 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Address */}
-                  <p className="text-gray-600 mb-4 text-sm">{cafe.address}</p>
+                  {/* Address and Distance */}
+                  <p className="text-gray-600 mb-4 text-sm flex items-center">
+                    {(() => {
+                      // Try to extract just street address and city
+                      if (cafe.address) {
+                        // Typical US format: "123 Main St, Berkeley, CA 94704"
+                        const parts = cafe.address.split(',');
+                        if (parts.length >= 2) {
+                          return parts[0].trim() + ', ' + parts[1].trim();
+                        } else {
+                          return cafe.address;
+                        }
+                      }
+                      return '';
+                    })()}
+                    {userLocation && typeof cafe.latitude === 'number' && typeof cafe.longitude === 'number' && !isNaN(Number(cafe.latitude)) && !isNaN(Number(cafe.longitude)) && (
+                      <span className="ml-2 px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100">
+                        {(() => {
+                          const distMeters = haversineDistance(userLocation.lat, userLocation.lng, Number(cafe.latitude), Number(cafe.longitude));
+                          const metersPerMile = 1609.34;
+                          const metersPerFoot = 0.3048;
+                          const distMiles = distMeters / metersPerMile;
+                          if (distMiles < 0.1) {
+                            // Show feet
+                            const distFeet = distMeters / metersPerFoot;
+                            return `${Math.round(distFeet)} ft`;
+                          } else {
+                            // Show miles
+                            return `${distMiles.toFixed(2)} mi`;
+                          }
+                        })()}
+                      </span>
+                    )}
+                  </p>
                   
                   {/* Metrics */}
                   <div className="grid grid-cols-2 gap-3 mb-4">

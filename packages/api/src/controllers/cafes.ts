@@ -8,7 +8,7 @@ type Review = Database['public']['Tables']['reviews']['Row']
 
 // Validation schema for reviews
 const reviewSchema = z.object({
-    content: z.string().min(1),
+    content: z.string().min(0),
     grindability_score: z.number().min(0).max(5),
     student_friendliness_score: z.number().min(0).max(5),
     coffee_quality_score: z.number().min(0).max(5),
@@ -33,6 +33,8 @@ const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
                 coffee_quality_score,
                 vibe_score,
                 golden_bear_score,
+                latitude,
+                longitude,
                 reviews (
                     grindability_score,
                     student_friendliness_score,
@@ -149,7 +151,8 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                 // Add user data to each review
                 cafe.reviews = (cafe.reviews as any[]).map((review: any) => ({
                     ...review,
-                    updated_at: review.updated_at, // Ensure updated_at is present
+                    updated_at: review.updated_at ?? null, // Always include updated_at, even if null
+                    created_at: review.created_at ?? null, // Always include created_at for comparison
                     user: review.user_id && userMap[review.user_id] 
                         ? userMap[review.user_id] 
                         : { username: 'Unknown User' }
@@ -357,7 +360,7 @@ const updateReview = async (req: Request, res: Response, next: NextFunction) => 
         
         // Validate the request body
         const reviewSchema = z.object({
-            content: z.string().min(1).max(1000),
+            content: z.string().min(0).max(1000),
             grindability_score: z.number().min(1).max(5),
             student_friendliness_score: z.number().min(1).max(5),
             coffee_quality_score: z.number().min(1).max(5),
@@ -463,30 +466,48 @@ const deleteReview = async (req: Request, res: Response, next: NextFunction) => 
             return next(new AppError('You must be logged in to delete a review', 401))
         }
         
-        // First check if the review exists and belongs to the user
-        const { data: existingReview, error: findError } = await supabase
+        // Create a per-request Supabase client with the user's JWT for RLS (matching updateReview)
+        const { createClient } = require('@supabase/supabase-js');
+        const userAccessToken = req.headers.authorization?.replace('Bearer ', '');
+        const supabaseWithAuth = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY,
+            {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${userAccessToken}`,
+                    },
+                },
+            }
+        );
+
+        // First check if the review exists and belongs to the user using the authenticated client
+        const { data: existingReview, error: findError } = await supabaseWithAuth
             .from('reviews')
             .select('cafe_id')
             .eq('id', reviewId)
             .eq('user_id', userId)
-            .single()
-            
+            .single();
+        
         if (findError || !existingReview) {
             return next(new AppError('Review not found or you do not have permission to delete it', 404))
         }
         
         // Store the cafe_id for later recalculation
-        const cafeId = existingReview.cafe_id
-        
-        // Delete the review
-        const { error: deleteError } = await supabase
+        const cafeId = existingReview.cafe_id;
+
+        // Delete the review using the authenticated client
+        const { error: deleteError, count } = await supabaseWithAuth
             .from('reviews')
-            .delete()
+            .delete({ count: 'exact' })
             .eq('id', reviewId)
-            .eq('user_id', userId)
-            
+            .eq('user_id', userId);
+        
         if (deleteError) {
             return next(new AppError('Failed to delete review: ' + deleteError.message, 500))
+        }
+        if (count === 0) {
+            return next(new AppError('No review deleted (not found or not owned by user)', 404));
         }
         
         // Recalculate cafe scores after review deletion
