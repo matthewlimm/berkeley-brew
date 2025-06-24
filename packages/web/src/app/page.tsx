@@ -3,11 +3,8 @@
 import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
 import { ReviewForm } from "../components/ReviewForm";
-import { generateMockPopularTimes } from "../mocks/mockPopularTimes";
 import { CafeReviews } from "../components/CafeReviews";
 import { useAuth } from "@/contexts/AuthContext";
-import Link from "next/link";
-import { PostCreator } from "../components/PostCreator";
 import MainLayout from "@/components/layout/MainLayout";
 import HeroSectionWithRotatingBackground from "@/components/HeroSectionWithRotatingBackground";
 import PopularTimesChart from "@/components/PopularTimesChart";
@@ -511,19 +508,7 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    {/* Golden Bear Score (Overall) */}
-                    <div className="bg-amber-50 p-3 rounded-lg col-span-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-amber-700 font-medium">Golden Bear Score</span>
-                        <span className="text-amber-700 font-medium">{hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}</span>
-                      </div>
-                      <div className="w-full bg-amber-200 rounded-full h-2 mt-1.5">
-                        <div 
-                          className="bg-amber-600 h-2 rounded-full" 
-                          style={{ width: hasReviews(cafe) ? `${((cafe.average_rating || 0) / 5) * 100}%` : '0%' }}
-                        ></div>
-                      </div>
-                    </div>
+                    {/* Golden Bear Score removed */}
                   </div>
                   
                   {/* Amenities */}

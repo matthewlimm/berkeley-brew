@@ -1,0 +1,135 @@
+[
+  {
+    "name": "Sodoi Coffee Tasting House",
+    "address": "2438 Durant Ave, Berkeley, CA 94704",
+    "place_id": "ChIJS4KrsCh8hYARFrqy1pEUSeg",
+    "google_name": "Sodoi Coffee Tasting House",
+    "google_address": "2438 Durant Ave, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "Philz Coffee, College",
+    "address": "6310 College Ave, Oakland, CA 94618",
+    "place_id": "ChIJn-29E8V9hYARmAezYfXpKBo",
+    "google_name": "Philz Coffee",
+    "google_address": "6310 College Ave, Oakland, CA 94618, United States"
+  },
+  {
+    "name": "Ain't Normal Cafe",
+    "address": "3988 Piedmont Ave, Oakland, CA 94611",
+    "place_id": "ChIJUborLjx_hYARle9InnFaRGA",
+    "google_name": "Ain't Normal Cafe",
+    "google_address": "5701 College Ave, Oakland, CA 94618, United States"
+  },
+  {
+    "name": "Timeless Coffee",
+    "address": "2965 College Ave, Berkeley, CA 94705",
+    "place_id": "ChIJF3Pix_Z9hYAREl-3wI4BX_I",
+    "google_name": "Timeless Coffee",
+    "google_address": "4252 Piedmont Ave, Oakland, CA 94611, United States"
+  },
+  {
+    "name": "Artis Coffee",
+    "address": "1717 4th St, Berkeley, CA 94710",
+    "place_id": "ChIJMbB3FNt-hYAR-FZpf8Lpdxs",
+    "google_name": "Art\u00eds Coffee",
+    "google_address": "1717 Fourth St B, Berkeley, CA 94710, United States"
+  },
+  {
+    "name": "CoRo Coffee Roastery",
+    "address": "2530 Ridge Rd, Berkeley, CA 94709",
+    "place_id": "ChIJKX5_xeh-hYARWnaplTv6toM",
+    "google_name": "CoRo Coffee Roastery",
+    "google_address": "2322 Fifth St, Berkeley, CA 94710, United States"
+  },
+  {
+    "name": "Caffe Strada",
+    "address": "2300 College Ave, Berkeley, CA 94704",
+    "place_id": "ChIJJe5a5i98hYARKF0NeaK-9kM",
+    "google_name": "Caff\u00e8 Strada",
+    "google_address": "2300 College Ave, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "1951 Coffee Company",
+    "address": "2410 Channing Way, Berkeley, CA 94704",
+    "place_id": "ChIJW2yuxCh8hYARGGQHIaJzsZc",
+    "google_name": "1951 Coffee Company",
+    "google_address": "2410 Channing Way, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "Romeo's Coffee",
+    "address": "2499 Telegraph Ave, Berkeley, CA 94704",
+    "place_id": "ChIJ0acevi58hYARWbsFtrpCPHI",
+    "google_name": "Romeo's Coffee",
+    "google_address": "2499 Telegraph Ave, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "Yali's Cafe",
+    "address": "1920 Oxford St, Berkeley, CA 94704",
+    "place_id": "ChIJq6PhM55-hYAR-EokE9qVQdA",
+    "google_name": "Yali's Caf\u00e9",
+    "google_address": "1920 Oxford St, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "The Hidden Cafe",
+    "address": "1250 Addison St #113, Berkeley, CA 94702",
+    "place_id": "ChIJBXOowZl_hYARlyq3_rFQii0",
+    "google_name": "The Hidden Cafe",
+    "google_address": "1250 Addison St Suite 111, Berkeley, CA 94702, United States"
+  },
+  {
+    "name": "Blue Bottle Coffee",
+    "address": "3083 Claremont Ave, Berkeley, CA 94705",
+    "place_id": "ChIJS4sDZp5-hYARIW-0A3ZOoqM",
+    "google_name": "Blue Bottle Coffee",
+    "google_address": "2118 University Ave #1026, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "Victory Point Cafe",
+    "address": "1797 Shattuck Ave, Berkeley, CA 94709",
+    "place_id": "ChIJc4U-eZ9-hYAR5ih4d-bZpBI",
+    "google_name": "Victory Point Cafe",
+    "google_address": "1797 Shattuck Ave. Ste A, Berkeley, CA 94709, United States"
+  },
+  {
+    "name": "Free Speech Movement Cafe",
+    "address": "Moffitt Library, UC Berkeley, Berkeley, CA",
+    "place_id": "ChIJ60w1qN9-hYARtzxtM7Qwdw4",
+    "google_name": "Free Speech Movement Cafe",
+    "google_address": "3rd Floor, U C, University Dr, Berkeley, CA 94709, United States"
+  },
+  {
+    "name": "Souvenir Coffee, Claremont",
+    "address": "3084 Claremont Ave, Berkeley, CA 94705",
+    "place_id": "ChIJG1xfM899hYARfrx1-OhOLQM",
+    "google_name": "Souvenir Coffee Co.",
+    "google_address": "3084 Claremont Ave, Berkeley, CA 94705, United States"
+  },
+  {
+    "name": "Peet's Coffee, Telegraph",
+    "address": "2501 Telegraph Ave, Berkeley, CA 94704",
+    "place_id": "ChIJY2RivS58hYARUDQo9IrHJx0",
+    "google_name": "Peet's Coffee",
+    "google_address": "2501 Telegraph Ave, Berkeley, CA 94704, United States"
+  },
+  {
+    "name": "Souvenir Coffee, College",
+    "address": "2701 College Ave, Berkeley, CA 94705",
+    "place_id": "ChIJJ-rmLjd9hYARbVcUfNxaw0A",
+    "google_name": "Souvenir Coffee Co.",
+    "google_address": "2701 College Ave, Berkeley, CA 94705, United States"
+  },
+  {
+    "name": "Cafenated Coffee, Southside",
+    "address": "2960 College Ave, Berkeley, CA 94705",
+    "place_id": "ChIJGZDBn7R9hYARvUN8FuUOi2Y",
+    "google_name": "Cafenated Coffee Company",
+    "google_address": "2960 College Ave, Berkeley, CA 94705, United States"
+  },
+  {
+    "name": "Cafenated Coffee, Northside",
+    "address": "2085 Vine St, Berkeley, CA 94709",
+    "place_id": "ChIJz4VbokB_hYAR95axLBoPul4",
+    "google_name": "Cafenated Coffee Company",
+    "google_address": "2085 Vine St, Berkeley, CA 94709, United States"
+  }
+]

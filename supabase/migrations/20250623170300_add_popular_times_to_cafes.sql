@@ -1,5 +1,4 @@
--- Migration script to add popular_times and popular_times_updated_at columns to cafes table
--- Run this with your database client (e.g., psql, pgAdmin, or Supabase SQL Editor)
+-- Add popular_times and popular_times_updated_at columns to cafes table
 
 -- Check if columns already exist
 DO $$
