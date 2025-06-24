@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
 import { ReviewForm } from "../components/ReviewForm";
+import { generateMockPopularTimes } from "../mocks/mockPopularTimes";
 import { CafeReviews } from "../components/CafeReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { PostCreator } from "../components/PostCreator";
 import MainLayout from "@/components/layout/MainLayout";
 import HeroSectionWithRotatingBackground from "@/components/HeroSectionWithRotatingBackground";
+import PopularTimesChart from "@/components/PopularTimesChart";
 import type { Database } from "@berkeley-brew/api/src/types/database.types";
 
 // Helper function to format rating display
@@ -551,6 +553,17 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+
+                  {/* Popular Times Section */}
+                  {cafe.popular_times && (
+                    <div className="mt-5 px-3">
+                      {/* Debug the data - using useEffect in a component would be better, but this works for now */}
+                      <script dangerouslySetInnerHTML={{ __html: `console.log('Cafe popular_times data for ${cafe.name}:', ${JSON.stringify(cafe.popular_times)})` }} />
+                      <PopularTimesChart 
+                        data={cafe.popular_times} 
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Reviews Section */}

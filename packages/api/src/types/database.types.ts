@@ -29,6 +29,8 @@ export type Database = {
             wifi_speed: number | null
             updated_at: string | null
           }
+          popular_times?: Json | null
+          popular_times_updated_at?: string | null
         }
         Insert: {
           address: string
