@@ -28,22 +28,43 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   console.log('PopularTimesChart received raw data:', data);
   console.log('Data type:', typeof data);
   
-  // Day selector component
-  const DaySelector = () => (
-    <div className="flex justify-between mb-2 text-xs">
-      {daysOfWeek.map((day, index) => (
-        <button
-          key={day}
-          onClick={() => setSelectedDay(index)}
-          className={`px-1 py-0.5 rounded ${selectedDay === index 
-            ? 'bg-blue-500 text-white font-medium' 
-            : 'text-gray-500 hover:bg-gray-100'}`}
+  // Day selector dropdown component
+  const DaySelector = () => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    
+    return (
+      <div className="relative">
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center text-xs text-gray-500 hover:text-gray-700 focus:outline-none"
         >
-          {day.substring(0, 3)}
+          <span>{daysOfWeek[selectedDay]}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 ml-1 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
         </button>
-      ))}
-    </div>
-  );
+        
+        {isOpen && (
+          <div className="absolute z-10 right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg">
+            {daysOfWeek.map((day, index) => (
+              <button
+                key={day}
+                onClick={() => {
+                  setSelectedDay(index);
+                  setIsOpen(false);
+                }}
+                className={`block w-full text-left px-3 py-1.5 text-xs ${selectedDay === index 
+                  ? 'bg-blue-50 text-blue-700 font-medium' 
+                  : 'text-gray-700 hover:bg-gray-50'}`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   
   // Parse and normalize data
   let hourlyData: number[] | null = null;
@@ -133,14 +154,14 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   if (!hourlyData || !Array.isArray(hourlyData) || hourlyData.length === 0 || isMockData) {
     console.error('No valid hourly data found or using mock data');
     return (
-      <div className="w-full">
-        <div className="flex items-center justify-between mb-1">
+      <div className="w-full popular-times-container">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-700">Popular Times</h3>
-          <span className="text-xs text-gray-500">{daysOfWeek[selectedDay]}</span>
+          <DaySelector />
         </div>
         
-        {/* Day selector */}
-        <DaySelector />
+        {/* Empty placeholder for current status indicator to maintain consistent height */}
+        <div className="h-6"></div>
         
         {/* Empty state with same height as chart */}
         <div className="relative h-20 w-full">
@@ -161,7 +182,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         <div className="flex mt-1">
           {[6, 9, 12, 15, 18, 21].map(hour => (
             <div key={hour} className="flex-1 text-center">
-              <span className="text-xs text-gray-300">
+              <span className="text-xs text-gray-500">
                 {hour % 12 || 12}{hour < 12 ? 'a' : 'p'}
               </span>
             </div>
@@ -169,17 +190,17 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
         
         {/* Legend to match chart view */}
-        <div className="flex justify-between mt-2 text-xs text-gray-300">
+        <div className="flex justify-between mt-2 text-xs text-gray-500">
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
+            <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
             <span>Not busy</span>
           </div>
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
+            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
             <span>Busy</span>
           </div>
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
+            <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
             <span>Very busy</span>
           </div>
         </div>
@@ -203,14 +224,11 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   // Component already defined above
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-1">
+    <div className="w-full popular-times-container">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-gray-700">Popular Times</h3>
-        <span className="text-xs text-gray-500">{daysOfWeek[selectedDay]}</span>
+        <DaySelector />
       </div>
-      
-      {/* Day selector */}
-      <DaySelector />
       
       {/* Current status indicator */}
       {currentHour >= 6 && currentHour <= 22 && hourlyData[currentHour] !== undefined && (

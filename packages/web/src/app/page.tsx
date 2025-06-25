@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { getCafes } from "../services/api";
-import { ReviewForm } from "../components/ReviewForm";
+import { PopularTimesChart } from "../components/PopularTimesChart";
 import { CafeReviews } from "../components/CafeReviews";
+import { CafeOpeningHours } from "../components/CafeOpeningHours";
+import { CafeDetailModal } from "../components/CafeDetailModal";
 import { useAuth } from "@/contexts/AuthContext";
 import MainLayout from "@/components/layout/MainLayout";
 import HeroSectionWithRotatingBackground from "@/components/HeroSectionWithRotatingBackground";
-import PopularTimesChart from "@/components/PopularTimesChart";
+// Import UI components as needed
+import { ReviewForm } from "../components/ReviewForm";
 import type { Database } from "@berkeley-brew/api/src/types/database.types";
 
 // Helper function to format rating display
@@ -81,6 +84,8 @@ type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   longitude?: number | null;
   review_count?: number | null;
   reviews?: any[];
+  place_id?: string | null; // Added for Google Places API integration
+  business_hours?: any; // JSONB field containing opening hours data
 };
 
 export default function Home() {
@@ -94,6 +99,7 @@ export default function Home() {
     'distance' | 'rating' | 'mostReviewed' | 'grindability' | 'vibe' | 'studentFriendliness' | 'coffeeQuality'
   >('distance');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [modalCafeId, setModalCafeId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Load cafes on mount
@@ -103,6 +109,13 @@ export default function Home() {
       .then((response) => {
         if (response?.data?.cafes) {
           const allCafes = response.data.cafes;
+          console.log('Cafes from API:', allCafes);
+          // Check if any cafes have business_hours data
+          const cafesWithHours = allCafes.filter(cafe => (cafe as any).business_hours);
+          console.log(`Found ${cafesWithHours.length} cafes with business_hours data`);
+          if (cafesWithHours.length > 0) {
+            console.log('Sample business_hours:', (cafesWithHours[0] as any).business_hours);
+          }
           setCafes(allCafes);
           
           // Using the calculateGoldenBearScore function defined at component scope
@@ -378,18 +391,22 @@ export default function Home() {
                 className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-auto"
                 style={{ breakInside: 'avoid', height: 'fit-content' }}
               >
-                {/* Cafe Image */}
+                {/* Cafe Image - Clickable */}
                 <div 
-                  className="h-48 bg-cover bg-center" 
+                  className="h-48 bg-cover bg-center cursor-pointer" 
                   style={{ 
                     backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
                   }}
+                  onClick={() => setModalCafeId(cafe.id)}
                 ></div>
                 
                 <div className="p-5">
                   {/* Cafe Name and Overall Rating */}
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900 flex-grow">
+                    <h3 
+                      className="text-xl font-semibold text-gray-900 flex-grow cursor-pointer hover:text-amber-600 transition-colors"
+                      onClick={() => setModalCafeId(cafe.id)}
+                    >
                       {cafe.name}
                     </h3>
                     <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
@@ -408,39 +425,45 @@ export default function Home() {
                   </div>
 
                   {/* Address and Distance */}
-                  <p className="text-gray-600 mb-4 text-sm flex items-center">
-                    {(() => {
-                      // Try to extract just street address and city
-                      if (cafe.address) {
-                        // Typical US format: "123 Main St, Berkeley, CA 94704"
-                        const parts = cafe.address.split(',');
-                        if (parts.length >= 2) {
-                          return parts[0].trim() + ', ' + parts[1].trim();
-                        } else {
-                          return cafe.address;
-                        }
-                      }
-                      return '';
-                    })()}
-                    {userLocation && typeof cafe.latitude === 'number' && typeof cafe.longitude === 'number' && !isNaN(Number(cafe.latitude)) && !isNaN(Number(cafe.longitude)) && (
-                      <span className="ml-2 px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100">
-                        {(() => {
-                          const distMeters = haversineDistance(userLocation.lat, userLocation.lng, Number(cafe.latitude), Number(cafe.longitude));
-                          const metersPerMile = 1609.34;
-                          const metersPerFoot = 0.3048;
-                          const distMiles = distMeters / metersPerMile;
-                          if (distMiles < 0.1) {
-                            // Show feet
-                            const distFeet = distMeters / metersPerFoot;
-                            return `${Math.round(distFeet)} ft`;
+                  <div className="mb-4">
+                    <p className="text-gray-600 text-sm flex items-center">
+                      {(() => {
+                        // Try to extract just street address and city
+                        if (cafe.address) {
+                          // Typical US format: "123 Main St, Berkeley, CA 94704"
+                          const parts = cafe.address.split(',');
+                          if (parts.length >= 2) {
+                            return parts[0].trim() + ', ' + parts[1].trim();
                           } else {
-                            // Show miles
-                            return `${distMiles.toFixed(2)} mi`;
+                            return cafe.address;
                           }
-                        })()}
-                      </span>
-                    )}
-                  </p>
+                        }
+                        return '';
+                      })()}
+                      {userLocation && typeof cafe.latitude === 'number' && typeof cafe.longitude === 'number' && !isNaN(Number(cafe.latitude)) && !isNaN(Number(cafe.longitude)) && (
+                        <span className="ml-2 px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100">
+                          {(() => {
+                            const distMeters = haversineDistance(userLocation.lat, userLocation.lng, Number(cafe.latitude), Number(cafe.longitude));
+                            const metersPerMile = 1609.34;
+                            const metersPerFoot = 0.3048;
+                            const distMiles = distMeters / metersPerMile;
+                            if (distMiles < 0.1) {
+                              // Show feet
+                              const distFeet = distMeters / metersPerFoot;
+                              return `${Math.round(distFeet)} ft`;
+                            } else {
+                              // Show miles
+                              return `${distMiles.toFixed(2)} mi`;
+                            }
+                          })()}
+                        </span>
+                      )}
+                    </p>
+                    
+                    {/* Opening Hours */}
+                    {/* Debug info - using useEffect in the component instead */}
+                    <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
+                  </div>
                   
                   {/* Metrics */}
                   <div className="grid grid-cols-2 gap-3 mb-4">
@@ -539,16 +562,15 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Popular Times Section */}
-                  {cafe.popular_times && (
-                    <div className="mt-5 px-3">
-                      {/* Debug the data - using useEffect in a component would be better, but this works for now */}
+                  {/* Popular Times Section - Always render for consistent layout */}
+                  <div className="mt-5 px-3">
+                    {cafe.popular_times && (
                       <script dangerouslySetInnerHTML={{ __html: `console.log('Cafe popular_times data for ${cafe.name}:', ${JSON.stringify(cafe.popular_times)})` }} />
-                      <PopularTimesChart 
-                        data={cafe.popular_times} 
-                      />
-                    </div>
-                  )}
+                    )}
+                    <PopularTimesChart 
+                      data={cafe.popular_times || null} 
+                    />
+                  </div>
                 </div>
 
                 {/* Reviews Section */}
@@ -567,14 +589,14 @@ export default function Home() {
                       >
                         {expandedCafeId === cafe.id ? (
                           <>
-                            Hide Reviews
+                            Hide Preview
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
                             </svg>
                           </>
                         ) : (
                           <>
-                            Show Reviews
+                            Show Preview
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                             </svg>
@@ -586,7 +608,10 @@ export default function Home() {
 
                   {expandedCafeId === cafe.id && (
                     <div className="mb-5 bg-gray-50 p-4 rounded-lg" style={{ height: 'auto', minHeight: 'min-content' }}>
-                      <CafeReviews cafeId={cafe.id} />
+                      <CafeReviews 
+                        cafeId={cafe.id} 
+                        onShowAll={() => setModalCafeId(cafe.id)}
+                      />
                     </div>
                   )}
 
@@ -604,7 +629,7 @@ export default function Home() {
                       className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
                       </svg>
                       Write a Review
                     </button>
@@ -613,6 +638,21 @@ export default function Home() {
               </div>
             ))}
           </div>
+        )}
+        
+        {/* Cafe Detail Modal */}
+        {modalCafeId && cafes.find(cafe => cafe.id === modalCafeId) && (
+          <CafeDetailModal 
+            cafe={{
+              ...cafes.find(cafe => cafe.id === modalCafeId)!,
+              image_url: cafes.find(cafe => cafe.id === modalCafeId)?.image_url || undefined
+            }}
+            isOpen={!!modalCafeId}
+            onClose={() => setModalCafeId(null)}
+            formatRating={formatRating}
+            hasReviews={hasReviews}
+            getScoreValue={getScoreValue}
+          />
         )}
       </div>
     </MainLayout>

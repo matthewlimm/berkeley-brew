@@ -1,6 +1,6 @@
-# Berkeley Brew Popular Times Scripts
+# Berkeley Brew Cafe Data Scripts
 
-This directory contains scripts for fetching, generating, and managing popular times data for cafes in the Berkeley Brew application.
+This directory contains scripts for fetching, generating, and managing cafe data for the Berkeley Brew application, including place IDs, business hours, and popular times data.
 
 ## Environment Setup
 
@@ -31,6 +31,20 @@ export GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 ## Available Scripts
+
+### Main Script (Recommended)
+
+- `update_cafe_data.js` - **Comprehensive script** that updates all cafe data in one go:
+  - Place IDs from Google Places API
+  - Business hours from Google Places API
+  - Popular times data from Google Maps
+
+  ```bash
+  # Run the comprehensive update script
+  node packages/api/scripts/update_cafe_data.js
+  ```
+
+### Legacy Scripts
 
 - `check_format.bat` - Checks the format of popular times data in the database
 - `run_mock_data.bat` - Generates mock popular times data for all cafes

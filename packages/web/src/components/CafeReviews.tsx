@@ -58,14 +58,21 @@ type CafeResponse = {
 
 interface CafeReviewsProps {
   cafeId: string;
+  showAll?: boolean;
+  onShowAll?: () => void;
+  hideToggle?: boolean;
 }
 
 import { useAuth } from '@/contexts/AuthContext';
 
-export function CafeReviews({ cafeId }: CafeReviewsProps) {
+export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = false }: CafeReviewsProps) {
   const [reviews, setReviews] = useState<ExtendedReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAllReviews, setShowAllReviews] = useState(showAll);
+  
+  // Number of reviews to show in preview mode
+  const PREVIEW_REVIEW_COUNT = 3;
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const { user: currentUser } = useAuth();
 
@@ -116,7 +123,9 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
 
   useEffect(() => {
     loadReviews();
-  }, [cafeId]);
+    // Update showAllReviews when showAll prop changes
+    setShowAllReviews(showAll);
+  }, [cafeId, showAll]);
 
   const loadReviews = async () => {
     try {
@@ -220,6 +229,21 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
   if (reviews.length === 0) {
     return <p className="text-gray-500 text-sm">No reviews yet. Be the first to review!</p>;
   }
+  
+  // Determine which reviews to display based on showAllReviews state
+  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, PREVIEW_REVIEW_COUNT);
+  const hasMoreReviews = reviews.length > PREVIEW_REVIEW_COUNT;
+  
+  // Handle toggle between showing all reviews or preview
+  const handleToggleReviews = () => {
+    if (onShowAll) {
+      // If onShowAll callback is provided, use it to open the modal
+      onShowAll();
+    } else {
+      // Otherwise just toggle to show all reviews in-place
+      setShowAllReviews(!showAllReviews);
+    }
+  };
 
   return (
     <div>
@@ -232,7 +256,7 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
       
       {/* Reviews list */}
       <div className="space-y-6">
-        {reviews.map((review) => (
+        {displayedReviews.map((review) => (
           <div
             key={review.id}
             className="p-5 bg-white rounded-lg border border-gray-100 shadow-sm"
@@ -293,7 +317,7 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
             
             {/* Review Content */}
             {review.content && review.content.trim() !== '' && (
-              <div className="mb-4 text-gray-700 text-sm border-l-4 border-amber-200 pl-3 py-1">
+              <div className="mb-4 text-gray-700 text-sm border-l-4 border-amber-200 pl-3 py-1 break-words whitespace-pre-wrap overflow-hidden max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                 {review.content}
               </div>
             )}
@@ -552,6 +576,21 @@ export function CafeReviews({ cafeId }: CafeReviewsProps) {
           )}
         </div>
       ))}
+      
+      {/* Show All Reviews button - only shown when not in modal and there are more reviews */}
+      {hasMoreReviews && !showAll && !hideToggle && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={handleToggleReviews}
+            className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-full shadow-md transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            Show All {reviews.length} Reviews
+          </button>
+        </div>
+      )}
     </div>
   </div>
   );

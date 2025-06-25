@@ -9,9 +9,10 @@ import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
 import postsRouter from './routes/posts'
 import userRouter from './routes/users'
+import placesRouter from './routes/places'
 
 const app = express()
-const port = process.env.PORT || '3001'
+const port = 3001 // Fixed port for API server
 const maxRetries = 3
 let currentPort = port
 
@@ -28,6 +29,7 @@ app.use(express.json())
 app.use('/api/cafes', cafeRouter)
 app.use('/api/posts', postsRouter)
 app.use('/api/user', userRouter)
+app.use('/api/places', placesRouter)
 
 // Health check
 app.get('/health', (req, res) => {
@@ -49,16 +51,16 @@ const startServer = async () => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       await new Promise((resolve, reject) => {
-        const server = app.listen(currentPort as number, () => {
+        const server = app.listen(currentPort, () => {
           console.log(`🚀 API server running on port ${currentPort}`)
           resolve(true)
         })
         
         server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
-            const nextPort = parseInt(currentPort as string) + 1
+            const nextPort = currentPort + 1
             console.log(`Port ${currentPort} is in use, trying ${nextPort}`)
-            currentPort = nextPort.toString()
+            currentPort = nextPort
             server.close()
             reject(error)
           } else {
