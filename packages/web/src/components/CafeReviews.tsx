@@ -72,7 +72,7 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
   const [showAllReviews, setShowAllReviews] = useState(showAll);
   
   // Number of reviews to show in preview mode
-  const PREVIEW_REVIEW_COUNT = 3;
+  const PREVIEW_REVIEW_COUNT = 2;
   const [avatarUrls, setAvatarUrls] = useState<Record<string, string>>({});
   const { user: currentUser } = useAuth();
 
@@ -130,7 +130,16 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
   const loadReviews = async () => {
     try {
       const response = await getCafe(cafeId);
-      const reviewsData = response.data?.cafe.reviews || [];
+      let reviewsData = response.data?.cafe.reviews || [];
+      
+      // Sort reviews by created_at date, most recent first
+      reviewsData = reviewsData.sort((a: ExtendedReview, b: ExtendedReview) => {
+        // Use updated_at if available, otherwise use created_at
+        const dateA = a.updated_at || a.created_at || '';
+        const dateB = b.updated_at || b.created_at || '';
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
+      
       setReviews(reviewsData);
       
       // Load avatar URLs for users who have reviews
@@ -255,27 +264,26 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
       </div>
       
       {/* Reviews list */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {displayedReviews.map((review) => (
           <div
             key={review.id}
-            className="p-5 bg-white rounded-lg border border-gray-100 shadow-sm"
+            className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm"
           >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
                 {/* User Avatar */}
-                {/* User Avatar */}
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
                   {review.user_id && avatarUrls[review.user_id] ? (
                     <Image 
                       src={avatarUrls[review.user_id]}
                       alt={(review.user?.username || 'User')}
-                      width={40}
-                      height={40}
+                      width={32}
+                      height={32}
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-800 text-sm font-medium">
+                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-800 text-xs font-medium">
                       {review.user?.username ? review.user.username[0].toUpperCase() : 'A'}
                     </div>
                   )}
@@ -285,22 +293,11 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
                   <div className="text-sm font-medium text-gray-900">
                     {review.user?.username || 'Anonymous User'}
                   </div>
-                  <div className="text-xs text-gray-500 flex flex-col gap-0.5 mt-1">
-                    <span className="flex items-center gap-1" title={review.created_at ? new Date(review.created_at).toLocaleString() : undefined}>
-                      <svg aria-label="Published" className="w-3.5 h-3.5 text-amber-500 mr-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
-                      <span className="font-medium">Published</span>
-                      <span className="ml-1">
-                        {review.created_at ? formatRelativeTimestamp(review.created_at, new Date().toISOString()) : 'Unknown date'}
-                      </span>
-                    </span>
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <svg aria-label="Published" className="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
+                    {review.created_at ? formatRelativeTimestamp(review.created_at, new Date().toISOString()) : 'Unknown date'}
                     {review.updated_at && review.updated_at !== review.created_at && (
-                      <span className="flex items-center gap-1 mt-0.5" title={new Date(review.updated_at).toLocaleString()}>
-                        <svg aria-label="Edited" className="w-3.5 h-3.5 text-blue-400 mr-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6.293-6.293a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414L11 15H7v-4z"/></svg>
-                        <span className="font-medium">Edited</span>
-                        <span className="ml-1">
-                          {formatRelativeTimestamp(review.updated_at, new Date().toISOString())}
-                        </span>
-                      </span>
+                      <span className="text-blue-400 ml-1">(edited)</span>
                     )}
                   </div>
                 </div>
@@ -323,29 +320,29 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
             )}
             
             {/* Detailed Scores */}
-            <div className="grid grid-cols-2 gap-3 mt-4 bg-gray-50 p-3 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 mt-3 bg-gray-50 p-2 rounded-lg text-xs">
               <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-blue-600 mr-2"></div>
-                <span className="text-xs text-gray-600">Grindability:</span>
-                <span className="text-xs font-medium text-blue-700 ml-1">{review.grindability_score?.toFixed(1) || 'N/A'}</span>
+                <div className="w-2 h-2 rounded-full bg-blue-600 mr-1"></div>
+                <span className="text-gray-600">Grindability:</span>
+                <span className="font-medium text-blue-700 ml-1">{review.grindability_score?.toFixed(1) || 'N/A'}</span>
               </div>
               
               <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-pink-600 mr-2"></div>
-                <span className="text-xs text-gray-600">Vibe:</span>
-                <span className="text-xs font-medium text-pink-700 ml-1">{review.vibe_score?.toFixed(1) || 'N/A'}</span>
+                <div className="w-2 h-2 rounded-full bg-pink-600 mr-1"></div>
+                <span className="text-gray-600">Vibe:</span>
+                <span className="font-medium text-pink-700 ml-1">{review.vibe_score?.toFixed(1) || 'N/A'}</span>
               </div>
               
               <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-purple-600 mr-2"></div>
-                <span className="text-xs text-gray-600">Coffee:</span>
-                <span className="text-xs font-medium text-purple-700 ml-1">{review.coffee_quality_score?.toFixed(1) || 'N/A'}</span>
+                <div className="w-2 h-2 rounded-full bg-purple-600 mr-1"></div>
+                <span className="text-gray-600">Coffee:</span>
+                <span className="font-medium text-purple-700 ml-1">{review.coffee_quality_score?.toFixed(1) || 'N/A'}</span>
               </div>
               
               <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
-                <span className="text-xs text-gray-600">Friendliness:</span>
-                <span className="text-xs font-medium text-green-700 ml-1">{review.student_friendliness_score?.toFixed(1) || 'N/A'}</span>
+                <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
+                <span className="text-gray-600">Friendliness:</span>
+                <span className="font-medium text-green-700 ml-1">{review.student_friendliness_score?.toFixed(1) || 'N/A'}</span>
               </div>
             </div>
           {/* Edit Review Button for Owner (bottom right) */}

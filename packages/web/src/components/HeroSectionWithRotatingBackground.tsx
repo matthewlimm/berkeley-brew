@@ -168,13 +168,17 @@ export default function HeroSectionWithRotatingBackground() {
         className={`absolute inset-0 bg-black z-20 transition-opacity duration-500 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
       />
       
-      {/* Background Image */}
+      {/* Background Image with Sepia Filter and Overlay for Readability */}
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{ 
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${currentImage.image})`,
+          backgroundImage: `url(${currentImage.image})`,
+          filter: 'sepia(0.6)',
         }}
       />
+      
+      {/* Semi-transparent overlay for better text readability */}
+      <div className="absolute inset-0 bg-black bg-opacity-40 z-10" />
       
       {/* Location and Attribution Label */}
       <div className={`absolute bottom-6 right-6 md:bottom-10 md:right-10 z-30 transition-opacity duration-500 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>

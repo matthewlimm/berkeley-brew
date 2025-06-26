@@ -81,7 +81,59 @@ export async function GET(request: NextRequest) {
     }
     
     // Check if the place is currently open
-    const isOpen = openingHours.open_now || false;
+    // First try to use Google's open_now flag if available
+    let isOpen = openingHours.open_now || false;
+    
+    // If we have today's hours, calculate open status as a fallback or verification
+    if (todayHours && todayHours.open && todayHours.close) {
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeMinutes = currentHour * 60 + currentMinute;
+      
+      // Parse opening and closing times
+      const openHour = parseInt(todayHours.open.time.substring(0, 2));
+      const openMinute = parseInt(todayHours.open.time.substring(2));
+      const openTimeMinutes = openHour * 60 + openMinute;
+      
+      const closeHour = parseInt(todayHours.close.time.substring(0, 2));
+      const closeMinute = parseInt(todayHours.close.time.substring(2));
+      const closeTimeMinutes = closeHour * 60 + closeMinute;
+      
+      // Calculate if open based on current time
+      let calculatedIsOpen = false;
+      
+      // Add a larger buffer (15 minutes) to ensure stores show as closed after their closing time
+      // This helps account for any time discrepancies or rounding issues
+      const bufferMinutes = 15;
+      
+      // Handle cases where store closes after midnight
+      if (closeTimeMinutes < openTimeMinutes) {
+        // Store closes after midnight
+        calculatedIsOpen = (currentTimeMinutes >= openTimeMinutes) || 
+                          (currentTimeMinutes < (closeTimeMinutes - bufferMinutes));
+      } else {
+        // Normal case (opens and closes on same day)
+        calculatedIsOpen = (currentTimeMinutes >= openTimeMinutes) && 
+                          (currentTimeMinutes < (closeTimeMinutes - bufferMinutes));
+      }
+      
+      // Always prioritize our calculation when it shows closed after the closing time
+      // This ensures cafes don't show as open after their closing hours
+      const isPastClosingTime = currentTimeMinutes > closeTimeMinutes - bufferMinutes;
+      
+      if (isPastClosingTime && !calculatedIsOpen) {
+        // If we've calculated that it should be closed because it's past closing time,
+        // override Google's open_now flag
+        isOpen = false;
+        console.log(`Overriding Google's open status for ${name}: It's past closing time (${Math.floor(closeTimeMinutes/60)}:${String(closeTimeMinutes%60).padStart(2, '0')})`);
+      } else if (openingHours.open_now === undefined) {
+        // If Google's open_now is undefined, use our calculation
+        isOpen = calculatedIsOpen;
+      } else if (openingHours.open_now !== calculatedIsOpen) {
+        // Log discrepancy for debugging but don't override in other cases
+        console.log(`Discrepancy for ${name}: Google says ${openingHours.open_now ? 'open' : 'closed'}, calculation says ${calculatedIsOpen ? 'open' : 'closed'}`);
+      }
+    }
     
     // Determine if it's "opening soon" or "closing soon" (within 1 hour)
     let status: 'open' | 'closed' | 'opening-soon' | 'closing-soon' = isOpen ? 'open' : 'closed';

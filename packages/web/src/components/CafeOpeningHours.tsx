@@ -103,18 +103,67 @@ export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeI
           // Get hours for all days
           const allHours = formatAllHours(periods);
           
-          // Parse opening and closing times
-          const openHour = parseInt(todayPeriod.open.time.substring(0, 2));
-          const openMinute = parseInt(todayPeriod.open.time.substring(2));
-          const openTimeMinutes = openHour * 60 + openMinute;
+          // Parse opening and closing times with validation
+          const parseTimeToMinutes = (timeStr: string): number => {
+            if (!timeStr || timeStr.length !== 4) {
+              console.error(`Invalid time format: ${timeStr}`);
+              return 0;
+            }
+            const hour = parseInt(timeStr.substring(0, 2));
+            const minute = parseInt(timeStr.substring(2));
+            if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+              console.error(`Invalid time values: ${timeStr}, hour=${hour}, minute=${minute}`);
+              return 0;
+            }
+            return hour * 60 + minute;
+          };
           
-          const closeHour = parseInt(todayPeriod.close.time.substring(0, 2));
-          const closeMinute = parseInt(todayPeriod.close.time.substring(2));
-          const closeTimeMinutes = closeHour * 60 + closeMinute;
+          const openTimeMinutes = parseTimeToMinutes(todayPeriod.open.time);
+          const closeTimeMinutes = parseTimeToMinutes(todayPeriod.close.time);
+          
+          // Log the exact times for debugging
+          console.log(`${name} hours: opens at ${Math.floor(openTimeMinutes/60)}:${openTimeMinutes%60} (${openTimeMinutes} mins), ` +
+                     `closes at ${Math.floor(closeTimeMinutes/60)}:${closeTimeMinutes%60} (${closeTimeMinutes} mins), ` +
+                     `current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} mins)`);
+          
+          
+          // Add a larger buffer (15 minutes) to ensure stores show as closed after their closing time
+          // This helps account for any time discrepancies or rounding issues
+          const bufferMinutes = 15;
+          
+          // Calculate if open based on current time
+          let calculatedIsOpen = false;
+          
+          // Handle cases where store closes after midnight
+          if (closeTimeMinutes < openTimeMinutes) {
+            // Store closes after midnight
+            calculatedIsOpen = (currentTimeMinutes >= openTimeMinutes) || 
+                          (currentTimeMinutes < (closeTimeMinutes - bufferMinutes));
+          } else {
+            // Normal case (opens and closes on same day)
+            calculatedIsOpen = (currentTimeMinutes >= openTimeMinutes) && 
+                          (currentTimeMinutes < (closeTimeMinutes - bufferMinutes));
+          }
+          
+          // Check if it's past closing time
+          const isPastClosingTime = currentTimeMinutes > closeTimeMinutes - bufferMinutes;
           
           // Determine if currently open
-          const isOpen = openNow !== undefined ? openNow : 
-            (currentTimeMinutes >= openTimeMinutes && currentTimeMinutes < closeTimeMinutes);
+          let isOpen = false;
+          
+          if (isPastClosingTime && !calculatedIsOpen) {
+            // If we've calculated that it should be closed because it's past closing time,
+            // override Google's open_now flag
+            isOpen = false;
+            console.log(`Overriding Google's open status for ${name}: It's past closing time (${Math.floor(closeTimeMinutes/60)}:${String(closeTimeMinutes%60).padStart(2, '0')})`);
+          } else if (openNow !== undefined) {
+            // If we have explicit open_now from Google and it's not past closing time, use that
+            isOpen = openNow;
+          } else {
+            // Use our calculation
+            isOpen = calculatedIsOpen;
+            console.log(`${name}: Open status calculated from hours (no explicit open_now flag)`, isOpen);
+          }
           
           // Determine status
           let status: 'open' | 'closed' | 'opening-soon' | 'closing-soon' = isOpen ? 'open' : 'closed';
