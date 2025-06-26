@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import Image from 'next/image';
 import { CafeReviews } from './CafeReviews';
 import { CafeOpeningHours } from './CafeOpeningHours';
@@ -35,6 +36,153 @@ interface CafeDetailModalProps {
   hasReviews: (cafe: any) => boolean;
   getScoreValue: (cafe: any, scoreField: string) => number;
 }
+
+interface TooltipProps {
+  content: string;
+  isVisible: boolean;
+  iconRef: React.RefObject<SVGSVGElement>;
+}
+
+// Tooltip component that uses React Portal
+const Tooltip = ({ content, isVisible, iconRef }: TooltipProps) => {
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  
+  useEffect(() => {
+    if (iconRef.current && isVisible) {
+      const rect = iconRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.top,
+        left: rect.right
+      });
+    }
+  }, [isVisible, iconRef]);
+
+  if (!isVisible) return null;
+
+  return ReactDOM.createPortal(
+    <div 
+      className="w-64 bg-white p-2 rounded shadow-lg text-xs text-gray-700 border border-gray-200 z-[9999]"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translateY(-100%)',
+      }}
+    >
+      {content}
+    </div>,
+    document.body
+  );
+};
+
+// Tooltip components for each rating category
+const GrindabilityTooltip = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const iconRef = useRef<SVGSVGElement>(null);
+  
+  return (
+    <div className="inline-block ml-1 relative">
+      <svg 
+        ref={iconRef}
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-4 w-4 text-blue-500 cursor-help" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <Tooltip 
+        content="How suitable the cafe is for studying or working. Considers factors like available seating, outlet access, WiFi quality, and noise level."
+        isVisible={showTooltip}
+        iconRef={iconRef}
+      />
+    </div>
+  );
+};
+
+const VibeTooltip = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const iconRef = useRef<SVGSVGElement>(null);
+  
+  return (
+    <div className="inline-block ml-1 relative">
+      <svg 
+        ref={iconRef}
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-4 w-4 text-pink-500 cursor-help" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <Tooltip 
+        content="The overall atmosphere and ambiance of the cafe. Includes decor, music, lighting, and the general feeling or energy of the space."
+        isVisible={showTooltip}
+        iconRef={iconRef}
+      />
+    </div>
+  );
+};
+
+const CoffeeQualityTooltip = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const iconRef = useRef<SVGSVGElement>(null);
+  
+  return (
+    <div className="inline-block ml-1 relative">
+      <svg 
+        ref={iconRef}
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-4 w-4 text-purple-500 cursor-help" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <Tooltip 
+        content="The taste, freshness, and overall quality of coffee and espresso drinks. Considers flavor profile, consistency, and variety of coffee options available."
+        isVisible={showTooltip}
+        iconRef={iconRef}
+      />
+    </div>
+  );
+};
+
+const StudentFriendlyTooltip = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const iconRef = useRef<SVGSVGElement>(null);
+  
+  return (
+    <div className="inline-block ml-1 relative">
+      <svg 
+        ref={iconRef}
+        xmlns="http://www.w3.org/2000/svg" 
+        className="h-4 w-4 text-green-500 cursor-help" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <Tooltip 
+        content="How welcoming the cafe is to students. Includes staff friendliness, policies on laptop use, time limits for seating, and overall attitude toward student customers."
+        isVisible={showTooltip}
+        iconRef={iconRef}
+      />
+    </div>
+  );
+};
 
 export function CafeDetailModal({ 
   cafe, 
@@ -133,7 +281,10 @@ export function CafeDetailModal({
             {/* Grindability Score */}
             <div className="bg-blue-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-700">Grindability</span>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-blue-700">Grindability</span>
+                  <GrindabilityTooltip />
+                </div>
                 <span className="text-sm font-bold text-blue-700">
                   {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'grindability_score')) : "N/A"}
                 </span>
@@ -149,7 +300,10 @@ export function CafeDetailModal({
             {/* Vibe Score */}
             <div className="bg-pink-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-pink-700">Vibe</span>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-pink-700">Vibe</span>
+                  <VibeTooltip />
+                </div>
                 <span className="text-sm font-bold text-pink-700">
                   {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'vibe_score')) : "N/A"}
                 </span>
@@ -165,7 +319,10 @@ export function CafeDetailModal({
             {/* Coffee Quality Score */}
             <div className="bg-purple-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
+                  <CoffeeQualityTooltip />
+                </div>
                 <span className="text-sm font-bold text-purple-700">
                   {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'coffee_quality_score')) : "N/A"}
                 </span>
@@ -181,7 +338,10 @@ export function CafeDetailModal({
             {/* Student-Friendliness Score */}
             <div className="bg-green-50 p-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-green-700">Friendliness</span>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-green-700">Student-Friendly</span>
+                  <StudentFriendlyTooltip />
+                </div>
                 <span className="text-sm font-bold text-green-700">
                   {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'student_friendliness_score')) : "N/A"}
                 </span>

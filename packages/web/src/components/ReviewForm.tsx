@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { createReview } from '../services/api';
 
 interface ReviewFormProps {
@@ -70,26 +71,101 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
     }
   };
 
+  interface RatingInputProps {
+    label: string;
+    value: number | null;
+    onChange: (value: number) => void;
+    icon: React.ReactNode;
+  }
+
+  interface TooltipProps {
+    content: string;
+    isVisible: boolean;
+    iconRef: React.RefObject<SVGSVGElement>;
+  }
+  
+  // Tooltip component that uses React Portal
+  const Tooltip = ({ content, isVisible, iconRef }: TooltipProps) => {
+    const [position, setPosition] = useState({ top: 0, left: 0 });
+    
+    useEffect(() => {
+      if (iconRef.current && isVisible) {
+        const rect = iconRef.current.getBoundingClientRect();
+        setPosition({
+          top: rect.top,
+          left: rect.right
+        });
+      }
+    }, [isVisible, iconRef]);
+
+    if (!isVisible) return null;
+
+    return ReactDOM.createPortal(
+      <div 
+        className="w-64 bg-white p-2 rounded shadow-lg text-xs text-gray-700 border border-gray-200 z-[9999]"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          transform: 'translateY(-100%)',
+        }}
+      >
+        {content}
+      </div>,
+      document.body
+    );
+  };
+
   // Emoji rating component
   const EmojiRating = ({ 
     value, 
     onChange, 
     icon, 
     label 
-  }: { 
-    value: number | null; 
-    onChange: (value: number) => void; 
-    icon: React.ReactNode;
-    label: React.ReactNode;
-  }) => {
+  }: RatingInputProps) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    const iconRef = useRef<SVGSVGElement>(null);
+    
+    let tooltipContent = '';
+    if (label === 'Grindability') {
+      tooltipContent = 'How suitable the cafe is for studying or working. Consider factors like available seating, outlet access, WiFi quality, and noise level.';
+    } else if (label === 'Vibe') {
+      tooltipContent = 'The overall atmosphere and ambiance of the cafe. Includes decor, music, lighting, and the general feeling or energy of the space.';
+    } else if (label === 'Coffee Quality') {
+      tooltipContent = 'The taste, freshness, and overall quality of coffee and espresso drinks. Consider flavor profile, consistency, and variety of coffee options available.';
+    } else if (label === 'Student-Friendliness') {
+      tooltipContent = 'How welcoming the cafe is to students. Includes staff friendliness, policies on laptop use, time limits for seating, and overall attitude toward student customers.';
+    }
+
     return (
       <div className="mb-5">
         <div className="flex items-center mb-2">
           <span className="mr-2 text-lg">{icon}</span>
-          <label className="text-sm font-medium text-gray-700">
-            {label}
-            <span className="text-red-500 ml-1">*</span>
-          </label>
+          <div className="flex items-center">
+            <label className="text-sm font-medium text-gray-700">
+              {label}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
+            <div className="inline-block ml-1 relative">
+              <svg 
+                ref={iconRef}
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-4 w-4 text-gray-500 cursor-help" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <Tooltip 
+                content={tooltipContent}
+                isVisible={showTooltip}
+                iconRef={iconRef}
+              />
+            </div>
+          </div>
         </div>
         <div className="flex space-x-3 justify-center bg-white p-2 rounded-full shadow-sm border-2 transition-all duration-200 ease-in-out" 
           style={{ borderColor: value === null ? 'rgb(239 68 68 / 0.2)' : 'transparent' }}>

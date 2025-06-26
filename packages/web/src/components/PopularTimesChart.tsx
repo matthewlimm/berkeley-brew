@@ -154,7 +154,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   if (!hourlyData || !Array.isArray(hourlyData) || hourlyData.length === 0 || isMockData) {
     console.error('No valid hourly data found or using mock data');
     return (
-      <div className="w-full popular-times-container">
+      <div className="w-full popular-times-container h-[180px] flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-700">Popular Times</h3>
           <DaySelector />
@@ -224,7 +224,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   // Component already defined above
 
   return (
-    <div className="w-full popular-times-container">
+    <div className="w-full popular-times-container h-[180px] flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-gray-700">Popular Times</h3>
         <DaySelector />
