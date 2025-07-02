@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/contexts/AuthContext'
+import { BookmarkProvider } from '@/contexts/BookmarkContext'
 import './globals.css'
 
 export default function RootLayout({
@@ -10,7 +11,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <BookmarkProvider>
+            {children}
+          </BookmarkProvider>
         </AuthProvider>
       </body>
     </html>

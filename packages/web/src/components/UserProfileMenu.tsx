@@ -60,13 +60,13 @@ const UserProfileMenu = () => {
           </div>
           
           <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
-            Dashboard
-          </Link>
-          <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
-            Profile
+            Dashboard & Profile
           </Link>
           <Link href="/dashboard/reviews" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
             My Reviews
+          </Link>
+          <Link href="/dashboard/bookmarks" className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700">
+            My Bookmarks
           </Link>
           
           <button

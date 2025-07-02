@@ -1,6 +1,3 @@
-- phone number
-- business hours
-- average price of a latte
-- card popout, review pages to avoid long cards
-- jumbotron improvement
+- bookmarked cafes
+- about, contact, terms
 - better UI/UX

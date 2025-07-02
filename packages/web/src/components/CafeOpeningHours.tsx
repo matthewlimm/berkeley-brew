@@ -148,22 +148,17 @@ export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeI
           // Check if it's past closing time
           const isPastClosingTime = currentTimeMinutes > closeTimeMinutes - bufferMinutes;
           
-          // Determine if currently open
-          let isOpen = false;
+          // IMPORTANT: Always use our calculated open status based on hours
+          // This ensures we don't rely on potentially stale open_now flags from Google
+          const isOpen = calculatedIsOpen;
           
-          if (isPastClosingTime && !calculatedIsOpen) {
-            // If we've calculated that it should be closed because it's past closing time,
-            // override Google's open_now flag
-            isOpen = false;
-            console.log(`Overriding Google's open status for ${name}: It's past closing time (${Math.floor(closeTimeMinutes/60)}:${String(closeTimeMinutes%60).padStart(2, '0')})`);
-          } else if (openNow !== undefined) {
-            // If we have explicit open_now from Google and it's not past closing time, use that
-            isOpen = openNow;
-          } else {
-            // Use our calculation
-            isOpen = calculatedIsOpen;
-            console.log(`${name}: Open status calculated from hours (no explicit open_now flag)`, isOpen);
-          }
+          console.log(`${name}: Open status calculated from hours:`, {
+            openTimeMinutes,
+            closeTimeMinutes,
+            currentTimeMinutes,
+            calculatedIsOpen,
+            isPastClosingTime
+          });
           
           // Determine status
           let status: 'open' | 'closed' | 'opening-soon' | 'closing-soon' = isOpen ? 'open' : 'closed';

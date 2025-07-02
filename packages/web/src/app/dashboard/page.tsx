@@ -1,102 +1,503 @@
-'use client'
+'use client';
 
-import { useAuth } from '@/contexts/AuthContext'
-import Link from 'next/link'
-import MainLayout from '@/components/layout/MainLayout';
-
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, updateUserProfile } = useAuth();
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [profileUpdated, setProfileUpdated] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile'); // Track active tab
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      // Set initial values from user data if available
+      setName(user.user_metadata?.name || '');
+      setUsername(user.user_metadata?.username || '');
+      setAvatarUrl(user.user_metadata?.avatar_url || '');
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setProfileUpdated(false);
+
+    try {
+      const result = await updateUserProfile({ 
+        name,
+        username, 
+        avatar_url: avatarUrl 
+      });
+      
+      setSuccessMessage('Profile updated successfully!');
+      setProfileUpdated(true);
+      
+      setTimeout(() => {
+        setSuccessMessage('');
+        setProfileUpdated(false);
+      }, 5000);
+    } catch (error) {
+      setErrorMessage(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      setErrorMessage('');
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('You must select an image to upload.');
+      }
+      
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please upload an image file (PNG, JPG, etc.)');
+      }
+      
+      // Check if file size is reasonable (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Image size should be less than 5MB');
+      }
+      
+      // Create a path that includes the user ID in the folder structure for RLS policies
+      // Using the format userId/avatar (no extension) as per the app's storage structure
+      const filePath = `${user?.id}/avatar`;
+      
+      try {
+        // First, list all existing avatars for this user
+        const { data: existingFiles } = await supabase.storage
+          .from('avatars')
+          .list(user?.id as string);
+        
+        // Delete any existing avatar files
+        if (existingFiles && existingFiles.length > 0) {
+          const filesToDelete = existingFiles.map(file => `${user?.id}/${file.name}`);
+          
+          const { error: deleteError } = await supabase.storage
+            .from('avatars')
+            .remove(filesToDelete);
+            
+          if (deleteError) {
+            console.warn('Error deleting existing avatars:', deleteError.message);
+          }
+        }
+      } catch (error) {
+        console.warn('Error checking for existing avatars:', error);
+      }
+      
+      // Upload the file to the avatars bucket with improved options
+      const timestamp = Date.now();
+      const filePathWithExt = `${filePath}-${timestamp}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePathWithExt, file, {
+          cacheControl: '3600',
+          upsert: true, // Overwrite if file exists
+          contentType: file.type, // Explicitly set the content type
+          duplex: 'half' // Fix for potential streaming issues
+        });
+        
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        
+        // Provide more specific error messages based on the error code
+        if (uploadError.message.includes('storage/unauthorized') || uploadError.message.includes('row-level security')) {
+          setErrorMessage('Failed to upload image: You are not authorized to upload to this location. This may be due to a Row Level Security policy.');
+          console.error('This might be a RLS policy issue. Make sure the storage policy allows users to upload to their own folder.');
+        } else if (uploadError.message.includes('storage/object-too-large')) {
+          setErrorMessage('Failed to upload image: File size exceeds the maximum limit');
+        } else {
+          setErrorMessage(`Failed to upload image: ${uploadError.message}`);
+        }
+        
+        // Log additional debugging information
+        console.log('User ID:', user?.id);
+        console.log('File path:', filePath);
+        console.log('Error message:', uploadError.message);
+        
+        setUploading(false);
+        return;
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = await supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePathWithExt);
+      
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        setErrorMessage('Failed to get public URL for the uploaded image');
+        setUploading(false);
+        return;
+      }
+      
+      // Add a strong cache-busting parameter with a unique ID to ensure the browser loads the new image
+      const uniqueId = `${Math.floor(Date.now()/1000)}-${Math.random().toString(36).substring(2, 10)}`;
+      const cacheBustedUrl = `${publicUrlData.publicUrl}?v=${uniqueId}`;
+      
+      // Update user metadata with the new avatar URL
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrlData.publicUrl }
+      });
+      
+      if (updateError) {
+        console.error('Error updating user metadata:', updateError);
+        setErrorMessage(`Failed to update profile: ${updateError.message}`);
+        setUploading(false);
+        return;
+      }
+      
+      // Set the avatar URL in the component state
+      setAvatarUrl(cacheBustedUrl);
+      
+      // Update profile immediately with the new avatar URL
+      if (user) {
+        try {
+          const result = await updateUserProfile({
+            name,
+            username,
+            avatar_url: publicUrlData.publicUrl // Store the clean URL in the database
+          });
+          
+          // Show success message
+          setSuccessMessage('Profile picture updated successfully!');
+          setProfileUpdated(true);
+          
+          // Auto-hide success message after 5 seconds
+          setTimeout(() => {
+            setSuccessMessage('');
+            setProfileUpdated(false);
+          }, 5000);
+        } catch (updateError) {
+          console.error('Error updating profile with avatar:', updateError);
+          throw new Error('Avatar uploaded but profile update failed. Please try again.');
+        }
+      }
+    } catch (error) {
+      setErrorMessage(`${error instanceof Error ? error.message : 'An error occurred during upload'}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div className="pb-5 border-b border-gray-200 mb-5">
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+      <div className="pb-5 border-b border-gray-200 mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Manage your profile and content on Berkeley Brew
+        </p>
       </div>
       
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            User Profile
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Your personal information
-          </p>
-        </div>
-        <div className="border-t border-gray-200">
-          <dl>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">
-                Email
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user?.email}
-              </dd>
-            </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">
-                User ID
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user?.id}
-              </dd>
-            </div>
-          </dl>
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-8">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`${activeTab === 'profile' 
+              ? 'border-amber-500 text-amber-600' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
+              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('quickAccess')}
+            className={`${activeTab === 'quickAccess' 
+              ? 'border-amber-500 text-amber-600' 
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
+              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Quick Access
+          </button>
+        </nav>
       </div>
       
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">My Reviews</h3>
-            <div className="mt-3 text-sm text-gray-500">
-              View and manage your cafe reviews
+      {/* Profile Section */}
+      {activeTab === 'profile' && (
+      <div className="md:grid md:grid-cols-3 md:gap-6 mb-8">
+        <div className="md:col-span-1">
+          <div className="px-4 sm:px-0">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Profile</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Update your personal information and how others see you on Berkeley Brew.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 md:mt-0 md:col-span-2">
+          <form onSubmit={handleSubmit}>
+            <div className="shadow sm:rounded-md sm:overflow-hidden">
+              <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
+                {/* Success message */}
+                {(successMessage || profileUpdated) && (
+                  <div id="success-message-container" className="rounded-md p-4 bg-green-100 border border-green-400 mb-4">
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm font-medium text-green-800">
+                        {successMessage || 'Profile updated successfully!'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Error message */}
+                {errorMessage && (
+                  <div className="rounded-md p-4 bg-red-100 border border-red-400 mb-4">
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm font-medium text-red-800">
+                        {errorMessage}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
+                  <div className="mt-2 flex items-center space-x-5">
+                    <div 
+                      onClick={handleAvatarClick}
+                      className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
+                    >
+                      {avatarUrl ? (
+                        <Image
+                          src={avatarUrl}
+                          alt="Avatar"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 128px"
+                          priority
+                          unoptimized={true}
+                          onError={(e) => {
+                            console.error('Image failed to load:', avatarUrl);
+                            // Fall back to placeholder on error
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.classList.add('bg-gray-100');
+                              parent.innerHTML = `
+                                <svg class="h-10 w-10 text-gray-300 m-auto" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                              `;
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full bg-amber-50 text-amber-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
+                      {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={uploadAvatar}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      className="text-sm text-amber-600 hover:text-amber-500"
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Uploading...' : 'Change'}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Click on the avatar to upload a new image.</p>
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <div className="mt-1 flex rounded-md shadow-sm">
+                    <input
+                      type="text"
+                      name="email"
+                      id="email"
+                      className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300 bg-gray-100"
+                      value={user.email || ''}
+                      disabled
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Your email cannot be changed.</p>
+                </div>
+
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <div className="mt-1 flex rounded-md shadow-sm">
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
+                      placeholder="Your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                    Username
+                  </label>
+                  <div className="mt-1 flex rounded-md shadow-sm">
+                    <input
+                      type="text"
+                      name="username"
+                      id="username"
+                      className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
+                      placeholder="Your username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">This will be displayed on your reviews and posts.</p>
+                </div>
+              </div>
+              <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                <button
+                  type="submit"
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             </div>
-            <div className="mt-5">
+          </form>
+        </div>
+      </div>
+      )}
+      
+      {/* Dashboard Navigation Cards */}
+      {activeTab === 'quickAccess' && (
+      <div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Reviews Card */}
+          <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100">
+            <div className="px-6 py-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">My Reviews</h3>
+              </div>
+              <div className="text-sm text-gray-500 mb-5">
+                View and manage your cafe reviews and ratings
+              </div>
               <Link
                 href="/dashboard/reviews"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200"
               >
                 View Reviews
               </Link>
             </div>
           </div>
-        </div>
-        
-        {/* <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">My Coffee Posts</h3>
-            <div className="mt-3 text-sm text-gray-500">
-              View and manage your coffee recipes and guides
-            </div>
-            <div className="mt-5">
+          
+          {/* Bookmarks Card */}
+          <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100">
+            <div className="px-6 py-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">My Bookmarks</h3>
+              </div>
+              <div className="text-sm text-gray-500 mb-5">
+                Access your saved cafes and favorite spots
+              </div>
               <Link
-                href="/dashboard/posts"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                href="/dashboard/bookmarks"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200"
               >
-                View Posts
+                View Bookmarks
               </Link>
             </div>
           </div>
-        </div> */}
-        
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900">Profile</h3>
-            <div className="mt-3 text-sm text-gray-500">
-              Update your profile and preferences
-            </div>
-            <div className="mt-5">
+          
+          {/* Home Card */}
+          <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-gray-100">
+            <div className="px-6 py-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">Explore Cafes</h3>
+              </div>
+              <div className="text-sm text-gray-500 mb-5">
+                Discover new cafes around Berkeley campus
+              </div>
               <Link
-                href="/dashboard/profile"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                href="/"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-200"
               >
-                Edit Profile
+                Go to Homepage
               </Link>
             </div>
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
