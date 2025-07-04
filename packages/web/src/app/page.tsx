@@ -889,7 +889,7 @@ export default function Home() {
                       >
                         {cafe.name}
                       </h3>
-                      <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="sm" />
+                      <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="md" />
                     </div>
                     <div className="flex items-center gap-2">
                       {cafe.price_category && (
@@ -1031,7 +1031,7 @@ export default function Home() {
                     {cafe.realtime?.wifi_speed && (
                       <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                          <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.415-1.415 9 9 0 0112.728 0 1 1 0 01-1.415 1.415zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                         </svg>
                         <span className="capitalize">WiFi: {cafe.realtime.wifi_speed}Mbps</span>
                       </div>

@@ -111,6 +111,9 @@ export default function MainLayout({ children, isDashboardLayout = false }: Main
               <Link href="/terms" className="text-gray-500 hover:text-gray-700 text-sm">
                 Terms
               </Link>
+              <Link href="/privacy" className="text-gray-500 hover:text-gray-700 text-sm">
+                Privacy
+              </Link>
             </div>
           </div>
         </div>
