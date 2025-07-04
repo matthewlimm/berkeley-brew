@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import { getCafes } from "../services/api";
+import { getCafes, ExtendedCafe } from "../services/api";
 import { PopularTimesChart } from "../components/PopularTimesChart";
 import { CafeReviews } from "../components/CafeReviews";
 import { CafeOpeningHours } from "../components/CafeOpeningHours";
@@ -90,35 +90,7 @@ type BusinessHoursPeriod = {
   };
 };
 
-type BusinessHours = {
-  periods: BusinessHoursPeriod[];
-  open_now?: boolean;
-  weekday_text: string[];
-};
-
-// Extended cafe type to include API response fields
-type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
-  average_rating?: number | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  review_count?: number | null;
-  reviews?: any[];
-  place_id?: string | null;
-  business_hours?: BusinessHours;
-  price_category?: '$' | '$$' | '$$$' | null;
-  location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
-  name: string;
-  id: string;
-  image_url?: string | null;
-  address?: string | null;
-  grindability_score?: number | null;
-  student_friendliness_score?: number | null;
-  coffee_quality_score?: number | null;
-  vibe_score?: number | null;
-  golden_bear_score?: number | null;
-  realtime?: any;
-  popular_times?: any;
-};
+// Using ExtendedCafe type imported from api.ts
 
 export default function Home() {
   const [cafes, setCafes] = useState<ExtendedCafe[]>([]);
@@ -289,12 +261,18 @@ export default function Home() {
       period.open && period.open.day === currentDay
     );
     
-    if (!todayPeriod) {
+    if (!todayPeriod || !todayPeriod.open) {
       console.log(`  ${cafe.name} is closed today (no hours for today)`);
       return false;
     }
     
     console.log(`  ${cafe.name} today's hours:`, todayPeriod);
+    
+    // Check if we have both open and close times
+    if (!todayPeriod.open.time || !todayPeriod.close?.time) {
+      console.log(`  ${cafe.name} has incomplete hours data`);
+      return false;
+    }
     
     // Parse opening time
     const openHour = parseInt(todayPeriod.open.time.substring(0, 2));
@@ -314,7 +292,7 @@ export default function Home() {
     console.log(`  Current time: ${currentTimeMinutes} minutes`);
     
     // Handle overnight hours (when close time is on the next day)
-    if (todayPeriod.close.day !== todayPeriod.open.day) {
+    if (todayPeriod.close && todayPeriod.close.day !== todayPeriod.open.day) {
       // For overnight hours, cafe is open if current time is after opening time
       const isOpen = currentTimeMinutes >= openTimeMinutes;
       console.log(`  ${cafe.name} has overnight hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);

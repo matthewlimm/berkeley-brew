@@ -2,7 +2,43 @@ import type { Database } from '@berkeley-brew/api/src/db'
 import { supabase } from '@/lib/supabase'
 import { UUID } from 'crypto'
 
+// Business hours interface
+interface BusinessHours {
+  open_now?: boolean;
+  periods?: {
+    open?: {
+      day: number;
+      time: string;
+    };
+    close?: {
+      day: number;
+      time: string;
+    };
+  }[];
+  weekday_text?: string[];
+}
+
+// Base Cafe type from database
 type Cafe = Database['public']['Tables']['cafes']['Row']
+
+// Extended Cafe type with additional properties
+export type ExtendedCafe = Cafe & {
+  business_hours?: BusinessHours;
+  average_rating?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  review_count?: number | null;
+  reviews?: any[];
+  place_id?: string | null;
+  price_category?: '$' | '$$' | '$$$' | null;
+  location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
+  popular_times?: any;
+  realtime?: any;
+  coffee_quality_score?: number | null;
+  vibe_score?: number | null;
+  golden_bear_score?: number | null;
+}
+
 type Review = Database['public']['Tables']['reviews']['Row']
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'
@@ -39,7 +75,7 @@ interface ApiResponse<T> {
   message?: string
 }
 
-export async function getCafes(): Promise<ApiResponse<{ cafes: (Cafe & { average_rating: number | null })[] }>> {
+export async function getCafes(): Promise<ApiResponse<{ cafes: ExtendedCafe[] }>> {
   const headers = await getAuthHeader()
   const res = await fetch(`${API_URL}/api/cafes`, { headers })
   if (!res.ok) {

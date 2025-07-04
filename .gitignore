@@ -79,3 +79,8 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Deployment
+netlify.toml
+.env.example
+DEPLOYMENT.md
