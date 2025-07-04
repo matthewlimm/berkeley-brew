@@ -39,6 +39,8 @@ const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
                 popular_times_updated_at,
                 place_id,
                 business_hours,
+                price_category,
+                location,
                 reviews (
                     grindability_score,
                     student_friendliness_score,
@@ -107,6 +109,8 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
                 golden_bear_score,
                 popular_times,
                 popular_times_updated_at,
+                price_category,
+                location,
                 reviews (
                     id,
                     content,

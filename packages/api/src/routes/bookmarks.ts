@@ -57,6 +57,7 @@ router.get('/', requireAuth, async (req, res) => {
         coffee_quality_score,
         vibe_score,
         golden_bear_score,
+        price_category,
         latitude,
         longitude,
         popular_times,

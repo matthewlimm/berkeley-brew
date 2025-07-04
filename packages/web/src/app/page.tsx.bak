@@ -78,24 +78,6 @@ const calculateGoldenBearScore = (cafe: Database['public']['Tables']['cafes']['R
   return scores.length > 0 ? scores.reduce((sum, score) => sum + (score || 0), 0) / scores.length : null;
 };
 
-// Business hours types based on the actual API response format
-type BusinessHoursPeriod = {
-  open: {
-    day: number; // 0-6 for Sunday-Saturday
-    time: string; // Format: "0800" for 8:00 AM
-  };
-  close: {
-    day: number;
-    time: string;
-  };
-};
-
-type BusinessHours = {
-  periods: BusinessHoursPeriod[];
-  open_now?: boolean;
-  weekday_text: string[];
-};
-
 // Extended cafe type to include API response fields
 type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   average_rating?: number | null;
@@ -104,9 +86,9 @@ type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   review_count?: number | null;
   reviews?: any[];
   place_id?: string | null;
-  business_hours?: BusinessHours;
-  price_category?: '$' | '$$' | '$$$' | null;
-  location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
+  business_hours?: any;
+  price_category?: '$' | '$$' | '$$$' | '$$$$' | null;
+  location?: 'northside' | 'southside' | 'downtown' | 'outer' | null;
   name: string;
   id: string;
   image_url?: string | null;
@@ -136,8 +118,8 @@ export default function Home() {
   
   // Filter state
   const [isOpenNowActive, setIsOpenNowActive] = useState(false);
-  const [selectedPrice, setSelectedPrice] = useState<'$' | '$$' | '$$$' | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<'$' | '$$' | '$$$' | '$$$$' | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<'northside' | 'southside' | 'downtown' | 'outer' | null>(null);
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   
@@ -168,39 +150,6 @@ export default function Home() {
     };
   }, []);
 
-  // Debug function to examine business hours data
-  const debugBusinessHours = (cafes: ExtendedCafe[]) => {
-    console.log('Debugging business hours data:');
-    const now = new Date();
-    const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
-    console.log(`Current day: ${dayOfWeek}, Current time: ${now.getHours()}:${now.getMinutes()}`);
-    
-    cafes.forEach(cafe => {
-      if (!cafe.business_hours) {
-        console.log(`Cafe ${cafe.name}: No business hours data`);
-        return;
-      }
-      
-      let hoursData;
-      try {
-        if (typeof cafe.business_hours === 'string') {
-          hoursData = JSON.parse(cafe.business_hours);
-        } else {
-          hoursData = cafe.business_hours;
-        }
-        
-        console.log(`Cafe ${cafe.name} business hours:`, hoursData);
-        console.log(`Today's hours:`, hoursData[dayOfWeek]);
-        
-        // Check if the cafe is open now
-        const isOpen = isCurrentlyOpen(cafe);
-        console.log(`Cafe ${cafe.name} is ${isOpen ? 'OPEN' : 'CLOSED'} now`);
-      } catch (e) {
-        console.log(`Error parsing business hours for ${cafe.name}:`, e);
-      }
-    });
-  };
-  
   // Load cafes on mount
   useEffect(() => {
     setIsLoading(true);
@@ -210,12 +159,10 @@ export default function Home() {
           const allCafes = response.data.cafes;
           console.log('Cafes from API:', allCafes);
           // Check if any cafes have business_hours data
-          const cafesWithHours = allCafes.filter(cafe => cafe.business_hours);
+          const cafesWithHours = allCafes.filter(cafe => (cafe as any).business_hours);
           console.log(`Found ${cafesWithHours.length} cafes with business_hours data`);
           if (cafesWithHours.length > 0) {
-            console.log('Sample business_hours:', cafesWithHours[0].business_hours);
-            // Debug business hours
-            debugBusinessHours(cafesWithHours);
+            console.log('Sample business_hours:', (cafesWithHours[0] as any).business_hours);
           }
           setCafes(allCafes);
           
@@ -257,78 +204,32 @@ export default function Home() {
 
   // Function to check if a cafe is currently open based on business hours
   const isCurrentlyOpen = (cafe: ExtendedCafe): boolean => {
-    // Get current day and time
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    console.log(`Checking if ${cafe.name} is open:`);
-    console.log(`  Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}, Day: ${currentDay} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentDay]})`);
-    
-    // Check if business_hours exists
-    if (!cafe.business_hours) {
-      console.log(`  ${cafe.name} has no business_hours data`);
+    if (!cafe.business_hours) return false;
+    try {
+      const now = new Date();
+      const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const hoursData = typeof cafe.business_hours === 'string' ? JSON.parse(cafe.business_hours) : cafe.business_hours;
+      if (!hoursData[dayOfWeek] || hoursData[dayOfWeek].is_closed) return false;
+      const openTime = hoursData[dayOfWeek].open;
+      const closeTime = hoursData[dayOfWeek].close;
+      if (!openTime || !closeTime) return false;
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
+      const openTimeInMinutes = openHour * 60 + openMinute;
+      const closeTimeInMinutes = closeHour * 60 + closeMinute;
+      if (closeTimeInMinutes < openTimeInMinutes) {
+        // Handle overnight hours (e.g., 10:00 PM to 2:00 AM)
+        if (currentTimeInMinutes >= openTimeInMinutes) return true;
+        if (currentTimeInMinutes <= closeTimeInMinutes) return true;
+        return false;
+      }
+      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes <= closeTimeInMinutes;
+    } catch (error) {
+      console.error('Error parsing business hours:', error);
       return false;
-    }
-    
-    // The simplest solution: use the open_now flag directly if available
-    if (cafe.business_hours.open_now !== undefined) {
-      console.log(`  ${cafe.name} has open_now flag: ${cafe.business_hours.open_now}`);
-      return !!cafe.business_hours.open_now;
-    }
-    
-    // If open_now is not available, we'll calculate it manually using periods
-    if (!cafe.business_hours.periods || !Array.isArray(cafe.business_hours.periods)) {
-      console.log(`  ${cafe.name} has no periods data`);
-      return false;
-    }
-    
-    // Find the period for today
-    const todayPeriod = cafe.business_hours.periods.find(period => 
-      period.open && period.open.day === currentDay
-    );
-    
-    if (!todayPeriod) {
-      console.log(`  ${cafe.name} is closed today (no hours for today)`);
-      return false;
-    }
-    
-    console.log(`  ${cafe.name} today's hours:`, todayPeriod);
-    
-    // Parse opening time
-    const openHour = parseInt(todayPeriod.open.time.substring(0, 2));
-    const openMinute = parseInt(todayPeriod.open.time.substring(2));
-    const openTimeMinutes = openHour * 60 + openMinute;
-    
-    // Parse closing time
-    const closeHour = parseInt(todayPeriod.close.time.substring(0, 2));
-    const closeMinute = parseInt(todayPeriod.close.time.substring(2));
-    const closeTimeMinutes = closeHour * 60 + closeMinute;
-    
-    // Current time in minutes
-    const currentTimeMinutes = currentHour * 60 + currentMinute;
-    
-    console.log(`  ${cafe.name} open time: ${openHour}:${openMinute.toString().padStart(2, '0')} (${openTimeMinutes} minutes)`);
-    console.log(`  ${cafe.name} close time: ${closeHour}:${closeMinute.toString().padStart(2, '0')} (${closeTimeMinutes} minutes)`);
-    console.log(`  Current time: ${currentTimeMinutes} minutes`);
-    
-    // Handle overnight hours (when close time is on the next day)
-    if (todayPeriod.close.day !== todayPeriod.open.day) {
-      // For overnight hours, cafe is open if current time is after opening time
-      const isOpen = currentTimeMinutes >= openTimeMinutes;
-      console.log(`  ${cafe.name} has overnight hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
-    } else if (closeTimeMinutes < openTimeMinutes) {
-      // Another overnight case where the close time is earlier than open time on the same day
-      const isOpen = currentTimeMinutes >= openTimeMinutes || currentTimeMinutes <= closeTimeMinutes;
-      console.log(`  ${cafe.name} has same-day overnight hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
-    } else {
-      // Regular hours check
-      const isOpen = currentTimeMinutes >= openTimeMinutes && currentTimeMinutes <= closeTimeMinutes;
-      console.log(`  ${cafe.name} has regular hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
     }
   };
 
@@ -337,40 +238,8 @@ export default function Home() {
   
   // Apply Open Now filter
   if (isOpenNowActive) {
-    // Add more detailed logging
-    console.log('Applying Open Now filter...');
-    console.log('Before filtering:', filteredCafes.length, 'cafes');
-    
-    // First check: use the open_now flag directly if available
-    const openCafes = filteredCafes.filter(cafe => {
-      // Check if we can use the open_now flag directly
-      if (cafe.business_hours && typeof cafe.business_hours.open_now === 'boolean') {
-        console.log(`${cafe.name}: Using open_now flag: ${cafe.business_hours.open_now ? 'OPEN' : 'CLOSED'}`);
-        return cafe.business_hours.open_now;
-      }
-      
-      // Fall back to our calculation
-      const isOpen = isCurrentlyOpen(cafe);
-      console.log(`${cafe.name}: Calculated: ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
-    });
-    
-    filteredCafes = openCafes;
-    console.log('After Open Now filtering:', filteredCafes.length, 'cafes remaining');
-    
-    // If no cafes are open, add a debug message
-    if (filteredCafes.length === 0) {
-      console.log('WARNING: No cafes are currently open! Check business hours data format.');
-      
-      // For debugging: show a sample of business hours from all cafes
-      cafes.slice(0, 3).forEach(cafe => {
-        console.log(`Sample business hours for ${cafe.name}:`, cafe.business_hours);
-      });
-      
-      // If no cafes are open, show all cafes anyway
-      console.log('Showing all cafes since none are open');
-      filteredCafes = [...cafes];
-    }
+    filteredCafes = filteredCafes.filter(cafe => isCurrentlyOpen(cafe));
+    console.log('Filtered by Open Now:', filteredCafes.length, 'cafes remaining');
   }
   
   // Apply Price filter
@@ -682,6 +551,15 @@ export default function Home() {
                     >
                       $$$ (High-end)
                     </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedPrice('$$$$');
+                        setIsPriceDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-amber-50 ${selectedPrice === '$$$$' ? 'bg-amber-100 text-amber-800 font-medium' : 'text-gray-700'}`}
+                    >
+                      $$$$ (Premium)
+                    </button>
                     {selectedPrice && (
                       <div className="border-t border-gray-200 mt-1">
                         <button 
@@ -720,15 +598,6 @@ export default function Home() {
                 
                 {isLocationDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg overflow-hidden z-10 border border-gray-200 py-1 animate-fade-in-down">
-                    <button 
-                      onClick={() => {
-                        setSelectedLocation('campus');
-                        setIsLocationDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-amber-50 ${selectedLocation === 'campus' ? 'bg-amber-100 text-amber-800 font-medium' : 'text-gray-700'}`}
-                    >
-                      Campus
-                    </button>
                     <button 
                       onClick={() => {
                         setSelectedLocation('northside');
@@ -781,23 +650,6 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              
-              {/* Clear All Filters button - only shows when at least one filter is active */}
-              {(isOpenNowActive || selectedPrice || selectedLocation) && (
-                <button 
-                  onClick={() => {
-                    setIsOpenNowActive(false);
-                    setSelectedPrice(null);
-                    setSelectedLocation(null);
-                  }}
-                  className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 ml-1"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Clear Filters
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -881,9 +733,9 @@ export default function Home() {
                 <div className="p-5">
                   {/* Cafe Name and Overall Rating */}
                   <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center max-w-[60%]"> {/* Reduced max width for more aggressive truncation */}
+                    <div className="flex items-center gap-2 max-w-[70%]">
                       <h3 
-                        className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate pr-3"
+                        className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate"
                         onClick={() => setModalCafeId(cafe.id)}
                         title={cafe.name} /* Show full name on hover */
                       >
@@ -891,30 +743,23 @@ export default function Home() {
                       </h3>
                       <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="sm" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      {cafe.price_category && (
-                        <span className="bg-green-100 text-green-800 font-medium text-xs px-2 py-1 rounded-full border border-green-200">
-                          {cafe.price_category}
+                    <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-sm font-medium text-amber-700">
+                        {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
+                      </span>
+                      {(cafe.review_count ?? 0) > 0 && (
+                        <span className="text-amber-500 text-xs ml-1">
+                          ({cafe.review_count})
                         </span>
                       )}
-                      <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="text-sm font-medium text-amber-700">
-                          {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
-                        </span>
-                        {(cafe.review_count ?? 0) > 0 && (
-                          <span className="text-amber-500 text-xs ml-1">
-                            ({cafe.review_count})
-                          </span>
-                        )}
-                      </div>
                     </div>
                   </div>
 
                   {/* Address, Price Category, and Distance */}
-                  <div className="mb-2"> {/* Reduced bottom margin from mb-4 to mb-2 */}
+                  <div className="mb-4">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-gray-600 text-sm">
                         {(() => {
@@ -950,15 +795,23 @@ export default function Home() {
                         </span>
                       )}
                     </div>
-                    {/* Price Category moved next to rating */}
+                    {/* Price Category */}
+                    {cafe.price_category && (
+                      <div className="flex items-center">
+                        <span className="text-amber-600 font-medium text-sm">
+                          {cafe.price_category}
+                        </span>
+                      </div>
+                    )}
                   </div>
                     
-                  {/* Opening Hours */}
-                  {/* Debug info - using useEffect in the component instead */}
-                  <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
+                    {/* Opening Hours */}
+                    {/* Debug info - using useEffect in the component instead */}
+                    <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
+                  </div>
                   
-                  {/* Metrics - with increased spacing from opening hours */}
-                  <div className="mt-6 grid grid-cols-2 gap-3 mb-4">
+                  {/* Metrics */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     {/* Grindability Score */}
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <div className="flex items-center justify-between">

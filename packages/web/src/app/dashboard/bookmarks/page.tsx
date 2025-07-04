@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { CafeOpeningHours } from '@/components/CafeOpeningHours'
 import { CafeDetailModal } from '@/components/CafeDetailModal'
+import { PopularTimesChart } from '@/components/PopularTimesChart'
+import BookmarkButton from '@/components/BookmarkButton'
 
 interface Bookmark {
   id: string
@@ -25,7 +27,12 @@ interface Bookmark {
     coffee_quality_score?: number
     student_friendliness_score?: number
     business_hours?: any
+    price_category?: "$" | "$$" | "$$$" | "$$$$" | null
     wifi_speed?: number
+    latitude?: number
+    longitude?: number
+    place_id?: string
+    popular_times?: any
     realtime?: {
       wifi_speed?: number
       noise_level?: number
@@ -94,6 +101,23 @@ const getScoreValue = (cafe: any, scoreField: string): number => {
   return 0;
 }
 
+// Haversine distance calculation function (same as homepage)
+const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+};
+
 export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -102,6 +126,24 @@ export default function BookmarksPage() {
   const { refreshBookmarks, isLoading: bookmarkLoading } = useBookmarks()
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
+
+  // Get user location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Error getting location:', error.message);
+        }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const fetchBookmarkDetails = async () => {
@@ -232,46 +274,106 @@ export default function BookmarksPage() {
               <div className="p-5">
                 {/* Cafe Name and Overall Rating */}
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {bookmark.cafes.name}
-                  </h3>
-                  <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="text-sm font-medium text-amber-700">
-{hasReviews(bookmark.cafes) ? formatRating(bookmark.cafes.average_rating) : "N/A"}
-                    </span>
-                    {(bookmark.cafes.review_count ?? 0) > 0 && (
-                      <span className="text-amber-500 text-xs ml-1">
-                        ({bookmark.cafes.review_count})
+                  <div className="flex items-center max-w-[60%]"> {/* Reduced max width for more aggressive truncation */}
+                    <h3 className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate pr-3"
+                      onClick={() => setModalCafeId(bookmark.cafes.id)}
+                      title={bookmark.cafes.name} /* Show full name on hover */
+                    >
+                      {bookmark.cafes.name}
+                    </h3>
+                    <BookmarkButton key={`bookmark-${bookmark.cafes.id}`} cafeId={bookmark.cafes.id} size="sm" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {bookmark.cafes.price_category && (
+                      <span className="bg-green-100 text-green-800 font-medium text-xs px-2 py-1 rounded-full border border-green-200">
+                        {bookmark.cafes.price_category}
                       </span>
                     )}
+                    <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-sm font-medium text-amber-700">
+                        {hasReviews(bookmark.cafes) ? formatRating(bookmark.cafes.average_rating) : "N/A"}
+                      </span>
+                      {(bookmark.cafes.review_count ?? 0) > 0 && (
+                        <span className="text-amber-500 text-xs ml-1">
+                          ({bookmark.cafes.review_count})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
+                {/* Address and Distance */}
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-gray-600 text-sm">
+                      {(() => {
+                        // Try to extract just street address and city
+                        if (bookmark.cafes.address) {
+                          // Typical US format: "123 Main St, Berkeley, CA 94704"
+                          const parts = bookmark.cafes.address.split(',');
+                          if (parts.length >= 2) {
+                            return parts[0].trim() + ', ' + parts[1].trim();
+                          } else {
+                            return bookmark.cafes.address;
+                          }
+                        }
+                        return '';
+                      })()}
+                    </p>
+                    {userLocation && bookmark.cafes.latitude && bookmark.cafes.longitude && !isNaN(Number(bookmark.cafes.latitude)) && !isNaN(Number(bookmark.cafes.longitude)) && (
+                      <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100">
+                        {(() => {
+                          const distMeters = haversineDistance(userLocation.lat, userLocation.lng, Number(bookmark.cafes.latitude), Number(bookmark.cafes.longitude));
+                          const metersPerMile = 1609.34;
+                          const metersPerFoot = 0.3048;
+                          const distMiles = distMeters / metersPerMile;
+                          if (distMiles < 0.1) {
+                            // Show feet
+                            const distFeet = distMeters / metersPerFoot;
+                            return `${Math.round(distFeet)} ft`;
+                          } else {
+                            // Show miles
+                            return `${distMiles.toFixed(2)} mi`;
+                          }
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Price Category moved next to rating */}
+                </div>
+                
                 {/* Opening Hours */}
-                <div className="mb-4">
+                <div className="mb-2 text-sm text-gray-600">
                   <CafeOpeningHours 
+                    name={bookmark.cafes.name}
                     businessHours={bookmark.cafes.business_hours || {}} 
-                    className="text-sm text-gray-600"
                   />
                 </div>
                 
-                {/* Metrics - using homepage logic */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* Popular Times Chart */}
+                {bookmark.cafes.popular_times && (
+                  <div className="mb-4">
+                    <PopularTimesChart data={bookmark.cafes.popular_times} />
+                  </div>
+                )}
+
+                {/* Metrics - with increased spacing from opening hours */}
+                <div className="mt-6 grid grid-cols-2 gap-3 mb-4">
                   {/* Grindability Score */}
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-blue-700">Grindability</span>
                       <span className="text-sm font-bold text-blue-700">
-                        {getScoreValue(bookmark.cafes, 'grindability_score') > 0 ? formatRating(getScoreValue(bookmark.cafes, 'grindability_score')) : "N/A"}
+                        {hasScore(bookmark.cafes, 'grindability_score') ? formatRating(getScoreValue(bookmark.cafes, 'grindability_score')) : "N/A"}
                       </span>
                     </div>
                     <div className="w-full bg-blue-200 rounded-full h-2 mt-1.5">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${getScoreValue(bookmark.cafes, 'grindability_score') * 20}%` }}
+                        style={{ width: hasScore(bookmark.cafes, 'grindability_score') ? `${getScoreValue(bookmark.cafes, 'grindability_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
@@ -281,45 +383,45 @@ export default function BookmarksPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-pink-700">Vibe</span>
                       <span className="text-sm font-bold text-pink-700">
-                        {getScoreValue(bookmark.cafes, 'vibe_score') > 0 ? formatRating(getScoreValue(bookmark.cafes, 'vibe_score')) : "N/A"}
+                        {hasScore(bookmark.cafes, 'vibe_score') ? formatRating(getScoreValue(bookmark.cafes, 'vibe_score')) : "N/A"}
                       </span>
                     </div>
                     <div className="w-full bg-pink-200 rounded-full h-2 mt-1.5">
                       <div 
                         className="bg-pink-600 h-2 rounded-full" 
-                        style={{ width: `${getScoreValue(bookmark.cafes, 'vibe_score') * 20}%` }}
+                        style={{ width: hasScore(bookmark.cafes, 'vibe_score') ? `${getScoreValue(bookmark.cafes, 'vibe_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
                   
                   {/* Coffee Quality Score */}
-                  <div className="bg-purple-50 p-3 rounded-lg">
+                  <div className="bg-amber-50 p-3 rounded-lg">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
-                      <span className="text-sm font-bold text-purple-700">
-                        {getScoreValue(bookmark.cafes, 'coffee_quality_score') > 0 ? formatRating(getScoreValue(bookmark.cafes, 'coffee_quality_score')) : "N/A"}
+                      <span className="text-sm font-medium text-amber-700">Coffee</span>
+                      <span className="text-sm font-bold text-amber-700">
+                        {hasScore(bookmark.cafes, 'coffee_quality_score') ? formatRating(getScoreValue(bookmark.cafes, 'coffee_quality_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="w-full bg-purple-200 rounded-full h-2 mt-1.5">
+                    <div className="w-full bg-amber-200 rounded-full h-2 mt-1.5">
                       <div 
-                        className="bg-purple-600 h-2 rounded-full" 
-                        style={{ width: `${getScoreValue(bookmark.cafes, 'coffee_quality_score') * 20}%` }}
+                        className="bg-amber-600 h-2 rounded-full" 
+                        style={{ width: hasScore(bookmark.cafes, 'coffee_quality_score') ? `${getScoreValue(bookmark.cafes, 'coffee_quality_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
                   
-                  {/* Student-Friendliness Score */}
+                  {/* Student Friendliness Score */}
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-green-700">Friendliness</span>
                       <span className="text-sm font-bold text-green-700">
-                        {getScoreValue(bookmark.cafes, 'student_friendliness_score') > 0 ? formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score')) : "N/A"}
+                        {hasScore(bookmark.cafes, 'student_friendliness_score') ? formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score')) : "N/A"}
                       </span>
                     </div>
                     <div className="w-full bg-green-200 rounded-full h-2 mt-1.5">
                       <div 
                         className="bg-green-600 h-2 rounded-full" 
-                        style={{ width: `${getScoreValue(bookmark.cafes, 'student_friendliness_score') * 20}%` }}
+                        style={{ width: hasScore(bookmark.cafes, 'student_friendliness_score') ? `${getScoreValue(bookmark.cafes, 'student_friendliness_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
