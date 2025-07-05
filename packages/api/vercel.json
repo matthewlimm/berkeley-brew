@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "builds": [
     {
@@ -13,6 +14,8 @@
     }
   ],
   "env": {
-    "FRONTEND_URL": "https://berkeley-brew.netlify.app"
-  }
+    "FRONTEND_URL": "${VERCEL_URL}"
+  },
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "pnpm build"
 }

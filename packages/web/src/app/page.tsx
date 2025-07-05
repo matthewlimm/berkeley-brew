@@ -227,86 +227,73 @@ export default function Home() {
     }
   }, [sortBy, userLocation]);
 
-  // Function to check if a cafe is currently open based on business hours
+  // Accurate function to check if a cafe is currently open based on business hours
   const isCurrentlyOpen = (cafe: ExtendedCafe): boolean => {
-    // Get current day and time
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    console.log(`Checking if ${cafe.name} is open:`);
-    console.log(`  Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}, Day: ${currentDay} (${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentDay]})`);
-    
-    // Check if business_hours exists
+    // If we don't have business hours data, we can't determine if it's open
     if (!cafe.business_hours) {
-      console.log(`  ${cafe.name} has no business_hours data`);
-      return false;
+      // Check for explicit status indicators
+      if (cafe.open_now !== undefined) return cafe.open_now;
+      if (cafe.status?.toLowerCase().includes('open')) return true;
+      if (cafe.status?.toLowerCase().includes('closed')) return false;
+      return false; // Default to closed if we can't determine
     }
-    
-    // The simplest solution: use the open_now flag directly if available
-    if (cafe.business_hours.open_now !== undefined) {
-      console.log(`  ${cafe.name} has open_now flag: ${cafe.business_hours.open_now}`);
-      return !!cafe.business_hours.open_now;
-    }
-    
-    // If open_now is not available, we'll calculate it manually using periods
-    if (!cafe.business_hours.periods || !Array.isArray(cafe.business_hours.periods)) {
-      console.log(`  ${cafe.name} has no periods data`);
-      return false;
-    }
-    
-    // Find the period for today
-    const todayPeriod = cafe.business_hours.periods.find(period => 
-      period.open && period.open.day === currentDay
-    );
-    
-    if (!todayPeriod || !todayPeriod.open) {
-      console.log(`  ${cafe.name} is closed today (no hours for today)`);
-      return false;
-    }
-    
-    console.log(`  ${cafe.name} today's hours:`, todayPeriod);
-    
-    // Check if we have both open and close times
-    if (!todayPeriod.open.time || !todayPeriod.close?.time) {
-      console.log(`  ${cafe.name} has incomplete hours data`);
-      return false;
-    }
-    
-    // Parse opening time
-    const openHour = parseInt(todayPeriod.open.time.substring(0, 2));
-    const openMinute = parseInt(todayPeriod.open.time.substring(2));
-    const openTimeMinutes = openHour * 60 + openMinute;
-    
-    // Parse closing time
-    const closeHour = parseInt(todayPeriod.close.time.substring(0, 2));
-    const closeMinute = parseInt(todayPeriod.close.time.substring(2));
-    const closeTimeMinutes = closeHour * 60 + closeMinute;
-    
-    // Current time in minutes
-    const currentTimeMinutes = currentHour * 60 + currentMinute;
-    
-    console.log(`  ${cafe.name} open time: ${openHour}:${openMinute.toString().padStart(2, '0')} (${openTimeMinutes} minutes)`);
-    console.log(`  ${cafe.name} close time: ${closeHour}:${closeMinute.toString().padStart(2, '0')} (${closeTimeMinutes} minutes)`);
-    console.log(`  Current time: ${currentTimeMinutes} minutes`);
-    
-    // Handle overnight hours (when close time is on the next day)
-    if (todayPeriod.close && todayPeriod.close.day !== todayPeriod.open.day) {
-      // For overnight hours, cafe is open if current time is after opening time
-      const isOpen = currentTimeMinutes >= openTimeMinutes;
-      console.log(`  ${cafe.name} has overnight hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
+
+    try {
+      // Get current time
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeMinutes = currentHour * 60 + currentMinute;
+      
+      // Get periods from business_hours
+      const periods = cafe.business_hours.periods || 
+                    (cafe.business_hours.opening_hours && cafe.business_hours.opening_hours.periods) || 
+                    [];
+      
+      // Find today's period
+      const todayPeriod = periods.find(
+        (period: any) => period.open && period.open.day === currentDay
+      );
+      
+      // If no hours for today, the cafe is closed
+      if (!todayPeriod || !todayPeriod.open || !todayPeriod.close) {
+        return false;
+      }
+      
+      // Parse opening and closing times
+      const parseTimeToMinutes = (timeStr: string): number => {
+        if (!timeStr || timeStr.length !== 4) return 0;
+        const hour = parseInt(timeStr.substring(0, 2));
+        const minute = parseInt(timeStr.substring(2));
+        if (isNaN(hour) || isNaN(minute)) return 0;
+        return hour * 60 + minute;
+      };
+      
+      const openTimeMinutes = parseTimeToMinutes(todayPeriod.open.time);
+      const closeTimeMinutes = parseTimeToMinutes(todayPeriod.close.time);
+      
+      // Calculate if open based on current time
+      let isOpen = false;
+      
+      // Handle cases where cafe closes after midnight
+      if (closeTimeMinutes < openTimeMinutes) {
+        // Cafe closes after midnight
+        isOpen = (currentTimeMinutes >= openTimeMinutes) || 
+                (currentTimeMinutes < closeTimeMinutes);
+      } else {
+        // Normal case (opens and closes on same day)
+        isOpen = (currentTimeMinutes >= openTimeMinutes) && 
+                (currentTimeMinutes < closeTimeMinutes);
+      }
+      
       return isOpen;
-    } else if (closeTimeMinutes < openTimeMinutes) {
-      // Another overnight case where the close time is earlier than open time on the same day
-      const isOpen = currentTimeMinutes >= openTimeMinutes || currentTimeMinutes <= closeTimeMinutes;
-      console.log(`  ${cafe.name} has same-day overnight hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
-    } else {
-      // Regular hours check
-      const isOpen = currentTimeMinutes >= openTimeMinutes && currentTimeMinutes <= closeTimeMinutes;
-      console.log(`  ${cafe.name} has regular hours, is ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
+    } catch (error) {
+      console.error(`Error determining if ${cafe.name} is open:`, error);
+      // Fall back to simpler checks
+      if (cafe.open_now !== undefined) return cafe.open_now;
+      if (cafe.business_hours?.open_now !== undefined) return !!cafe.business_hours.open_now;
+      return false; // Default to closed if there's an error
     }
   };
 
@@ -315,40 +302,39 @@ export default function Home() {
   
   // Apply Open Now filter
   if (isOpenNowActive) {
-    // Add more detailed logging
     console.log('Applying Open Now filter...');
     console.log('Before filtering:', filteredCafes.length, 'cafes');
+    console.log('Current time:', new Date().toLocaleTimeString());
     
-    // First check: use the open_now flag directly if available
+    // First, check if any cafes have business_hours data
+    const cafesWithHours = filteredCafes.filter(cafe => cafe.business_hours);
+    console.log(`${cafesWithHours.length} out of ${filteredCafes.length} cafes have business hours data`);
+    
+    // Use our accurate isCurrentlyOpen function
     const openCafes = filteredCafes.filter(cafe => {
-      // Check if we can use the open_now flag directly
-      if (cafe.business_hours && typeof cafe.business_hours.open_now === 'boolean') {
-        console.log(`${cafe.name}: Using open_now flag: ${cafe.business_hours.open_now ? 'OPEN' : 'CLOSED'}`);
-        return cafe.business_hours.open_now;
+      try {
+        const isOpen = isCurrentlyOpen(cafe);
+        // Log the result with the cafe name and status
+        console.log(`${cafe.name}: ${isOpen ? 'OPEN' : 'CLOSED'} - ${cafe.status || 'No status'} - Has hours: ${!!cafe.business_hours}`);
+        return isOpen;
+      } catch (error) {
+        console.error(`Error checking if ${cafe.name} is open:`, error);
+        return false; // Default to closed if there's an error
       }
-      
-      // Fall back to our calculation
-      const isOpen = isCurrentlyOpen(cafe);
-      console.log(`${cafe.name}: Calculated: ${isOpen ? 'OPEN' : 'CLOSED'}`);
-      return isOpen;
     });
     
-    filteredCafes = openCafes;
-    console.log('After Open Now filtering:', filteredCafes.length, 'cafes remaining');
-    
-    // If no cafes are open, add a debug message
-    if (filteredCafes.length === 0) {
-      console.log('WARNING: No cafes are currently open! Check business hours data format.');
-      
-      // For debugging: show a sample of business hours from all cafes
-      cafes.slice(0, 3).forEach(cafe => {
-        console.log(`Sample business hours for ${cafe.name}:`, cafe.business_hours);
-      });
-      
-      // If no cafes are open, show all cafes anyway
-      console.log('Showing all cafes since none are open');
-      filteredCafes = [...cafes];
+    // Only update the filtered cafes if we found at least one open cafe
+    if (openCafes.length > 0) {
+      filteredCafes = openCafes;
+      console.log('After Open Now filtering:', filteredCafes.length, 'cafes remaining');
+    } else {
+      console.log('No cafes are currently open - showing all cafes instead');
+      // Keep the original filtered cafes
+      // This ensures we don't lose other filters like price and location
     }
+    
+    // Log the open cafes for debugging
+    console.log('Open cafes:', openCafes.map(cafe => cafe.name));
   }
   
   // Apply Price filter

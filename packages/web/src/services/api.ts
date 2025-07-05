@@ -16,6 +16,21 @@ interface BusinessHours {
     };
   }[];
   weekday_text?: string[];
+  // Add opening_hours property to support nested structure
+  opening_hours?: {
+    open_now?: boolean;
+    periods?: {
+      open?: {
+        day: number;
+        time: string;
+      };
+      close?: {
+        day: number;
+        time: string;
+      };
+    }[];
+    weekday_text?: string[];
+  };
 }
 
 // Base Cafe type from database
@@ -37,6 +52,9 @@ export type ExtendedCafe = Cafe & {
   coffee_quality_score?: number | null;
   vibe_score?: number | null;
   golden_bear_score?: number | null;
+  // Additional properties for open/closed status
+  open_now?: boolean;
+  status?: string;
 }
 
 type Review = Database['public']['Tables']['reviews']['Row']
