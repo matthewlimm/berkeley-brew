@@ -31,8 +31,19 @@ const allowedOrigins = [
 
 // Initialize Supabase client
 let supabase = null;
+let supabaseAdmin = null;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 if (supabaseUrl && supabaseAnonKey) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  // Initialize admin client with service role key for bypassing RLS
+  if (supabaseServiceKey) {
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('Supabase admin client initialized');
+  } else {
+    console.warn('SUPABASE_SERVICE_ROLE_KEY not provided, admin operations will fail');
+  }
 }
 
 // Middleware
@@ -236,7 +247,45 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
+    // Ensure user exists in public users table (needed for RLS)
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .select()
+      .eq('id', userId)
+      .single();
+
+    if (userError && userError.code !== 'PGRST116') {
+      console.error('Error checking user:', userError);
+      // Continue anyway, we'll create the user if needed
+    }
+
+    // If user doesn't exist in public users table, create them
+    if (!userData) {
+      console.log(`Creating user record for ${userId}`);
+      const { error: createUserError } = await supabaseAdmin
+        .from('users')
+        .insert([{
+          id: userId,
+          username: req.user.email || `user-${userId.substring(0, 8)}`,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (createUserError) {
+        console.error('Error creating user record:', createUserError);
+        // Continue anyway, the insert might still work
+      }
+    }
+
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('reviews')
       .insert([
         {
@@ -296,8 +345,16 @@ app.patch('/api/reviews/:id', authMiddleware, async (req, res) => {
     // Calculate golden bear score (average of all scores)
     const golden_bear_score = (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4;
 
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
     // Check if review exists and belongs to the user
-    const { data: existingReview, error: reviewCheckError } = await supabase
+    const { data: existingReview, error: reviewCheckError } = await supabaseAdmin
       .from('reviews')
       .select()
       .eq('id', id)
@@ -314,8 +371,8 @@ app.patch('/api/reviews/:id', authMiddleware, async (req, res) => {
       throw reviewCheckError;
     }
 
-    // Update the review
-    const { data, error } = await supabase
+    // Update the review using admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('reviews')
       .update({
         content: content || existingReview.content,
@@ -367,8 +424,16 @@ app.delete('/api/reviews/:id', authMiddleware, async (req, res) => {
     
     console.log(`Deleting review ${id} by user ${userId}`);
 
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
     // Check if review exists and belongs to the user
-    const { data: existingReview, error: reviewCheckError } = await supabase
+    const { data: existingReview, error: reviewCheckError } = await supabaseAdmin
       .from('reviews')
       .select()
       .eq('id', id)
@@ -385,8 +450,8 @@ app.delete('/api/reviews/:id', authMiddleware, async (req, res) => {
       throw reviewCheckError;
     }
 
-    // Delete the review
-    const { error } = await supabase
+    // Delete the review using admin client to bypass RLS
+    const { error } = await supabaseAdmin
       .from('reviews')
       .delete()
       .eq('id', id)
@@ -420,7 +485,15 @@ app.get('/api/bookmarks', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     console.log('Fetching bookmarks for user:', userId);
 
-    const { data, error } = await supabase
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
+    const { data, error } = await supabaseAdmin
       .from('bookmarks')
       .select('*')
       .eq('user_id', userId);
@@ -460,8 +533,16 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
       });
     }
 
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
     // Check if bookmark already exists
-    const { data: existingBookmark, error: checkError } = await supabase
+    const { data: existingBookmark, error: checkError } = await supabaseAdmin
       .from('bookmarks')
       .select('*')
       .eq('user_id', userId)
@@ -480,7 +561,7 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
     }
 
     // Otherwise create a new bookmark
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookmarks')
       .insert([
         {
@@ -522,7 +603,15 @@ app.delete('/api/bookmarks/:cafeId', authMiddleware, async (req, res) => {
 
     console.log(`Removing bookmark for cafe ${cafeId} by user ${userId}`);
 
-    const { data, error } = await supabase
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Admin database connection not available'
+      });
+    }
+
+    const { data, error } = await supabaseAdmin
       .from('bookmarks')
       .delete()
       .eq('user_id', userId)
