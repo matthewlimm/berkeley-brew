@@ -92,54 +92,6 @@ export type Database = {
         }
         Relationships: []
       }
-      posts: {
-        Row: {
-          author_id: string
-          brew_method: string | null
-          comments_count: number | null
-          content: string
-          created_at: string | null
-          difficulty_level: number | null
-          id: string
-          ingredients: string[] | null
-          likes_count: number | null
-          prep_time: number | null
-          title: string
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          author_id: string
-          brew_method?: string | null
-          comments_count?: number | null
-          content: string
-          created_at?: string | null
-          difficulty_level?: number | null
-          id?: string
-          ingredients?: string[] | null
-          likes_count?: number | null
-          prep_time?: number | null
-          title: string
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          author_id?: string
-          brew_method?: string | null
-          comments_count?: number | null
-          content?: string
-          created_at?: string | null
-          difficulty_level?: number | null
-          id?: string
-          ingredients?: string[] | null
-          likes_count?: number | null
-          prep_time?: number | null
-          title?: string
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       reviews: {
         Row: {
           cafe_id: string | null
