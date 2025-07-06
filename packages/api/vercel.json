@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" }
   ],
+  "outputDirectory": "public",
   "env": {
     "NODE_ENV": "production",
     "FRONTEND_URL": "${VERCEL_URL}"
