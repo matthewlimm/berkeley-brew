@@ -14,42 +14,39 @@ const reviewUpdateSchema = z.object({
 
 // PATCH /api/reviews/:id
 export const updateReview = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const user = req.user;
-    // Extract user's JWT from Authorization header
-    const userAccessToken = req.headers.authorization?.split(' ')[1];
-    // Create a per-request Supabase client with the user's JWT for RLS
-    const supabase = createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${userAccessToken}`
-          }
+  const { id } = req.params;
+  const user = req.user;
+  
+  // Validate authentication
+  if (!user) {
+    console.error('No user found in request.');
+    return next(new AppError('Authentication required', 401));
+  }
+
+  // Extract user's JWT from Authorization header
+  const userAccessToken = req.headers.authorization?.split(' ')[1];
+  
+  // Create a per-request Supabase client with the user's JWT for RLS
+  const supabase = createClient<Database>(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${userAccessToken}`
         }
       }
-    );
-    if (!user) {
-      return next(new AppError('Authentication required', 401));
     }
-    // Validate input
-    const validation = reviewUpdateSchema.safeParse(req.body);
-    if (!validation.success) {
-      return next(new AppError('Invalid review update data: ' + validation.error.message, 400));
-    }
-    // Debug: print current auth user id
-    console.log('Current auth user.id:', user.id);
-    console.log('--- updateReview controller invoked ---');
-    console.log('Request params:', req.params);
-    console.log('Request body:', req.body);
-    if (!user) {
-      console.error('No user found in request.');
-      return next(new AppError('User not authenticated', 401));
-    }
-    console.log('User from request:', user);
-    try {
+  );
+
+  // Debug: print current auth user id
+  console.log('Current auth user.id:', user.id);
+  console.log('--- updateReview controller invoked ---');
+  console.log('Request params:', req.params);
+  console.log('Request body:', req.body);
+  console.log('User from request:', user);
+
+  try {
       // Validate input
       console.log('Validating input...');
       const validation = reviewUpdateSchema.safeParse(req.body);
@@ -123,4 +120,4 @@ export const updateReview = async (req: Request, res: Response, next: NextFuncti
       console.error('Exception in updateReview:', err);
       next(new AppError('An error occurred while updating the review', 500));
     }
-  };
+  }

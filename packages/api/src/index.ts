@@ -7,7 +7,6 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import errorHandler from './middleware/errorHandler'
 import cafeRouter from './routes/cafes'
-import postsRouter from './routes/posts'
 import userRouter from './routes/users'
 import placesRouter from './routes/places'
 import bookmarksRouter from './routes/bookmarks'
@@ -28,7 +27,6 @@ app.use(express.json())
 
 // Routes
 app.use('/api/cafes', cafeRouter)
-app.use('/api/posts', postsRouter)
 app.use('/api/user', userRouter)
 app.use('/api/places', placesRouter)
 app.use('/api/bookmarks', bookmarksRouter)
