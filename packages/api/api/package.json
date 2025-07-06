@@ -1,0 +1,12 @@
+{
+  "name": "berkeley-brew-api-serverless",
+  "version": "1.0.0",
+  "description": "Berkeley Brew API Serverless Function",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.2.0",
+    "@supabase/supabase-js": "^2.48.1"
+  }
+}
