@@ -3,19 +3,17 @@
   "version": 2,
   "framework": null,
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x"
+    "api/index.js": {
+      "runtime": "nodejs18.x",
+      "memory": 1024
     }
   },
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    }
+    { "src": "/api/(.*)", "dest": "/api/index.js" }
   ],
   "env": {
+    "NODE_ENV": "production",
     "FRONTEND_URL": "${VERCEL_URL}"
   },
-  "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "pnpm build"
+  "installCommand": "cd ../.. && pnpm install"
 }
