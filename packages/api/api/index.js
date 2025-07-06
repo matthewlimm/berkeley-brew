@@ -189,8 +189,8 @@ app.get('/api/cafes/:id/reviews', async (req, res) => {
   }
 });
 
-// Bookmarks endpoints
-app.get('/api/bookmarks', async (req, res) => {
+// Add a review
+app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
   try {
     if (!supabase) {
       return res.status(503).json({
@@ -199,21 +199,183 @@ app.get('/api/bookmarks', async (req, res) => {
       });
     }
 
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { rating, comment } = req.body;
+
+    console.log(`Adding review for cafe ${id} by user ${userId}`);
+    console.log('Review data:', { rating, comment });
+
+    if (!rating) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Rating is required'
+      });
+    }
+
     const { data, error } = await supabase
-      .from('bookmarks')
-      .select('*');
+      .from('reviews')
+      .insert([
+        {
+          cafe_id: id,
+          user_id: userId,
+          rating,
+          comment,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
 
     if (error) throw error;
 
-    return res.json({
+    return res.status(201).json({
       status: 'success',
-      data: { bookmarks: data }
+      data: { review: data[0] }
     });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to add review',
+      error: error.message
+    });
+  }
+});
+
+// Bookmarks endpoints
+app.get('/api/bookmarks', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const userId = req.user.id;
+    console.log('Fetching bookmarks for user:', userId);
+
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    return res.json(data);
   } catch (error) {
     console.error('Error fetching bookmarks:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to fetch bookmarks',
+      error: error.message
+    });
+  }
+});
+
+// Add a bookmark
+app.post('/api/bookmarks', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const userId = req.user.id;
+    const { cafe_id } = req.body;
+
+    console.log(`Adding bookmark for cafe ${cafe_id} by user ${userId}`);
+
+    if (!cafe_id) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cafe ID is required'
+      });
+    }
+
+    // Check if bookmark already exists
+    const { data: existingBookmark, error: checkError } = await supabase
+      .from('bookmarks')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('cafe_id', cafe_id)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+
+    // If bookmark exists, return it
+    if (existingBookmark) {
+      return res.json({
+        status: 'success',
+        data: { bookmark: existingBookmark },
+        message: 'Bookmark already exists'
+      });
+    }
+
+    // Otherwise create a new bookmark
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .insert([
+        {
+          user_id: userId,
+          cafe_id,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
+
+    if (error) throw error;
+
+    return res.status(201).json({
+      status: 'success',
+      data: { bookmark: data[0] }
+    });
+  } catch (error) {
+    console.error('Error adding bookmark:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to add bookmark',
+      error: error.message
+    });
+  }
+});
+
+// Delete a bookmark
+app.delete('/api/bookmarks/:cafeId', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const userId = req.user.id;
+    const { cafeId } = req.params;
+
+    console.log(`Removing bookmark for cafe ${cafeId} by user ${userId}`);
+
+    const { data, error } = await supabase
+      .from('bookmarks')
+      .delete()
+      .eq('user_id', userId)
+      .eq('cafe_id', cafeId)
+      .select();
+
+    if (error) throw error;
+
+    return res.json({
+      status: 'success',
+      data: { removed: data && data.length > 0 },
+      message: data && data.length > 0 ? 'Bookmark removed' : 'Bookmark not found'
+    });
+  } catch (error) {
+    console.error('Error removing bookmark:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to remove bookmark',
       error: error.message
     });
   }
