@@ -59,16 +59,73 @@ const getAllCafes = async (req: Request, res: Response, next: NextFunction) => {
             return next(new AppError('No cafes found', 404))
         }
 
-        // Calculate average rating for each cafe
-        const cafesWithAvgRating = cafes.map(cafe => {
+        // Helper function to check if a cafe is currently open based on business hours
+        const isCurrentlyOpen = (businessHours: any): boolean => {
+            if (!businessHours) return false;
+            
+            // Get current day and time
+            const now = new Date();
+            const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentTimeMinutes = currentHour * 60 + currentMinute;
+            
+            // If periods data is not available, we can't determine if it's open
+            if (!businessHours.periods || !Array.isArray(businessHours.periods)) {
+                return false;
+            }
+            
+            // Find the period for today
+            const todayPeriod = businessHours.periods.find((period: any) => 
+                period.open && period.open.day === currentDay
+            );
+            
+            // If no hours for today, it's closed
+            if (!todayPeriod) return false;
+            
+            // Parse opening time
+            const openHour = parseInt(todayPeriod.open.time.substring(0, 2));
+            const openMinute = parseInt(todayPeriod.open.time.substring(2));
+            const openTimeMinutes = openHour * 60 + openMinute;
+            
+            // Parse closing time
+            const closeHour = parseInt(todayPeriod.close.time.substring(0, 2));
+            const closeMinute = parseInt(todayPeriod.close.time.substring(2));
+            const closeTimeMinutes = closeHour * 60 + closeMinute;
+            
+            // Handle overnight hours (when close time is on the next day)
+            if (todayPeriod.close.day !== todayPeriod.open.day) {
+                // For overnight hours, cafe is open if current time is after opening time
+                return currentTimeMinutes >= openTimeMinutes;
+            } else if (closeTimeMinutes < openTimeMinutes) {
+                // Another overnight case where the close time is earlier than open time on the same day
+                return currentTimeMinutes >= openTimeMinutes || currentTimeMinutes <= closeTimeMinutes;
+            } else {
+                // Regular hours check
+                return currentTimeMinutes >= openTimeMinutes && currentTimeMinutes <= closeTimeMinutes;
+            }
+        };
+        
+        // Calculate average rating for each cafe and update open_now status
+        const cafesWithAvgRating = cafes.map((cafe: any) => {
             // Use type assertion to handle the reviews
             const reviews = ((cafe.reviews as any) || []).filter((r: any) => r && r.golden_bear_score !== undefined)
             const avgRating = reviews.length > 0
                 ? reviews.reduce((sum: number, r: any) => sum + Number(r.golden_bear_score), 0) / reviews.length
                 : null
+                
+            // Update the business_hours with current open_now status
+            let updatedBusinessHours = cafe.business_hours;
+            if (updatedBusinessHours) {
+                updatedBusinessHours = {
+                    ...updatedBusinessHours,
+                    open_now: isCurrentlyOpen(updatedBusinessHours)
+                };
+            }
 
             return {
                 ...cafe,
+                business_hours: updatedBusinessHours,
                 average_rating: avgRating,
                 review_count: reviews.length
             }

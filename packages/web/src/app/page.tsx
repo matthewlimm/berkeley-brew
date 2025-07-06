@@ -337,21 +337,13 @@ export default function Home() {
   
   // Apply Open Now filter
   if (isOpenNowActive) {
-    // Add more detailed logging
     console.log('Applying Open Now filter...');
     console.log('Before filtering:', filteredCafes.length, 'cafes');
     
-    // First check: use the open_now flag directly if available
+    // Use the backend-provided open_now flag which is now reliably calculated
     const openCafes = filteredCafes.filter(cafe => {
-      // Check if we can use the open_now flag directly
-      if (cafe.business_hours && typeof cafe.business_hours.open_now === 'boolean') {
-        console.log(`${cafe.name}: Using open_now flag: ${cafe.business_hours.open_now ? 'OPEN' : 'CLOSED'}`);
-        return cafe.business_hours.open_now;
-      }
-      
-      // Fall back to our calculation
-      const isOpen = isCurrentlyOpen(cafe);
-      console.log(`${cafe.name}: Calculated: ${isOpen ? 'OPEN' : 'CLOSED'}`);
+      const isOpen = cafe.business_hours?.open_now === true;
+      console.log(`${cafe.name}: ${isOpen ? 'OPEN' : 'CLOSED'}`);
       return isOpen;
     });
     
@@ -360,16 +352,12 @@ export default function Home() {
     
     // If no cafes are open, add a debug message
     if (filteredCafes.length === 0) {
-      console.log('WARNING: No cafes are currently open! Check business hours data format.');
+      console.log('WARNING: No cafes are currently open!');
       
       // For debugging: show a sample of business hours from all cafes
       cafes.slice(0, 3).forEach(cafe => {
         console.log(`Sample business hours for ${cafe.name}:`, cafe.business_hours);
       });
-      
-      // If no cafes are open, show all cafes anyway
-      console.log('Showing all cafes since none are open');
-      filteredCafes = [...cafes];
     }
   }
   
