@@ -27,10 +27,20 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   }
 }
 
+// Helper function to normalize URL and prevent double slashes
+function normalizeUrl(baseUrl: string, path: string, endpoint: string): string {
+  // Ensure endpoint has a leading slash
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  // Combine and normalize to prevent double slashes
+  return `${baseUrl}${path}${normalizedEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
+}
+
 class ApiService {
   async get<T = any>(endpoint: string): Promise<{ data: T }> {
     const headers = await getAuthHeader();
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
+    const url = normalizeUrl(API_URL, '/api', endpoint);
+    console.log('Making GET request to:', url);
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +58,9 @@ class ApiService {
 
   async post<T = any>(endpoint: string, data: any): Promise<{ data: T }> {
     const headers = await getAuthHeader();
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
+    const url = normalizeUrl(API_URL, '/api', endpoint);
+    console.log('Making POST request to:', url);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,12 +79,35 @@ class ApiService {
 
   async delete<T = any>(endpoint: string): Promise<{ data: T }> {
     const headers = await getAuthHeader();
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
+    const url = normalizeUrl(API_URL, '/api', endpoint);
+    console.log('Making DELETE request to:', url);
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
         ...headers
       }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API error: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async put<T = any>(endpoint: string, data: any): Promise<{ data: T }> {
+    const headers = await getAuthHeader();
+    const url = normalizeUrl(API_URL, '/api', endpoint);
+    console.log('Making PUT request to:', url);
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      body: JSON.stringify(data)
     });
 
     if (!response.ok) {
