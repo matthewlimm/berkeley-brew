@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 // Google Places API key
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
+export const dynamic = 'force-dynamic'; // Mark this route as dynamic
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Use the searchParams from the NextRequest object directly
+    const searchParams = request.nextUrl.searchParams;
     const placeId = searchParams.get('placeId');
     
     if (!placeId) {
