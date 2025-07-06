@@ -201,15 +201,38 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
 
     const { id } = req.params;
     const userId = req.user.id;
-    const { rating, comment } = req.body;
+    const { content, grindability_score, student_friendliness_score, coffee_quality_score, vibe_score } = req.body;
 
     console.log(`Adding review for cafe ${id} by user ${userId}`);
-    console.log('Review data:', { rating, comment });
+    console.log('Review data:', { content, grindability_score, student_friendliness_score, coffee_quality_score, vibe_score });
 
-    if (!rating) {
+    // Validate required fields
+    if (!grindability_score || !student_friendliness_score || !coffee_quality_score || !vibe_score) {
       return res.status(400).json({
         status: 'error',
-        message: 'Rating is required'
+        message: 'All score fields are required'
+      });
+    }
+
+    // Calculate golden bear score (average of all scores)
+    const golden_bear_score = (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4;
+
+    // Check if user has already reviewed this cafe
+    const { data: existingReview, error: reviewCheckError } = await supabase
+      .from('reviews')
+      .select()
+      .eq('cafe_id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (reviewCheckError && reviewCheckError.code !== 'PGRST116') {
+      throw reviewCheckError;
+    }
+
+    if (existingReview) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'You have already reviewed this cafe'
       });
     }
 
@@ -219,8 +242,12 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
         {
           cafe_id: id,
           user_id: userId,
-          rating,
-          comment,
+          content: content || '',
+          grindability_score,
+          student_friendliness_score,
+          coffee_quality_score,
+          vibe_score,
+          golden_bear_score,
           created_at: new Date().toISOString()
         }
       ])
@@ -236,8 +263,146 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
     console.error('Error adding review:', error);
     return res.status(500).json({
       status: 'error',
-      message: 'Failed to add review',
-      error: error.message
+      message: error.message
+    });
+  }
+});
+
+// Edit a review
+app.patch('/api/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+    const { content, grindability_score, student_friendliness_score, coffee_quality_score, vibe_score } = req.body;
+    
+    console.log(`Editing review ${id} by user ${userId}`);
+    console.log('Review update data:', { content, grindability_score, student_friendliness_score, coffee_quality_score, vibe_score });
+
+    // Validate required fields
+    if (!grindability_score || !student_friendliness_score || !coffee_quality_score || !vibe_score) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'All score fields are required'
+      });
+    }
+
+    // Calculate golden bear score (average of all scores)
+    const golden_bear_score = (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4;
+
+    // Check if review exists and belongs to the user
+    const { data: existingReview, error: reviewCheckError } = await supabase
+      .from('reviews')
+      .select()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (reviewCheckError) {
+      if (reviewCheckError.code === 'PGRST116') {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Review not found or you do not have permission to edit it'
+        });
+      }
+      throw reviewCheckError;
+    }
+
+    // Update the review
+    const { data, error } = await supabase
+      .from('reviews')
+      .update({
+        content: content || existingReview.content,
+        grindability_score,
+        student_friendliness_score,
+        coffee_quality_score,
+        vibe_score,
+        golden_bear_score,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', userId) // Ensure the user can only update their own review
+      .select();
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Review not found or you do not have permission to edit it'
+      });
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      data: { review: data[0] }
+    });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+// Delete a review
+app.delete('/api/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'Database connection not available'
+      });
+    }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    console.log(`Deleting review ${id} by user ${userId}`);
+
+    // Check if review exists and belongs to the user
+    const { data: existingReview, error: reviewCheckError } = await supabase
+      .from('reviews')
+      .select()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (reviewCheckError) {
+      if (reviewCheckError.code === 'PGRST116') {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Review not found or you do not have permission to delete it'
+        });
+      }
+      throw reviewCheckError;
+    }
+
+    // Delete the review
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId); // Ensure the user can only delete their own review
+
+    if (error) throw error;
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Review deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message
     });
   }
 });
