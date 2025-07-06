@@ -27,7 +27,7 @@ export function PostCreator({ onSuccess, onCancel }: PostProp) {
   const [brew_method, setBrewMethod] = useState("");
   const [difficulty_level, setDifficultyLevel] = useState(5);
   const [prep_time, setPrepTime] = useState(10);
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 

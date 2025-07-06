@@ -7,12 +7,9 @@
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm -r build",
-    "build:web": "pnpm --filter web build",
-    "build:api": "pnpm --filter api build",
     "start": "pnpm --filter web start",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "vercel-build": "pnpm build"
+    "lint": "pnpm -r lint"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

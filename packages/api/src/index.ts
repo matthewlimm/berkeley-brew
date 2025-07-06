@@ -1,7 +1,5 @@
 // Load environment variables first
 import './config/env'
-// Import environment variables (using require since it's a CommonJS export)
-const env = require('./config/env')
 
 import express from 'express'
 import cors from 'cors'
@@ -14,28 +12,18 @@ import userRouter from './routes/users'
 import placesRouter from './routes/places'
 import bookmarksRouter from './routes/bookmarks'
 
-// Create Express app
 const app = express()
-
-// Environment variables
-const port = env?.PORT || process.env.PORT || 3001
-const frontendUrl = env?.FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:3000'
-const isProduction = (env?.NODE_ENV || process.env.NODE_ENV) === 'production'
+const port = 3001 // Fixed port for API server
 const maxRetries = 3
 let currentPort = port
 
 // Middleware
 app.use(cors({
-  origin: frontendUrl,
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }))
 app.use(helmet())
-
-// Only use morgan in development
-if (!isProduction) {
-  app.use(morgan('dev'))
-}
-
+app.use(morgan('dev'))
 app.use(express.json())
 
 // Routes
@@ -47,11 +35,7 @@ app.use('/api/bookmarks', bookmarksRouter)
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    environment: isProduction ? 'production' : 'development',
-    timestamp: new Date().toISOString()
-  })
+  res.json({ status: 'ok' })
 })
 
 // Error handling
@@ -65,14 +49,12 @@ app.use((req, res) => {
   })
 })
 
-// Function to start the server for local development
 const startServer = async () => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       await new Promise((resolve, reject) => {
         const server = app.listen(currentPort, () => {
           console.log(`🚀 API server running on port ${currentPort}`)
-          console.log(`Frontend URL: ${frontendUrl}`)
           resolve(true)
         })
         
@@ -99,10 +81,4 @@ const startServer = async () => {
   }
 }
 
-// Start the server if running directly (not imported as a module)
-if (require.main === module) {
-  startServer()
-}
-
-// Export the Express app for Vercel serverless deployment
-export default app
+startServer()

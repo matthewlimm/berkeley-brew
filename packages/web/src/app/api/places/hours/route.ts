@@ -3,12 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 // Google Places API key
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
-export const dynamic = 'force-dynamic'; // Mark this route as dynamic
-
 export async function GET(request: NextRequest) {
   try {
-    // Use the searchParams from the NextRequest object directly
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = new URL(request.url);
     const placeId = searchParams.get('placeId');
     
     if (!placeId) {
@@ -107,7 +104,7 @@ export async function GET(request: NextRequest) {
       
       // Add a larger buffer (15 minutes) to ensure stores show as closed after their closing time
       // This helps account for any time discrepancies or rounding issues
-      const bufferMinutes = 0;
+      const bufferMinutes = 15;
       
       // Handle cases where store closes after midnight
       if (closeTimeMinutes < openTimeMinutes) {

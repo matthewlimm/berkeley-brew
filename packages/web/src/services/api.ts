@@ -2,70 +2,9 @@ import type { Database } from '@berkeley-brew/api/src/db'
 import { supabase } from '@/lib/supabase'
 import { UUID } from 'crypto'
 
-// Business hours interface
-interface BusinessHours {
-  open_now?: boolean;
-  periods?: {
-    open?: {
-      day: number;
-      time: string;
-    };
-    close?: {
-      day: number;
-      time: string;
-    };
-  }[];
-  weekday_text?: string[];
-  // Add opening_hours property to support nested structure
-  opening_hours?: {
-    open_now?: boolean;
-    periods?: {
-      open?: {
-        day: number;
-        time: string;
-      };
-      close?: {
-        day: number;
-        time: string;
-      };
-    }[];
-    weekday_text?: string[];
-  };
-}
-
-// Base Cafe type from database
 type Cafe = Database['public']['Tables']['cafes']['Row']
-
-// Extended Cafe type with additional properties
-export type ExtendedCafe = Cafe & {
-  business_hours?: BusinessHours;
-  average_rating?: number | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  review_count?: number | null;
-  reviews?: any[];
-  place_id?: string | null;
-  price_category?: '$' | '$$' | '$$$' | null;
-  location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
-  popular_times?: any;
-  realtime?: any;
-  coffee_quality_score?: number | null;
-  vibe_score?: number | null;
-  golden_bear_score?: number | null;
-  // Additional properties for open/closed status
-  open_now?: boolean;
-  status?: string;
-}
-
 type Review = Database['public']['Tables']['reviews']['Row']
 
-// Edge Function URL for Supabase backend
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const EDGE_FUNCTION_URL = SUPABASE_URL 
-  ? `${SUPABASE_URL}/functions/v1`
-  : 'http://localhost:54321/functions/v1';
-
-// Keep API_URL for backward compatibility during transition
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'
 
 // Helper function to get auth headers
@@ -100,9 +39,9 @@ interface ApiResponse<T> {
   message?: string
 }
 
-export async function getCafes(): Promise<ApiResponse<{ cafes: ExtendedCafe[] }>> {
+export async function getCafes(): Promise<ApiResponse<{ cafes: (Cafe & { average_rating: number | null })[] }>> {
   const headers = await getAuthHeader()
-  const res = await fetch(`${EDGE_FUNCTION_URL}/cafes-get-all`, { headers })
+  const res = await fetch(`${API_URL}/api/cafes`, { headers })
   if (!res.ok) {
     const error = await res.json()
     throw new Error(error.message || 'Failed to fetch cafes')
@@ -112,7 +51,7 @@ export async function getCafes(): Promise<ApiResponse<{ cafes: ExtendedCafe[] }>
 
 export async function getCafe(id: string): Promise<ApiResponse<{ cafe: Cafe & { reviews: Review[] } }>> {
   const headers = await getAuthHeader()
-  const res = await fetch(`${EDGE_FUNCTION_URL}/cafes-get-by-id/${id}`, { headers })
+  const res = await fetch(`${API_URL}/api/cafes/${id}`, { headers })
   if (!res.ok) {
     const error = await res.json()
     throw new Error(error.message || 'Failed to fetch cafe')
@@ -127,8 +66,16 @@ export async function createReview(cafeId: string, data: {
   coffee_quality_score: number; 
   vibe_score: number; 
 }): Promise<ApiResponse<void>> {
-  // Edge function will calculate golden_bear_score
-  const reviewData = data;
+  // Calculate golden_bear_score as the average of all subscores
+  const reviewData = {
+    ...data,
+    golden_bear_score: (
+      data.grindability_score + 
+      data.student_friendliness_score + 
+      data.coffee_quality_score + 
+      data.vibe_score
+    ) / 4
+  };
   const authHeaders = await getAuthHeader()
   
   // Debug request headers
@@ -137,13 +84,15 @@ export async function createReview(cafeId: string, data: {
     ...authHeaders
   })
   
-  const res = await fetch(`${EDGE_FUNCTION_URL}/add-cafe-review/${cafeId}`, {
+  const res = await fetch(`${API_URL}/api/cafes/${cafeId}/reviews`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders
     },
-    body: JSON.stringify(reviewData)
+    body: JSON.stringify(reviewData),
+    // Add credentials to include cookies
+    credentials: 'include'
   })
   if (!res.ok) {
     const error = await res.json()
@@ -168,9 +117,8 @@ export async function createPost(id: string, data: { title: string, content: str
 }
 
 export async function getPosts(): Promise<ApiResponse<{ posts: any[] }>> {
-  // Note: You'll need to implement this Edge Function if you need posts functionality
   const headers = await getAuthHeader()
-  const res = await fetch(`${EDGE_FUNCTION_URL}/get-posts`, { headers })
+  const res = await fetch(`${API_URL}/api/posts`, { headers })
   if (!res.ok) {
     const error = await res.json()
     throw new Error(error.message || 'Failed to get posts')
@@ -183,9 +131,9 @@ export async function getUserReviews(): Promise<ApiResponse<{ reviews: (Review &
     console.log('Fetching user reviews...');
     const headers = await getAuthHeader();
     console.log('Auth headers:', headers);
-    console.log('Edge Function URL:', `${EDGE_FUNCTION_URL}/get-user-reviews`);
+    console.log('API URL:', `${API_URL}/api/user/reviews`);
     
-    const res = await fetch(`${EDGE_FUNCTION_URL}/get-user-reviews`, { headers });
+    const res = await fetch(`${API_URL}/api/user/reviews`, { headers });
     console.log('Response status:', res.status);
     
     if (!res.ok) {
@@ -216,8 +164,8 @@ export async function updateReview(reviewId: string, data: {
     const headers = await getAuthHeader();
     console.log('Auth headers:', headers);
     
-    // The Edge Function endpoint URL
-    const url = `${EDGE_FUNCTION_URL}/update-review/${reviewId}`;
+    // The correct endpoint URL based on the backend routes
+    const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
     console.log('Update review URL:', url);
     
     const res = await fetch(url, {
@@ -252,8 +200,8 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse<null>>
     const headers = await getAuthHeader();
     console.log('Auth headers:', headers);
     
-    // The Edge Function endpoint URL
-    const url = `${EDGE_FUNCTION_URL}/delete-review/${reviewId}`;
+    // The correct endpoint URL based on the backend routes
+    const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
     console.log('Delete review URL:', url);
     
     const res = await fetch(url, {
@@ -297,13 +245,14 @@ export async function updateUserProfile(data: { username?: string; full_name?: s
   })
   
   try {
-    const res = await fetch(`${EDGE_FUNCTION_URL}/update-user-profile`, {
-      method: 'PUT',
+    const res = await fetch(`${API_URL}/api/user/profile`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         ...headers
       },
-      body: JSON.stringify(apiData)
+      body: JSON.stringify(apiData),
+      credentials: 'include'
     })
     
     console.log('Profile update response status:', res.status)
