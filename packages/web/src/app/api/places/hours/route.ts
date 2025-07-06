@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       
       // Add a larger buffer (15 minutes) to ensure stores show as closed after their closing time
       // This helps account for any time discrepancies or rounding issues
-      const bufferMinutes = 15;
+      const bufferMinutes = 0;
       
       // Handle cases where store closes after midnight
       if (closeTimeMinutes < openTimeMinutes) {
