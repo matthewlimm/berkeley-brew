@@ -205,7 +205,6 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
 
     console.log(`Adding review for cafe ${id} by user ${userId}`);
     console.log('Review data:', { rating, comment });
-    console.log('User object from auth middleware:', JSON.stringify(req.user, null, 2));
 
     if (!rating) {
       return res.status(400).json({
@@ -214,64 +213,24 @@ app.post('/api/cafes/:id/reviews', authMiddleware, async (req, res) => {
       });
     }
 
-    if (!userId) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'User ID is required'
-      });
-    }
-
-    // Check if user has already reviewed this cafe
-    const { data: existingReview, error: checkError } = await supabase
+    const { data, error } = await supabase
       .from('reviews')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('cafe_id', id)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('Error checking for existing review:', checkError);
-      throw checkError;
-    }
-
-    let result;
-    if (existingReview) {
-      // Update existing review
-      console.log('Updating existing review');
-      result = await supabase
-        .from('reviews')
-        .update({
+      .insert([
+        {
+          cafe_id: id,
+          user_id: userId,
           rating,
           comment,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingReview.id)
-        .select();
-    } else {
-      // Create new review
-      console.log('Creating new review');
-      result = await supabase
-        .from('reviews')
-        .insert([
-          {
-            cafe_id: id,
-            user_id: userId,
-            rating,
-            comment,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select();
-    }
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
 
-    if (result.error) {
-      console.error('Error saving review:', result.error);
-      throw result.error;
-    }
+    if (error) throw error;
 
     return res.status(201).json({
       status: 'success',
-      data: { review: result.data[0] }
+      data: { review: data[0] }
     });
   } catch (error) {
     console.error('Error adding review:', error);
@@ -328,20 +287,11 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
     const { cafe_id } = req.body;
 
     console.log(`Adding bookmark for cafe ${cafe_id} by user ${userId}`);
-    console.log('User object from auth middleware:', JSON.stringify(req.user, null, 2));
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
 
     if (!cafe_id) {
       return res.status(400).json({
         status: 'error',
         message: 'Cafe ID is required'
-      });
-    }
-
-    if (!userId) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'User ID is required'
       });
     }
 
@@ -353,14 +303,10 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
       .eq('cafe_id', cafe_id)
       .maybeSingle();
 
-    if (checkError) {
-      console.error('Error checking for existing bookmark:', checkError);
-      throw checkError;
-    }
+    if (checkError) throw checkError;
 
     // If bookmark exists, return it
     if (existingBookmark) {
-      console.log('Bookmark already exists');
       return res.json({
         status: 'success',
         data: { bookmark: existingBookmark },
@@ -369,7 +315,6 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
     }
 
     // Otherwise create a new bookmark
-    console.log('Creating new bookmark');
     const { data, error } = await supabase
       .from('bookmarks')
       .insert([
@@ -381,12 +326,8 @@ app.post('/api/bookmarks', authMiddleware, async (req, res) => {
       ])
       .select();
 
-    if (error) {
-      console.error('Error creating bookmark:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    console.log('Bookmark created successfully:', data[0]);
     return res.status(201).json({
       status: 'success',
       data: { bookmark: data[0] }
@@ -444,9 +385,6 @@ app.delete('/api/bookmarks/:cafeId', authMiddleware, async (req, res) => {
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   
-  console.log('Auth middleware called');
-  console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  
   // For development/debugging, allow requests without auth
   if (!isProduction) {
     console.log('Auth bypassed in development mode');
@@ -455,51 +393,39 @@ function authMiddleware(req, res, next) {
   }
   
   if (!authHeader) {
-    console.log('No authorization header provided');
     return res.status(401).json({ error: 'No authorization header provided' });
   }
 
   if (!authHeader.startsWith('Bearer ')) {
-    console.log('Invalid authorization format');
     return res.status(401).json({ error: 'Invalid authorization format' });
   }
 
   const token = authHeader.split(' ')[1];
-  console.log('Token received (first 15 chars):', token.substring(0, 15) + '...');
   
   if (!supabase) {
-    console.log('Supabase client not initialized');
     return res.status(500).json({ error: 'Supabase client not initialized' });
   }
 
-  try {
-    // Verify the token with Supabase
-    console.log('Verifying token with Supabase...');
-    supabase.auth.getUser(token)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Auth error from Supabase:', error);
-          return res.status(401).json({ error: 'Invalid token', details: error.message });
-        }
+  // Verify the token with Supabase
+  supabase.auth.getUser(token)
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('Auth error:', error);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
 
-        if (!data || !data.user) {
-          console.log('User not found in token data');
-          return res.status(401).json({ error: 'User not found' });
-        }
+      if (!data || !data.user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
 
-        console.log('User authenticated successfully:', data.user.id);
-        // Add user to request object
-        req.user = data.user;
-        next();
-      })
-      .catch(error => {
-        console.error('Exception in auth verification:', error);
-        res.status(500).json({ error: 'Authentication error', details: error.message });
-      });
-  } catch (error) {
-    console.error('Exception in auth middleware:', error);
-    res.status(500).json({ error: 'Authentication error', details: error.message });
-  }
+      // Add user to request object
+      req.user = data.user;
+      next();
+    })
+    .catch(error => {
+      console.error('Auth error:', error);
+      res.status(500).json({ error: 'Authentication error' });
+    });
 }
 
 // 404 handler
