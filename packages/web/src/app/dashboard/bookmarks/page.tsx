@@ -27,17 +27,11 @@ interface Bookmark {
     coffee_quality_score?: number
     student_friendliness_score?: number
     business_hours?: any
-    price_category?: "$" | "$$" | "$$$" | "$$$$" | null
-    wifi_speed?: number
+    price_category?: "$" | "$$" | "$$$" | null
     latitude?: number
     longitude?: number
     place_id?: string
     popular_times?: any
-    realtime?: {
-      wifi_speed?: number
-      noise_level?: number
-      seating_availability?: number
-    }
     reviews?: any[]
   }
 }
@@ -444,14 +438,7 @@ export default function BookmarksPage() {
         <CafeDetailModal 
           cafe={{
             ...bookmarks.find(b => b.cafes.id === modalCafeId)!.cafes,
-            image_url: bookmarks.find(b => b.cafes.id === modalCafeId)?.cafes.image_url || undefined,
-            // Convert wifi_speed from string to number if needed
-            realtime: bookmarks.find(b => b.cafes.id === modalCafeId)?.cafes.realtime ? {
-              wifi_speed: bookmarks.find(b => b.cafes.id === modalCafeId)?.cafes.realtime?.wifi_speed ? 
-                Number(bookmarks.find(b => b.cafes.id === modalCafeId)?.cafes.realtime?.wifi_speed) : null,
-              noise_level: null,
-              seating_availability: null
-            } : undefined
+            image_url: bookmarks.find(b => b.cafes.id === modalCafeId)?.cafes.image_url || undefined
           }}
           isOpen={!!modalCafeId}
           onClose={() => setModalCafeId(null)}

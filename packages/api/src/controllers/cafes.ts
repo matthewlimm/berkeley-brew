@@ -236,19 +236,11 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
             ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
             : 0
 
-        // Add placeholder for realtime data (removed from query)
-        const realtimeData = {
-            wifi_availability: null,
-            outlet_availability: null,
-            seating: null
-        }
-
         res.status(200).json({
             status: 'success',
             data: {
                 cafe: {
                     ...cafe,
-                    realtime: [realtimeData], // Match the original structure expected by frontend
                     average_rating: avgRating,
                     review_count: reviews.length
                 }

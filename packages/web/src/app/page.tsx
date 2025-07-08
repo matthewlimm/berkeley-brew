@@ -131,7 +131,8 @@ export default function Home() {
     'distance' | 'rating' | 'mostReviewed' | 'grindability' | 'vibe' | 'studentFriendliness' | 'coffeeQuality'
   >('distance');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [modalCafeId, setModalCafeId] = useState<string | null>(null);
+  const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
+  const [currentReviewCafeId, setCurrentReviewCafeId] = useState<string>('');
   const { user } = useAuth();
   
   // Filter state
@@ -550,6 +551,17 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    if (isWriteReviewModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isWriteReviewModalOpen]);
+
   if (error) {
     return (
       <MainLayout>
@@ -863,7 +875,7 @@ export default function Home() {
                   style={{ 
                     backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
                   }}
-                  onClick={() => setModalCafeId(cafe.id)}
+                  onClick={() => setSelectedCafeId(cafe.id)}
                 ></div>
                 
                 <div className="p-5">
@@ -872,7 +884,7 @@ export default function Home() {
                     <div className="flex items-center max-w-[60%]"> {/* Reduced max width for more aggressive truncation */}
                       <h3 
                         className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate pr-3"
-                        onClick={() => setModalCafeId(cafe.id)}
+                        onClick={() => setSelectedCafeId(cafe.id)}
                         title={cafe.name} /* Show full name on hover */
                       >
                         {cafe.name}
@@ -1013,34 +1025,6 @@ export default function Home() {
                     
                     {/* Golden Bear Score removed */}
                   </div>
-                  
-                  {/* Amenities */}
-                  <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                    {cafe.realtime?.wifi_speed && (
-                      <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.415-1.415 9 9 0 0112.728 0 1 1 0 01-1.415 1.415zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                        </svg>
-                        <span className="capitalize">WiFi: {cafe.realtime.wifi_speed}Mbps</span>
-                      </div>
-                    )}
-                    {cafe.realtime?.noise_level && (
-                      <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                        </svg>
-                        <span className="capitalize">Noise: {cafe.realtime.noise_level}/10</span>
-                      </div>
-                    )}
-                    {cafe.realtime?.seating_availability && (
-                      <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                        </svg>
-                        <span className="capitalize">Seating: {cafe.realtime.seating_availability}/10</span>
-                      </div>
-                    )}
-                  </div>
 
                   {/* Popular Times Section - Always render for consistent layout */}
                   <div className="mt-5 px-3">
@@ -1090,30 +1074,24 @@ export default function Home() {
                     <div className="mb-5 bg-gray-50 p-4 rounded-lg" style={{ height: 'auto', minHeight: 'min-content' }}>
                       <CafeReviews 
                         cafeId={cafe.id} 
-                        onShowAll={() => setModalCafeId(cafe.id)}
+                        hideToggle={true}
+                        onShowAll={() => setSelectedCafeId(cafe.id)}
                       />
                     </div>
                   )}
 
-                  {selectedCafeId === cafe.id ? (
-                    <div className="mt-4" style={{ height: 'auto', minHeight: 'min-content' }}>
-                      <ReviewForm
-                        cafeId={cafe.id}
-                        onSuccess={handleReviewSuccess}
-                        onCancel={() => setSelectedCafeId(null)}
-                      />
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setSelectedCafeId(cafe.id)}
-                      className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      Write a Review
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setIsWriteReviewModalOpen(true);
+                      setCurrentReviewCafeId(cafe.id);
+                    }}
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Write a Review
+                  </button>
                 </div>
               </div>
             ))}
@@ -1121,18 +1099,36 @@ export default function Home() {
         )}
         
         {/* Cafe Detail Modal */}
-        {modalCafeId && cafes.find(cafe => cafe.id === modalCafeId) && (
+        {selectedCafeId && cafes.find(cafe => cafe.id === selectedCafeId) && (
           <CafeDetailModal 
             cafe={{
-              ...cafes.find(cafe => cafe.id === modalCafeId)!,
-              image_url: cafes.find(cafe => cafe.id === modalCafeId)?.image_url || undefined
+              ...cafes.find(cafe => cafe.id === selectedCafeId)!,
+              image_url: cafes.find(cafe => cafe.id === selectedCafeId)?.image_url || undefined
             }}
-            isOpen={!!modalCafeId}
-            onClose={() => setModalCafeId(null)}
+            isOpen={!!selectedCafeId}
+            onClose={() => setSelectedCafeId(null)}
             formatRating={formatRating}
             hasReviews={hasReviews}
             getScoreValue={getScoreValue}
           />
+        )}
+        
+        {isWriteReviewModalOpen && currentReviewCafeId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+            setIsWriteReviewModalOpen(false);
+            setCurrentReviewCafeId('');
+          }}>
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+              <ReviewForm 
+                cafeId={currentReviewCafeId} 
+                onSuccess={() => {
+                  setIsWriteReviewModalOpen(false);
+                  setCurrentReviewCafeId('');
+                  // Refresh data as needed
+                }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </MainLayout>

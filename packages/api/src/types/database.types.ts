@@ -59,12 +59,6 @@ export type Database = {
           vibe_score: number | null
           golden_bear_score: number | null
           review_count: number | null
-          realtime?: {
-            seating_availability: number | null
-            noise_level: number | null
-            wifi_speed: number | null
-            updated_at: string | null
-          }
           popular_times?: Json | null
           popular_times_updated_at?: string | null
         }

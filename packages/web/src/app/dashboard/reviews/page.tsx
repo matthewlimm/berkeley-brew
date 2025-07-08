@@ -42,6 +42,18 @@ export default function MyReviewsPage() {
     fetchReviews();
   }, [user]);
   
+  useEffect(() => {
+    if (isEditModalOpen || isDeleteModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isEditModalOpen, isDeleteModalOpen]);
+
   const fetchReviews = async () => {
     if (!user) {
       console.log('No user found, skipping review fetch');
@@ -322,8 +334,11 @@ export default function MyReviewsPage() {
       
       {/* Edit Review Modal */}
       {isEditModalOpen && currentReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsEditModalOpen(false)}
+        >
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Review</h3>
             <form onSubmit={handleEditSubmit}>
               {/* Rating inputs - Overall Rating (golden_bear_score) is calculated on the backend */}
@@ -375,7 +390,7 @@ export default function MyReviewsPage() {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && currentReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Review</h3>
             <p className="text-sm text-gray-500 mb-4">Are you sure you want to delete your review for {currentReview?.cafe_name}? This action cannot be undone.</p>
             

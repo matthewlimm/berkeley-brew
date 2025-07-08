@@ -21,12 +21,8 @@ interface ExtendedCafe {
   reviews?: any[];
   place_id?: string | null;
   business_hours?: any;
-  price_category?: "$" | "$$" | "$$$" | "$$$$" | null;
-  realtime?: {
-    wifi_speed?: number | null;
-    noise_level?: number | null;
-    seating_availability?: number | null;
-  };
+  price_category?: "$" | "$$" | "$$$" | null;
+
   popular_times?: any;
 }
 
@@ -368,33 +364,7 @@ export function CafeDetailModal({
             </div>
           </div>
 
-          {/* Amenities */}
-          <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-6">
-            {cafe.realtime?.wifi_speed && (
-              <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                </svg>
-                <span className="capitalize">WiFi: {cafe.realtime.wifi_speed}Mbps</span>
-              </div>
-            )}
-            {cafe.realtime?.noise_level && (
-              <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                </svg>
-                <span className="capitalize">Noise: {cafe.realtime.noise_level}/10</span>
-              </div>
-            )}
-            {cafe.realtime?.seating_availability && (
-              <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-                <span className="capitalize">Seating: {cafe.realtime.seating_availability}/10</span>
-              </div>
-            )}
-          </div>
+
 
           {/* Popular Times Section */}
           <div className="mb-6">

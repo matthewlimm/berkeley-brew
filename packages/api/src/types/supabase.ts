@@ -11,53 +11,6 @@ export type AmenityType = 'low' | 'medium' | 'high'
 export interface Database {
   public: {
     Tables: {
-      post: {
-        Row: {
-          id: string
-          title: string
-          content: string
-          type: 'recipe' | 'guide'
-          author_id: string
-          brew_method: string
-          difficulty_level: number
-          prep_time: number
-          ingredients: string[] | null
-          likes_count: number
-          comments_count: number
-          updated_at: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          content: string
-          type: 'recipe' | 'guide'
-          author_id: string
-          brew_method: string
-          difficulty_level: number
-          prep_time: number
-          ingredients?: string[] | null
-          likes_count?: number
-          comments_count?: number
-          updated_at?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          content?: string
-          type?: 'recipe' | 'guide'
-          author_id?: string
-          brew_method?: string
-          difficulty_level?: number
-          prep_time?: number
-          ingredients?: string[] | null
-          likes_count?: number
-          comments_count?: number
-          updated_at?: string
-          created_at?: string
-        }
-      }
       cafes: {
         Row: {
           id: string
@@ -105,32 +58,6 @@ export interface Database {
           content?: string
           rating?: number
           created_at?: string
-        }
-      }
-      cafes_realtime_data: {
-        Row: {
-          id: string
-          cafe_id: string
-          user_id: string
-          wifi_availability: AmenityType
-          outlet_availability: AmenityType
-          seating: AmenityType
-        }
-        Insert: {
-          id?: string
-          cafe_id: string
-          user_id: string
-          wifi_availability: AmenityType
-          outlet_availability: AmenityType
-          seating: AmenityType
-        }
-        Update: {
-          id?: string
-          cafe_id?: string
-          user_id?: string
-          wifi_availability?: AmenityType
-          outlet_availability?: AmenityType
-          seating?: AmenityType
         }
       }
       users: {

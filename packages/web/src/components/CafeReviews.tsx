@@ -28,6 +28,8 @@ import { getCafe } from '../services/api';
 import type { Database } from '@berkeley-brew/api/src/types/database.types';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { ReviewForm } from './ReviewForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define the User type
 type User = {
@@ -59,13 +61,13 @@ type CafeResponse = {
 interface CafeReviewsProps {
   cafeId: string;
   showAll?: boolean;
-  onShowAll?: () => void;
+  setShowAll?: (showAll: boolean) => void;
   hideToggle?: boolean;
+  onShowAll?: () => void;
+  setSelectedCafeId?: (cafeId: string) => void;
 }
 
-import { useAuth } from '@/contexts/AuthContext';
-
-export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = false }: CafeReviewsProps) {
+export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = false, onShowAll, setSelectedCafeId }: CafeReviewsProps) {
   const [reviews, setReviews] = useState<ExtendedReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -91,6 +93,9 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<ExtendedReview | null>(null);
+
+  // Write review modal state
+  const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
 
   // Helper function to render rating input (copied from MyReviewsPage)
   const renderRatingInput = (name: string, label: string, value: number) => {
@@ -126,6 +131,18 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
     // Update showAllReviews when showAll prop changes
     setShowAllReviews(showAll);
   }, [cafeId, showAll]);
+
+  useEffect(() => {
+    if (isEditModalOpen || isDeleteModalOpen || isWriteReviewModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isEditModalOpen, isDeleteModalOpen, isWriteReviewModalOpen]);
 
   const loadReviews = async () => {
     try {
@@ -245,12 +262,34 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
   
   // Handle toggle between showing all reviews or preview
   const handleToggleReviews = () => {
-    if (onShowAll) {
-      // If onShowAll callback is provided, use it to open the modal
-      onShowAll();
+    if (setShowAll) {
+      // If setShowAll callback is provided, use it to open the modal
+      setShowAll(!showAll);
     } else {
       // Otherwise just toggle to show all reviews in-place
       setShowAllReviews(!showAllReviews);
+    }
+  };
+
+  const handleNewReviewSubmit = async (reviewData: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert([
+          {
+            cafe_id: cafeId,
+            user_id: user?.id,
+            ...reviewData
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+      
+      setIsWriteReviewModalOpen(false);
+      loadReviews();
+    } catch (error) {
+      console.error('Error submitting review:', error);
     }
   };
 
@@ -306,7 +345,7 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
               {/* Overall Score Badge */}
               <div className="px-3 py-1.5 bg-amber-50 rounded-full text-sm font-medium text-amber-700 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 {review.golden_bear_score?.toFixed(1) || 'N/A'}
               </div>
@@ -378,8 +417,17 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
 
           {/* Edit Review Modal */}
           {isEditModalOpen && currentReview && currentReview.id === review.id && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setCurrentReview(null);
+              }}
+            >
+              <div 
+                className="bg-white rounded-lg p-6 w-full max-w-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Review</h3>
                 <form onSubmit={async (e) => {
                   e.preventDefault();
@@ -494,98 +542,32 @@ export function CafeReviews({ cafeId, showAll = false, onShowAll, hideToggle = f
               </div>
             </div>
           )}
-
-          {/* Edit Review Modal */}
-          {isEditModalOpen && currentReview && currentReview.id === review.id && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Review</h3>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  setIsSubmitting(true);
-                  try {
-                    // updateReview should be imported from @/services/api
-                    // @ts-ignore
-                    const { updateReview } = await import('@/services/api');
-                    await updateReview(currentReview.id, editFormData);
-                    setIsEditModalOpen(false);
-                    setCurrentReview(null);
-                    await loadReviews();
-                  } catch (err) {
-                    alert('Failed to update review. Please try again.');
-                  } finally {
-                    setIsSubmitting(false);
-                  }
-                }}>
-                  {/* Rating inputs */}
-                  <div className="mb-4">
-                    <p className="block text-sm font-medium text-gray-700">Golden Bear Score (Auto-calculated)</p>
-                    <div className="mt-1 flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <svg
-                          key={i}
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-4 w-4 ${i < (currentReview.golden_bear_score || 0) ? 'text-amber-500' : 'text-gray-300'}`}
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                  {renderRatingInput('grindability_score', 'Grindability', editFormData.grindability_score)}
-                  {renderRatingInput('vibe_score', 'Vibe', editFormData.vibe_score)}
-                  {renderRatingInput('coffee_quality_score', 'Coffee Quality', editFormData.coffee_quality_score)}
-                  {renderRatingInput('student_friendliness_score', 'Friendliness', editFormData.student_friendliness_score)}
-                  {/* Content textarea */}
-                  <div className="mb-4">
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700">Review</label>
-                    <textarea
-                      id="content"
-                      rows={4}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                      value={editFormData.content}
-                      onChange={(e) => setEditFormData({ ...editFormData, content: e.target.value })}
-                      
-                    />
-                  </div>
-                  {/* Action buttons */}
-                  <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:col-start-2 sm:text-sm"
-                    >
-                      {isSubmitting ? 'Saving...' : 'Save Changes'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setIsEditModalOpen(false); setCurrentReview(null); }}
-                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
         </div>
       ))}
       
       {/* Show All Reviews button - only shown when not in modal and there are more reviews */}
-      {hasMoreReviews && !showAll && !hideToggle && (
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={handleToggleReviews}
-            className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-full shadow-md transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            Show All {reviews.length} Reviews
-          </button>
+      {reviews.length > 2 && !showAll && (
+        <button 
+          className="mt-4 text-sm text-amber-600 hover:text-amber-700 font-medium"
+          onClick={() => {
+            if (onShowAll) {
+              onShowAll();
+            } else if (setSelectedCafeId) {
+              setSelectedCafeId(cafeId);
+              // This matches the cafe card image click behavior
+            } else {
+              console.error('No handler provided to show cafe details');
+            }
+          }}
+        >
+          Show All Reviews
+        </button>
+      )}
+      {isWriteReviewModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsWriteReviewModalOpen(false)}>
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <ReviewForm cafeId={cafeId} onSubmit={handleNewReviewSubmit} />
+          </div>
         </div>
       )}
     </div>
