@@ -23,7 +23,7 @@ function formatRelativeTimestamp(dateString: string, nowString: string): string 
 }
 
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { getCafe } from '../services/api';
 import type { Database } from '@berkeley-brew/api/src/types/database.types';
 import Image from 'next/image';
@@ -65,12 +65,34 @@ interface CafeReviewsProps {
   hideToggle?: boolean;
   onShowAll?: () => void;
   setSelectedCafeId?: (cafeId: string) => void;
+  onReviewChange?: (reviewData: any) => void;
 }
 
-export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = false, onShowAll, setSelectedCafeId }: CafeReviewsProps) {
+export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hideToggle = false, onShowAll, setSelectedCafeId, onReviewChange }: CafeReviewsProps, ref) => {
   const [reviews, setReviews] = useState<ExtendedReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Expose methods to parent components
+  useImperativeHandle(ref, () => ({
+    // Method to add a new review directly to the reviews list
+    addReview: (newReview: any) => {
+      console.log('Adding new review directly to reviews list:', newReview);
+      setReviews(prevReviews => [newReview, ...prevReviews]);
+    },
+    // Method to update avatar URL in the avatarUrls map
+    updateAvatarUrl: (userId: string, avatarUrl: string) => {
+      console.log('Updating avatar URL for user:', userId, avatarUrl);
+      setAvatarUrls(prev => ({
+        ...prev,
+        [userId]: avatarUrl
+      }));
+    },
+    // Method to refresh reviews from the server
+    refreshReviews: () => {
+      loadReviews();
+    }
+  }));
   const [showAllReviews, setShowAllReviews] = useState(showAll);
   
   // Number of reviews to show in preview mode
@@ -286,7 +308,36 @@ export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = 
 
       if (error) throw error;
       
+      // Close the modal
       setIsWriteReviewModalOpen(false);
+      
+      if (data && data.length > 0) {
+        // Create a new review object with the current user data
+        const newReview = {
+          ...data[0],
+          user: currentUser ? {
+            id: currentUser.id,
+            username: currentUser.email?.split('@')[0] || currentUser.id,
+            full_name: currentUser.user_metadata?.full_name,
+            avatar_url: currentUser.user_metadata?.avatar_url
+          } : undefined,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Update the reviews list immediately
+        setReviews(prevReviews => [newReview, ...prevReviews]);
+        
+        // If the user has an avatar, update the avatarUrls state
+        if (currentUser?.id && currentUser?.user_metadata?.avatar_url) {
+          setAvatarUrls(prev => ({
+            ...prev,
+            [currentUser.id]: currentUser.user_metadata.avatar_url
+          }));
+        }
+      }
+      
+      // Also load reviews from the server to ensure consistency
       loadReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -436,10 +487,34 @@ export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = 
                     // updateReview should be imported from @/services/api
                     // @ts-ignore
                     const { updateReview } = await import('@/services/api');
-                    await updateReview(currentReview.id, editFormData);
+                    const result = await updateReview(currentReview.id, editFormData);
+                    
+                    // Update the review in the local state immediately
+                    if (result) {
+                      setReviews(prevReviews => 
+                        prevReviews.map(review => 
+                          review.id === currentReview.id 
+                            ? { ...review, ...editFormData, updated_at: new Date().toISOString() } 
+                            : review
+                        )
+                      );
+                    }
+                    
                     setIsEditModalOpen(false);
                     setCurrentReview(null);
+                    
+                    // Also load reviews from the server to ensure consistency
                     await loadReviews();
+                    
+                    // Trigger any parent callbacks to refresh cafe data
+                    if (onReviewChange) {
+                      // Pass the updated review data to trigger a refresh of cafe metrics
+                      onReviewChange({
+                        action: 'edit',
+                        reviewId: currentReview.id,
+                        ...editFormData
+                      });
+                    }
                   } catch (err) {
                     alert('Failed to update review. Please try again.');
                   } finally {
@@ -517,9 +592,25 @@ export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = 
                         // @ts-ignore
                         const { deleteReview } = await import('@/services/api');
                         await deleteReview(reviewToDelete.id);
+                        
+                        // Update the reviews list immediately by removing the deleted review
+                        setReviews(prevReviews => prevReviews.filter(review => review.id !== reviewToDelete.id));
+                        
                         setIsDeleteModalOpen(false);
                         setReviewToDelete(null);
+                        
+                        // Also load reviews from the server to ensure consistency
                         await loadReviews();
+                        
+                        // Trigger any parent callbacks to refresh cafe data
+                        if (onReviewChange) {
+                          // Pass detailed information about the deleted review to trigger a refresh of cafe metrics
+                          onReviewChange({
+                            action: 'delete',
+                            reviewId: reviewToDelete.id,
+                            cafeId: cafeId
+                          });
+                        }
                       } catch (err) {
                         alert('Failed to delete review. Please try again.');
                       } finally {
@@ -573,4 +664,4 @@ export function CafeReviews({ cafeId, showAll = false, setShowAll, hideToggle = 
     </div>
   </div>
   );
-}
+});

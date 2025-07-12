@@ -145,6 +145,41 @@ export default function Home() {
   // Refs for click outside handling
   const priceDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Function to handle review changes (edit/delete) and update cafe metrics
+  const handleReviewChange = async (reviewData: any) => {
+    console.log('Review changed:', reviewData);
+    
+    // Refresh cafe data to update metrics
+    try {
+      setIsLoading(true);
+      const response = await getCafes();
+      if (response?.data?.cafes) {
+        // Update cafes with fresh data
+        setCafes(response.data.cafes);
+        
+        // Update trending cafes
+        const trendingCafes = response.data.cafes
+          .filter(cafe => {
+            return cafe.grindability_score !== null || 
+                   cafe.student_friendliness_score !== null || 
+                   cafe.coffee_quality_score !== null || 
+                   cafe.vibe_score !== null;
+          })
+          .sort((a, b) => {
+            const scoreB = calculateGoldenBearScore(b) || 0;
+            const scoreA = calculateGoldenBearScore(a) || 0;
+            return scoreB - scoreA;
+          })
+          .slice(0, 3);
+        setTrendingCafes(trendingCafes);
+      }
+    } catch (error) {
+      console.error('Failed to refresh cafe data after review change:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -1076,6 +1111,7 @@ export default function Home() {
                         cafeId={cafe.id} 
                         hideToggle={true}
                         onShowAll={() => setSelectedCafeId(cafe.id)}
+                        onReviewChange={handleReviewChange}
                       />
                     </div>
                   )}
@@ -1110,6 +1146,18 @@ export default function Home() {
             formatRating={formatRating}
             hasReviews={hasReviews}
             getScoreValue={getScoreValue}
+            onReviewSubmit={() => {
+              // Refresh cafe data to update metrics
+              setIsLoading(true);
+              getCafes()
+                .then((response) => {
+                  if (response?.data?.cafes) {
+                    setCafes(response.data.cafes);
+                  }
+                })
+                .catch((e) => console.error("Failed to refresh cafes:", e))
+                .finally(() => setIsLoading(false));
+            }}
           />
         )}
         
@@ -1121,10 +1169,43 @@ export default function Home() {
             <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
               <ReviewForm 
                 cafeId={currentReviewCafeId} 
-                onSuccess={() => {
+                onSuccess={(reviewData) => {
                   setIsWriteReviewModalOpen(false);
                   setCurrentReviewCafeId('');
-                  // Refresh data as needed
+                  
+                  // Refresh cafe data to update metrics
+                  setIsLoading(true);
+                  getCafes()
+                    .then((response) => {
+                      if (response?.data?.cafes) {
+                        setCafes(response.data.cafes);
+                        
+                        // Update trending cafes
+                        const updatedTrendingCafes = response.data.cafes
+                          .filter(cafe => {
+                            return cafe.grindability_score !== null || 
+                                  cafe.student_friendliness_score !== null || 
+                                  cafe.coffee_quality_score !== null || 
+                                  cafe.vibe_score !== null;
+                          })
+                          .sort((a, b) => {
+                            const scoreB = calculateGoldenBearScore(b) || 0;
+                            const scoreA = calculateGoldenBearScore(a) || 0;
+                            return scoreB - scoreA;
+                          })
+                          .slice(0, 3);
+                        setTrendingCafes(updatedTrendingCafes);
+                      }
+                    })
+                    .catch((e) => console.error("Failed to refresh cafes:", e))
+                    .finally(() => setIsLoading(false));
+                  
+                  // If the cafe detail modal is open for this cafe, refresh it
+                  if (selectedCafeId === currentReviewCafeId) {
+                    // Force a refresh of the cafe detail modal
+                    setSelectedCafeId(null);
+                    setTimeout(() => setSelectedCafeId(currentReviewCafeId), 10);
+                  }
                 }}
               />
             </div>

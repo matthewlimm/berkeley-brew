@@ -253,6 +253,9 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
 
 // Add a review to a cafe
 const addCafeReview = async (req: Request, res: Response, next: NextFunction) => {
+    // Define insertedReview at the top level of the function
+    let reviewData: any = null;
+    
     try {
         const { id: cafeId } = req.params
         
@@ -357,8 +360,8 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             
             console.log('Auth user verified successfully:', !!authData.user);
             
-            // Now insert the review with the client that respects RLS
-            const { error } = await anonClient
+            // Now insert the review with the client that respects RLS and return the inserted data
+            const { data: insertedReview, error } = await anonClient
                 .from('reviews')
                 .insert({
                     cafe_id: cafeId,
@@ -370,6 +373,7 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
                     vibe_score,
                     golden_bear_score: (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4
                 })
+                .select('*')
 
             if (error) {
                 console.error('Review insert error:', error)
@@ -377,6 +381,12 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             }
             
             console.log('Review created successfully with proper authentication')
+            console.log('Inserted review data:', insertedReview)
+            
+            // Store the review data at the function scope level
+            if (insertedReview && insertedReview.length > 0) {
+                reviewData = insertedReview[0];
+            }
         } catch (err) {
             console.error('Unexpected error during review creation:', err)
             return next(new AppError('Unexpected error during review creation', 500))
@@ -384,7 +394,10 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
 
         res.status(201).json({
             status: 'success',
-            data: { message: 'Review submitted successfully' }
+            data: { 
+                message: 'Review submitted successfully',
+                review: reviewData
+            }
         })
     } catch (err) {
         next(new AppError('An error occurred while creating the review', 500))

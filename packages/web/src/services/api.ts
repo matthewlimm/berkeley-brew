@@ -65,7 +65,7 @@ export async function createReview(cafeId: string, data: {
   student_friendliness_score: number; 
   coffee_quality_score: number; 
   vibe_score: number; 
-}): Promise<ApiResponse<void>> {
+}): Promise<ApiResponse<{ review: any }>> {
   // Calculate golden_bear_score as the average of all subscores
   const reviewData = {
     ...data,

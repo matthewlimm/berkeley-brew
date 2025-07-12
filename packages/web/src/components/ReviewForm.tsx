@@ -4,6 +4,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { createReview } from '../services/api';
 
+// Define the API response type
+type ApiReviewResponse = {
+  review?: {
+    id: string;
+    content: string;
+    grindability_score: number;
+    student_friendliness_score: number;
+    coffee_quality_score: number;
+    vibe_score: number;
+    golden_bear_score: number;
+    user_id: string;
+    cafe_id: string;
+    created_at: string;
+    updated_at: string;
+  };
+};
+
 interface ReviewFormProps {
   cafeId: string;
   onSuccess?: (reviewData: { 
@@ -11,6 +28,10 @@ interface ReviewFormProps {
     student_friendliness_score: number;
     coffee_quality_score: number;
     vibe_score: number;
+    content?: string;
+    id?: string;
+    // Include the complete review data from the server
+    complete_review?: any;
   }) => void;
   onCancel?: () => void;
 }
@@ -43,13 +64,19 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
 
     try {
       // Content is optional (but API expects a string, so we use empty string if blank)
-      await createReview(cafeId, { 
+      const reviewData = { 
         content: content.trim() || '', // Allow empty content, convert to empty string if blank
         grindability_score: grindabilityScore,
         student_friendliness_score: studentFriendlinessScore,
         coffee_quality_score: coffeeQualityScore,
         vibe_score: vibeScore
-      });
+      };
+      
+      // Send the review to the server and get the complete review data back
+      const response = await createReview(cafeId, reviewData);
+      console.log('Review submission response:', response);
+      console.log('Review submission response type:', typeof response);
+      console.log('Review submission response JSON:', JSON.stringify(response, null, 2));
       
       // Reset form
       setContent('');
@@ -58,12 +85,32 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
       setCoffeeQualityScore(null);
       setVibeScore(null);
       setValidationError('');
-      onSuccess?.({
+      
+      // Extract the review data from the API response
+      const reviewFromServer = response?.data?.review;
+      console.log('Review from server:', reviewFromServer);
+      
+      // Create a complete review object with all necessary data
+      const completeReviewData = {
+        // Include the original review data
+        ...reviewData,
+        // Include the content
+        content: content.trim() || '',
+        // Include the review ID and other data from the server response
+        id: reviewFromServer?.id || '',
+        // Include the complete review object from the server
+        complete_review: reviewFromServer || {},
+        // Include the scores
         grindability_score: grindabilityScore,
         student_friendliness_score: studentFriendlinessScore,
         coffee_quality_score: coffeeQualityScore,
         vibe_score: vibeScore
-      });
+      };
+      
+      console.log('Sending complete review data to parent:', completeReviewData);
+      
+      // Pass the complete review data to the onSuccess callback
+      onSuccess?.(completeReviewData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit review');
     } finally {

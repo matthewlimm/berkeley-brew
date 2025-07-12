@@ -34,6 +34,7 @@ interface CafeDetailModalProps {
   hasReviews: (cafe: any) => boolean;
   getScoreValue: (cafe: any, scoreField: string) => number;
   onReviewSubmit?: () => void;
+  onReviewChange?: (reviewData: any) => void;
 }
 
 interface TooltipProps {
@@ -190,8 +191,36 @@ export function CafeDetailModal({
   formatRating, 
   hasReviews, 
   getScoreValue,
-  onReviewSubmit 
+  onReviewSubmit,
+  onReviewChange
 }: CafeDetailModalProps) {
+  // Create a ref to access the CafeReviews component
+  const cafeReviewsRef = useRef<any>(null);
+  
+  // Add a refreshCafeData function to handle all review actions
+  const refreshCafeData = (reviewData?: any) => {
+    console.log('Refreshing cafe data for metrics update', reviewData);
+    
+    // Call onReviewChange callback if provided to refresh cafe data
+    if (onReviewChange) {
+      onReviewChange(reviewData || { action: 'refresh', cafeId: cafe.id });
+    }
+    
+    // For backward compatibility, also call onReviewSubmit if provided
+    if (onReviewSubmit) {
+      onReviewSubmit();
+    }
+    
+    // Force refresh by adding animation to the reviews section
+    const reviewsSection = document.getElementById('cafe-reviews-section');
+    if (reviewsSection) {
+      reviewsSection.classList.add('animate-pulse');
+      setTimeout(() => {
+        reviewsSection.classList.remove('animate-pulse');
+      }, 500);
+    }
+  };
+  
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { user } = useAuth();
 
@@ -403,16 +432,54 @@ export function CafeDetailModal({
               <div className="mb-6 p-4 rounded-lg">
                 <ReviewForm 
                   cafeId={cafe.id} 
-                  onSuccess={() => {
+                  onSuccess={(reviewData) => {
                     setShowReviewForm(false);
-                    // Force refresh by remounting the CafeReviews component
-                    const reviewsSection = document.getElementById('cafe-reviews-section');
-                    if (reviewsSection) {
-                      reviewsSection.classList.add('animate-pulse');
-                      setTimeout(() => {
-                        reviewsSection.classList.remove('animate-pulse');
-                      }, 500);
+                    
+                    // Add the new review directly to the reviews list for immediate display
+                    if (cafeReviewsRef.current && user) {
+                      console.log('Review data from server:', reviewData);
+                      
+                      // Get the complete review data from the server
+                      // First check if we have the complete review from the API response
+                      const serverReview = reviewData.complete_review;
+                      
+                      if (serverReview && reviewData.id) {
+                        // Format the review data to match the expected structure
+                        const formattedReview = {
+                          // Use the complete review data from the server
+                          ...serverReview,
+                          // Ensure we have the correct ID
+                          id: reviewData.id,
+                          // Include the complete user object with all necessary fields
+                          user: {
+                            id: user.id,
+                            username: user.user_metadata?.username || user.email?.split('@')[0] || 'User',
+                            email: user.email,
+                            avatar_url: user.user_metadata?.avatar_url
+                          },
+                          // Use server timestamps if available, otherwise use current time
+                          created_at: serverReview.created_at || new Date().toISOString(),
+                          updated_at: serverReview.updated_at || new Date().toISOString()
+                        };
+                        
+                        // Also update the avatarUrls map in the CafeReviews component
+                        if (user.id && user.user_metadata?.avatar_url) {
+                          cafeReviewsRef.current.updateAvatarUrl(user.id, user.user_metadata.avatar_url);
+                        }
+                        
+                        console.log('Adding formatted review to UI:', formattedReview);
+                        
+                        // Add the review directly to the reviews list
+                        cafeReviewsRef.current.addReview(formattedReview);
+                        
+                        console.log('Added review with ID:', reviewData.id);
+                      } else {
+                        console.error('Missing review ID or complete review data');
+                      }
                     }
+                    
+                    // Use the refreshCafeData function to update metrics
+                    refreshCafeData();
                   }}
                   onCancel={() => setShowReviewForm(false)}
                 />
@@ -420,7 +487,17 @@ export function CafeDetailModal({
             )}
             
             <div id="cafe-reviews-section">
-              <CafeReviews cafeId={cafe.id} showAll={true} hideToggle={true} />
+              <CafeReviews 
+                ref={cafeReviewsRef}
+                cafeId={cafe.id} 
+                showAll={true} 
+                hideToggle={true} 
+                onReviewChange={(reviewData) => {
+                  // Use the refreshCafeData function to update metrics for all review actions
+                  // Pass the review data to ensure proper refresh of cafe metrics
+                  refreshCafeData(reviewData);
+                }}
+              />
             </div>
           </div>
         </div>

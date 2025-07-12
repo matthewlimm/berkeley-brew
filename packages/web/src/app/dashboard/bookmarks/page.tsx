@@ -122,6 +122,30 @@ export default function BookmarksPage() {
   const [hasLoaded, setHasLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
 
+  // Function to handle review changes (edit/delete) and update cafe metrics
+  const handleReviewChange = async (reviewData: any) => {
+    console.log('Review changed in bookmarks page:', reviewData);
+    
+    // Refresh bookmarks data to update metrics
+    try {
+      setIsLoading(true);
+      const { apiService } = await import('@/services/apiService');
+      
+      // Get bookmarks with reviews included for proper score calculation
+      const response = await apiService.get('/bookmarks?includeReviews=true');
+      
+      if (Array.isArray(response)) {
+        setBookmarks(response);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        setBookmarks(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh bookmarks data after review change:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -445,6 +469,7 @@ export default function BookmarksPage() {
           formatRating={formatRating}
           hasReviews={hasReviews}
           getScoreValue={getScoreValue}
+          onReviewChange={handleReviewChange}
         />
       )}
     </div>
