@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { getUserReviews, updateReview, deleteReview } from '@/services/api';
+import { getUserReviews, updateReview, deleteReview, getCafe } from '@/services/api';
+import { CafeDetailModal } from '@/components/CafeDetailModal';
 
 interface Review {
   id: string;
@@ -20,6 +21,60 @@ interface Review {
   user_id?: string | null;
 }
 
+// Helper function to format rating display
+const formatRating = (rating: number | null | undefined): string => {
+  if (rating === null || rating === undefined || isNaN(Number(rating))) return "N/A"
+  return Number(rating).toFixed(1)
+}
+
+// Helper function to check if a cafe has reviews
+const hasReviews = (cafe: any): boolean => {
+  // Check if the cafe has a review_count greater than 0 and has a valid average_rating
+  return (cafe.review_count && cafe.review_count > 0) && 
+    (typeof cafe.average_rating === 'number' && cafe.average_rating > 0);
+}
+
+// Helper function to check if a specific score exists
+const hasScore = (cafe: any, scoreField: string): boolean => {
+  return cafe && typeof cafe[scoreField] === 'number' && !isNaN(cafe[scoreField]) && cafe[scoreField] > 0;
+}
+
+// Helper function to get the score value
+const getScoreValue = (cafe: any, scoreField: string): number => {
+  // Don't show any scores if there are no reviews
+  if (!hasReviews(cafe)) {
+    return 0;
+  }
+  
+  // First try to use pre-calculated scores from backend
+  const score = cafe[scoreField];
+  if (score !== null && score !== undefined && !isNaN(Number(score)) && Number(score) > 0) {
+    return Number(score);
+  }
+  
+  // Check if we have detailed review data with subscores
+  if (cafe.reviews && cafe.reviews.length > 0) {
+    // First check if we have the full review data with all subscores
+    const hasDetailedScores = cafe.reviews.some((review: any) => 
+      review[scoreField] !== undefined && review[scoreField] !== null
+    );
+    
+    if (hasDetailedScores) {
+      // Calculate average from all reviews with valid scores
+      const validScores = cafe.reviews
+        .map((review: any) => review[scoreField])
+        .filter((score: any) => score !== null && score !== undefined && !isNaN(Number(score)) && Number(score) > 0);
+        
+      if (validScores.length > 0) {
+        return validScores.reduce((sum: number, score: any) => sum + Number(score), 0) / validScores.length;
+      }
+    }
+  }
+  
+  // Default to 0 if no valid score found
+  return 0;
+}
+
 export default function MyReviewsPage() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -28,6 +83,9 @@ export default function MyReviewsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentReview, setCurrentReview] = useState<Review | null>(null);
+  // Added state for CafeDetailModal
+  const [modalCafeId, setModalCafeId] = useState<string | null>(null);
+  const [selectedCafe, setSelectedCafe] = useState<any | null>(null);
   // Removed golden_bear_score as it's calculated on the backend
   const [editFormData, setEditFormData] = useState({
     content: '',
@@ -41,6 +99,15 @@ export default function MyReviewsPage() {
   useEffect(() => {
     fetchReviews();
   }, [user]);
+  
+  // Effect to fetch cafe details when modalCafeId changes
+  useEffect(() => {
+    if (modalCafeId) {
+      fetchCafeDetails(modalCafeId);
+    } else {
+      setSelectedCafe(null);
+    }
+  }, [modalCafeId]);
   
   useEffect(() => {
     if (isEditModalOpen || isDeleteModalOpen) {
@@ -84,6 +151,49 @@ export default function MyReviewsPage() {
     }
   };
   
+  // Function to fetch cafe details when a cafe is clicked
+  const fetchCafeDetails = async (cafeId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await getCafe(cafeId);
+      
+      if (response?.data?.cafe) {
+        setSelectedCafe(response.data.cafe);
+      } else {
+        console.warn('No cafe found in response:', response);
+        setSelectedCafe(null);
+        setModalCafeId(null);
+      }
+    } catch (err) {
+      console.error('Error fetching cafe details:', err);
+      setError('Failed to load cafe details. Please try again later.');
+      setModalCafeId(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Function to handle review changes in the modal
+  const handleReviewChange = async (reviewData: any) => {
+    console.log('Review changed in reviews page:', reviewData);
+    
+    // Refresh reviews after a change
+    await fetchReviews();
+    
+    // If we have a selected cafe, refresh its data to update metrics
+    if (modalCafeId && selectedCafe) {
+      try {
+        const response = await getCafe(modalCafeId);
+        
+        if (response?.data?.cafe) {
+          setSelectedCafe(response.data.cafe);
+        }
+      } catch (err) {
+        console.error('Error refreshing cafe details after review change:', err);
+      }
+    }
+  };
+  
   const handleEditClick = (review: Review) => {
     setCurrentReview(review);
     setEditFormData({
@@ -120,8 +230,13 @@ export default function MyReviewsPage() {
       console.log('Update review response:', response);
       
       setIsEditModalOpen(false);
-      // Refresh reviews list
-      await fetchReviews();
+      
+      // Use handleReviewChange to refresh reviews and update metrics
+      await handleReviewChange({
+        action: 'edit',
+        reviewId: currentReview.id,
+        cafeId: currentReview.cafe_id
+      });
     } catch (err) {
       console.error('Error updating review:', err);
       setError('Failed to update review. Please try again later.');
@@ -147,8 +262,13 @@ export default function MyReviewsPage() {
       console.log('Delete review response:', response);
       
       setIsDeleteModalOpen(false);
-      // Refresh reviews list
-      await fetchReviews();
+      
+      // Use handleReviewChange to refresh reviews and update metrics
+      await handleReviewChange({
+        action: 'delete',
+        reviewId: currentReview.id,
+        cafeId: currentReview.cafe_id
+      });
     } catch (err) {
       console.error('Error deleting review:', err);
       setError('Failed to delete review. Please try again later.');
@@ -249,11 +369,11 @@ export default function MyReviewsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="pb-5 border-b border-gray-200 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Reviews</h1>
+    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="pb-6 border-b border-gray-200 mb-10">
+        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">My Reviews</h1>
         <p className="mt-2 text-sm text-gray-500">
-          Manage your cafe reviews and ratings
+          Manage your reviews and ratings
         </p>
       </div>
 
@@ -279,9 +399,12 @@ export default function MyReviewsPage() {
                 <li key={review.id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
-                      <Link href={`/cafes/${review.cafe_id || ''}`} className="text-lg font-medium text-amber-600 truncate hover:underline">
+                      <button 
+                        onClick={() => setModalCafeId(review.cafe_id || '')}
+                        className="text-lg font-medium text-amber-600 truncate hover:underline text-left"
+                      >
                         {review.cafe_name}
-                      </Link>
+                      </button>
                       <div className="ml-2 flex-shrink-0 flex flex-col items-end gap-0.5">
   <span className="flex items-center gap-0.5 text-xs text-gray-500" title={review.created_at ? new Date(review.created_at).toLocaleString() : undefined}>
     <svg aria-label="Published" className="w-3 h-3 text-amber-400 mr-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
@@ -413,6 +536,19 @@ export default function MyReviewsPage() {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Cafe Detail Modal */}
+      {modalCafeId && selectedCafe && (
+        <CafeDetailModal 
+          cafe={selectedCafe}
+          isOpen={!!modalCafeId}
+          onClose={() => setModalCafeId(null)}
+          formatRating={formatRating}
+          hasReviews={hasReviews}
+          getScoreValue={getScoreValue}
+          onReviewChange={handleReviewChange}
+        />
       )}
     </div>
   );

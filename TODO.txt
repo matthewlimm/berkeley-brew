@@ -1,8 +1,0 @@
-- better UI/UX
-
-
-currently: when i edit a review, the individual review reflects changes instantly, but the overall cafe scores do not. also, when i submit a review, the individual review doesn't show up immediately and the overall cafe scores do not change.
-
-what i want: when i edit a review, overall cafe scores are calculated and reflected instantly. and when i submit a review, i want the individual review to show up immediately and the overall cafe scores to calculate and reflect immediately
-
-analyze my codebase extensively to understand it before fulfilling my request. do not break anything

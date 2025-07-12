@@ -248,18 +248,18 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
   if (loading) {
     return <div className="animate-pulse space-y-6">
       {[1, 2, 3].map(i => (
-        <div key={i} className="p-5 bg-white rounded-lg border border-gray-100 shadow-sm">
+        <div key={i} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-gray-200 h-10 w-10 rounded-full"></div>
             <div>
-              <div className="h-4 bg-gray-200 rounded w-24 mb-1"></div>
-              <div className="h-3 bg-gray-200 rounded w-16"></div>
+              <p className="font-semibold text-gray-800">Anonymous</p>
+              <p className="text-xs text-gray-500">Unknown date</p>
             </div>
             <div className="ml-auto h-6 bg-gray-200 rounded-full w-12"></div>
           </div>
           <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="grid grid-cols-2 gap-3 mt-4 bg-gray-50 p-3 rounded-lg">
+          <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="h-3 bg-gray-200 rounded w-full"></div>
             <div className="h-3 bg-gray-200 rounded w-full"></div>
             <div className="h-3 bg-gray-200 rounded w-full"></div>
@@ -300,7 +300,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
         .insert([
           {
             cafe_id: cafeId,
-            user_id: user?.id,
+            user_id: currentUser?.id,
             ...reviewData
           }
         ])
@@ -354,13 +354,13 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
       </div>
       
       {/* Reviews list */}
-      <div className="space-y-4">
+      <div className="space-y-8">
         {displayedReviews.map((review) => (
           <div
             key={review.id}
             className="p-3 bg-white rounded-lg border border-gray-100 shadow-sm"
           >
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
                 {/* User Avatar */}
                 <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
@@ -373,7 +373,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-amber-100 text-amber-800 text-xs font-medium">
+                    <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 font-medium text-sm ring-2 ring-amber-50">
                       {review.user?.username ? review.user.username[0].toUpperCase() : 'A'}
                     </div>
                   )}
@@ -394,7 +394,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
               </div>
               
               {/* Overall Score Badge */}
-              <div className="px-3 py-1.5 bg-amber-50 rounded-full text-sm font-medium text-amber-700 flex items-center">
+              <div className="flex items-center bg-amber-50 px-2.5 py-1.5 rounded-full shadow-sm border border-amber-100">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
@@ -404,9 +404,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
             
             {/* Review Content */}
             {review.content && review.content.trim() !== '' && (
-              <div className="mb-4 text-gray-700 text-sm border-l-4 border-amber-200 pl-3 py-1 break-words whitespace-pre-wrap overflow-hidden max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                {review.content}
-              </div>
+              <div className="mt-4 text-gray-700 leading-relaxed">{review.content}</div>
             )}
             
             {/* Detailed Scores */}
@@ -414,32 +412,31 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
               <div className="flex items-center">
                 <div className="w-2 h-2 rounded-full bg-blue-600 mr-1"></div>
                 <span className="text-gray-600">Grindability:</span>
-                <span className="font-medium text-blue-700 ml-1">{review.grindability_score?.toFixed(1) || 'N/A'}</span>
+                <span className="text-sm font-semibold text-amber-700 ml-1">{review.golden_bear_score}</span>
               </div>
               
               <div className="flex items-center">
                 <div className="w-2 h-2 rounded-full bg-pink-600 mr-1"></div>
                 <span className="text-gray-600">Vibe:</span>
-                <span className="font-medium text-pink-700 ml-1">{review.vibe_score?.toFixed(1) || 'N/A'}</span>
+                <span className="text-sm font-semibold text-amber-700 ml-1">{review.vibe_score}</span>
               </div>
               
               <div className="flex items-center">
                 <div className="w-2 h-2 rounded-full bg-purple-600 mr-1"></div>
                 <span className="text-gray-600">Coffee:</span>
-                <span className="font-medium text-purple-700 ml-1">{review.coffee_quality_score?.toFixed(1) || 'N/A'}</span>
+                <span className="text-sm font-semibold text-amber-700 ml-1">{review.coffee_quality_score}</span>
               </div>
               
               <div className="flex items-center">
                 <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
                 <span className="text-gray-600">Friendliness:</span>
-                <span className="font-medium text-green-700 ml-1">{review.student_friendliness_score?.toFixed(1) || 'N/A'}</span>
+                <span className="text-sm font-semibold text-amber-700 ml-1">{review.student_friendliness_score}</span>
               </div>
             </div>
           {/* Edit Review Button for Owner (bottom right) */}
           {currentUser?.id === review.user_id && (
-            <div className="flex justify-end mt-4 space-x-2">
+            <div className="mt-5 flex justify-end space-x-3">
               <button
-                className="px-3 py-1.5 bg-amber-600 text-white rounded shadow hover:bg-amber-700 text-xs font-semibold transition-all duration-150"
                 onClick={() => {
                   setCurrentReview(review);
                   setEditFormData({
@@ -451,16 +448,23 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
                   });
                   setIsEditModalOpen(true);
                 }}
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
               >
-                Edit Review
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
               </button>
               <button
-                className="px-3 py-1.5 bg-red-600 text-white rounded shadow hover:bg-red-700 text-xs font-semibold transition-all duration-150"
                 onClick={() => {
                   setReviewToDelete(review);
                   setIsDeleteModalOpen(true);
                 }}
+                className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
                 Delete
               </button>
             </div>
@@ -559,7 +563,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:col-start-2 sm:text-sm"
+                      className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2.5 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:col-start-2 sm:text-sm transition-colors"
                     >
                       {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>
@@ -578,9 +582,9 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
 
           {/* Delete Review Modal */}
           {isDeleteModalOpen && reviewToDelete && reviewToDelete.id === review.id && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Review</h3>
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+              <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Delete Review</h3>
                 <p className="text-sm text-gray-500 mb-4">Are you sure you want to delete your review? This action cannot be undone.</p>
                 <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                   <button
@@ -657,7 +661,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
       {isWriteReviewModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsWriteReviewModalOpen(false)}>
           <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <ReviewForm cafeId={cafeId} onSubmit={handleNewReviewSubmit} />
+            <ReviewForm cafeId={cafeId} onSuccess={handleNewReviewSubmit} />
           </div>
         </div>
       )}

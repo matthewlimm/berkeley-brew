@@ -208,17 +208,17 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600"></div>
+        <div className="animate-spin rounded-full h-14 w-14 border-t-3 border-b-3 border-amber-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-      <div className="pb-5 border-b border-gray-200 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="pb-6 border-b border-gray-200 mb-10">
+        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">My Account</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Manage your profile and content on Berkeley Brew
+          Manage your account settings and preferences
         </p>
       </div>
       
@@ -227,19 +227,13 @@ export default function DashboardPage() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`${activeTab === 'profile' 
-              ? 'border-amber-500 text-amber-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
-              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`whitespace-nowrap py-4 px-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'profile' ? 'text-amber-600 border-amber-600 font-semibold' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'}`}
           >
             Profile
           </button>
           <button
             onClick={() => setActiveTab('quickAccess')}
-            className={`${activeTab === 'quickAccess' 
-              ? 'border-amber-500 text-amber-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
-              whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            className={`whitespace-nowrap py-4 px-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'quickAccess' ? 'text-amber-600 border-amber-600 font-semibold' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'}`}
           >
             Quick Access
           </button>
@@ -248,19 +242,19 @@ export default function DashboardPage() {
       
       {/* Profile Section */}
       {activeTab === 'profile' && (
-      <div className="md:grid md:grid-cols-3 md:gap-6 mb-8">
+      <div className="md:grid md:grid-cols-3 md:gap-8 mb-10">
         <div className="md:col-span-1">
           <div className="px-4 sm:px-0">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Profile</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              Update your personal information and how others see you on Berkeley Brew.
+            <h3 className="text-xl font-bold leading-6 text-gray-800">Profile</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This information will be displayed publicly so be careful what you share.
             </p>
           </div>
         </div>
         <div className="mt-5 md:mt-0 md:col-span-2">
           <form onSubmit={handleSubmit}>
-            <div className="shadow sm:rounded-md sm:overflow-hidden">
-              <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
+            <div className="shadow-md rounded-xl overflow-hidden border border-gray-100">
+              <div className="px-6 py-6 bg-white space-y-8 sm:p-8">
                 {/* Success message */}
                 {(successMessage || profileUpdated) && (
                   <div id="success-message-container" className="rounded-md p-4 bg-green-100 border border-green-400 mb-4">
@@ -294,7 +288,7 @@ export default function DashboardPage() {
                   <div className="mt-2 flex items-center space-x-5">
                     <div 
                       onClick={handleAvatarClick}
-                      className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="relative w-28 h-28 rounded-full overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity ring-4 ring-amber-50"
                     >
                       {avatarUrl ? (
                         <Image
@@ -322,7 +316,7 @@ export default function DashboardPage() {
                           }}
                         />
                       ) : (
-                        <div className="flex items-center justify-center h-full bg-amber-50 text-amber-600">
+                        <div className="flex items-center justify-center h-full bg-amber-50 text-amber-500">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
@@ -344,16 +338,89 @@ export default function DashboardPage() {
                       onChange={uploadAvatar}
                       className="hidden"
                     />
-                    <button
-                      type="button"
-                      onClick={handleAvatarClick}
-                      className="text-sm text-amber-600 hover:text-amber-500"
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Uploading...' : 'Change'}
-                    </button>
+                    <div className="flex flex-col space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleAvatarClick}
+                        className="text-sm text-amber-600 hover:text-amber-500 font-medium"
+                        disabled={uploading}
+                      >
+                        {uploading ? 'Uploading...' : 'Change'}
+                      </button>
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              setUploading(true);
+                              setErrorMessage('');
+                              
+                              // List all existing avatars for this user
+                              const { data: existingFiles } = await supabase.storage
+                                .from('avatars')
+                                .list(user?.id as string);
+                              
+                              // Delete any existing avatar files
+                              if (existingFiles && existingFiles.length > 0) {
+                                const filesToDelete = existingFiles.map(file => `${user?.id}/${file.name}`);
+                                
+                                const { error: deleteError } = await supabase.storage
+                                  .from('avatars')
+                                  .remove(filesToDelete);
+                                  
+                                if (deleteError) {
+                                  console.warn('Error deleting existing avatars:', deleteError.message);
+                                  setErrorMessage(`Failed to delete profile picture: ${deleteError.message}`);
+                                  return;
+                                }
+                              }
+                              
+                              // Update user metadata to remove avatar URL
+                              const { error: updateError } = await supabase.auth.updateUser({
+                                data: { avatar_url: null }
+                              });
+                              
+                              if (updateError) {
+                                console.error('Error updating user metadata:', updateError);
+                                setErrorMessage(`Failed to update profile: ${updateError.message}`);
+                                return;
+                              }
+                              
+                              // Update profile with the removed avatar URL
+                              await updateUserProfile({
+                                name,
+                                username,
+                                avatar_url: '' // Use empty string instead of null
+                              });
+                              
+                              // Clear avatar URL in component state
+                              setAvatarUrl('');
+                              
+                              // Show success message
+                              setSuccessMessage('Profile picture removed successfully!');
+                              setProfileUpdated(true);
+                              
+                              // Auto-hide success message after 5 seconds
+                              setTimeout(() => {
+                                setSuccessMessage('');
+                                setProfileUpdated(false);
+                              }, 5000);
+                              
+                            } catch (error) {
+                              setErrorMessage(`${error instanceof Error ? error.message : 'An error occurred while removing profile picture'}`);
+                            } finally {
+                              setUploading(false);
+                            }
+                          }}
+                          className="text-sm text-red-600 hover:text-red-500 font-medium"
+                          disabled={uploading}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Click on the avatar to upload a new image.</p>
+                  <p className="mt-3 text-xs text-gray-500">Click on the avatar to upload a new image or use the remove button to delete it.</p>
                 </div>
 
                 <div>
@@ -365,7 +432,7 @@ export default function DashboardPage() {
                       type="text"
                       name="email"
                       id="email"
-                      className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300 bg-gray-100"
+                      className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300 bg-gray-100 py-2.5"
                       value={user.email || ''}
                       disabled
                     />

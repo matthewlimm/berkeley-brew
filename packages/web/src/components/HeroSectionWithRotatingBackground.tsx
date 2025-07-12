@@ -191,7 +191,7 @@ export default function HeroSectionWithRotatingBackground() {
               <span className="text-sm font-medium text-white">{currentImage.description} · {currentImage.location}</span>
             </div>
             <div className="text-xs text-gray-300">
-              Photo by <a href={currentImage.photographerUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200">{currentImage.photographer}</a> on <a href={currentImage.unsplashUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200">Unsplash</a>
+              Photo by {currentImage.photographer} on Unsplash
             </div>
           </div>
         </div>

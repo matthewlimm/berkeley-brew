@@ -19,11 +19,19 @@ interface ExtendedCafe {
   longitude?: number | null;
   review_count?: number | null;
   reviews?: any[];
+  user_reviews?: any[]; // Some pages use this structure
+  user_has_reviewed?: boolean; // Some pages have a direct flag
   place_id?: string | null;
   business_hours?: any;
   price_category?: "$" | "$$" | "$$$" | null;
 
   popular_times?: any;
+  
+  // Metrics
+  grindability_score?: number | null;
+  student_friendliness_score?: number | null;
+  coffee_quality_score?: number | null;
+  vibe_score?: number | null;
 }
 
 interface CafeDetailModalProps {
@@ -223,6 +231,44 @@ export function CafeDetailModal({
   
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { user } = useAuth();
+  
+  // Check if the current user has already reviewed this cafe
+  const hasUserReviewedCafe = React.useMemo(() => {
+    // If no user is logged in, they can't have reviewed anything
+    if (!user) return false;
+    
+    // For debugging only
+    console.log('CafeDetailModal - Checking review status for:', {
+      cafeId: cafe.id,
+      cafeName: cafe.name,
+      userId: user?.id
+    });
+    
+    // Check for user_has_reviewed flag (explicitly set by parent component)
+    if (cafe.user_has_reviewed === true) {
+      return true;
+    }
+    
+    // Check reviews array if it exists
+    if (cafe.reviews && Array.isArray(cafe.reviews)) {
+      for (const review of cafe.reviews) {
+        if (review && review.user_id === user.id) {
+          return true;
+        }
+      }
+    }
+    
+    // Check user_reviews array if it exists
+    if (cafe.user_reviews && Array.isArray(cafe.user_reviews)) {
+      for (const review of cafe.user_reviews) {
+        if (review && review.user_id === user.id) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }, [user, cafe]);
 
   // Close modal when Escape key is pressed
   useEffect(() => {
@@ -249,16 +295,16 @@ export function CafeDetailModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-60 flex items-center justify-center p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div 
-        className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button 
-          className="absolute top-4 right-4 z-10 bg-white bg-opacity-70 rounded-full p-2 hover:bg-opacity-100 transition-all duration-200"
+          className="absolute top-4 right-4 z-10 bg-white bg-opacity-80 rounded-full p-2.5 hover:bg-opacity-100 transition-all duration-200 shadow-md"
           onClick={onClose}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -268,26 +314,26 @@ export function CafeDetailModal({
 
         {/* Cafe Image */}
         <div 
-          className="h-64 bg-cover bg-center" 
+          className="h-72 bg-cover bg-center" 
           style={{ 
             backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
           }}
         ></div>
 
-        <div className="p-6">
+        <div className="p-8">
           {/* Cafe Name, Bookmark Button, and Overall Rating */}
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center">
-              <h2 className="text-2xl font-bold text-gray-900 pr-2">{cafe.name}</h2>
+          <div className="flex justify-between items-center mb-6"> {/* Changed from items-start to items-center */}
+            <div className="flex items-center gap-4"> {/* Increased gap between title and bookmark */}
+              <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">{cafe.name}</h2>
               <BookmarkButton cafeId={cafe.id} size="lg" />  
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center text-gray-700 gap-4"> {/* Added gap between price and rating */}
               {cafe.price_category && (
                 <span className="bg-green-100 text-green-800 font-medium text-sm px-2.5 py-1.5 rounded-full border border-green-200">
                   {cafe.price_category}
                 </span>
               )}
-              <div className="flex items-center bg-amber-50 px-3 py-1.5 rounded-full">
+              <div className="flex items-center bg-amber-50 px-3 py-2 rounded-full shadow-sm border border-amber-100">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
@@ -295,7 +341,7 @@ export function CafeDetailModal({
                   {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
                 </span>
                 {(cafe.review_count ?? 0) > 0 && (
-                  <span className="text-amber-500 text-sm ml-1">
+                  <span className="text-amber-500 text-sm ml-1.5">
                     ({cafe.review_count})
                   </span>
                 )}
@@ -304,7 +350,7 @@ export function CafeDetailModal({
           </div>
 
           {/* Address */}
-          <div className="mb-4">
+          <div className="space-y-5">
             <p className="text-gray-600">
               {cafe.address}
             </p>
@@ -317,9 +363,9 @@ export function CafeDetailModal({
           </div>
           
           {/* Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             {/* Grindability Score */}
-            <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="bg-blue-50 p-4 rounded-lg shadow-sm border-2 border-blue-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-blue-700">Grindability</span>
@@ -338,7 +384,7 @@ export function CafeDetailModal({
             </div>
             
             {/* Vibe Score */}
-            <div className="bg-pink-50 p-3 rounded-lg">
+            <div className="bg-pink-50 p-4 rounded-lg shadow-sm border-2 border-pink-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-pink-700">Vibe</span>
@@ -357,7 +403,7 @@ export function CafeDetailModal({
             </div>
             
             {/* Coffee Quality Score */}
-            <div className="bg-purple-50 p-3 rounded-lg">
+            <div className="bg-purple-50 p-4 rounded-lg shadow-sm border-2 border-purple-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
@@ -376,7 +422,7 @@ export function CafeDetailModal({
             </div>
             
             {/* Student-Friendliness Score */}
-            <div className="bg-green-50 p-3 rounded-lg">
+            <div className="bg-green-50 p-4 rounded-lg shadow-sm border-2 border-green-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-sm font-medium text-green-700">Student-Friendly</span>
@@ -395,37 +441,33 @@ export function CafeDetailModal({
             </div>
           </div>
 
-
-
           {/* Popular Times Section */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Popular Times</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">Popular Times</h3>
             <PopularTimesChart 
               data={cafe.popular_times || null} 
             />
           </div>
 
           {/* Reviews Section */}
-          <div className="border-t border-gray-200 pt-6 mt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                Reviews
-              </h3>
-              
-              {user && !showReviewForm && (
+          <div id="cafe-reviews-section" className="border-t border-gray-200 pt-8 mt-8">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-bold text-gray-800">Reviews</h3>
+              {user && !showReviewForm && !hasUserReviewedCafe ? (
                 <button 
                   onClick={() => setShowReviewForm(true)}
-                  className="flex items-center gap-1 text-sm font-medium text-amber-600 hover:text-amber-800 px-3 py-1.5 border border-amber-300 rounded-full hover:bg-amber-50 transition-colors"
+                  className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Write a Review
                 </button>
-              )}
+              ) : user && !showReviewForm && hasUserReviewedCafe ? (
+                <div className="text-sm text-gray-600 italic px-4 py-2 bg-gray-50 rounded-md border border-gray-200">
+                  You've already reviewed this cafe
+                </div>
+              ) : null}
             </div>
             
             {showReviewForm && (

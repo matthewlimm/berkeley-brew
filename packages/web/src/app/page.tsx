@@ -825,7 +825,7 @@ export default function Home() {
                     setSelectedPrice(null);
                     setSelectedLocation(null);
                   }}
-                  className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 ml-1"
+                  className="px-4 py-2.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 shadow-sm ml-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -838,8 +838,8 @@ export default function Home() {
         </div>
         
         {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-14 w-14 border-t-3 border-b-3 border-amber-500"></div>
           </div>
         ) : sortedCafes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -897,28 +897,28 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
             {sortedCafes.map((cafe) => (
               <div
                 key={cafe.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-auto"
+                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-auto border border-gray-100"
                 style={{ breakInside: 'avoid', height: 'fit-content' }}
               >
                 {/* Cafe Image - Clickable */}
                 <div 
-                  className="h-48 bg-cover bg-center cursor-pointer" 
+                  className="h-52 bg-cover bg-center cursor-pointer hover:opacity-95 transition-opacity" 
                   style={{ 
                     backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
                   }}
                   onClick={() => setSelectedCafeId(cafe.id)}
                 ></div>
                 
-                <div className="p-5">
+                <div className="p-6">
                   {/* Cafe Name and Overall Rating */}
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center max-w-[60%]"> {/* Reduced max width for more aggressive truncation */}
+                  <div className="flex justify-between items-center mb-3"> {/* Changed from items-start to items-center */}
+                    <div className="flex items-center max-w-[50%] gap-3"> {/* Reduced max width for more aggressive truncation */}
                       <h3 
-                        className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate pr-3"
+                        className="text-xl font-bold text-gray-800 cursor-pointer hover:text-amber-600 transition-colors truncate"
                         onClick={() => setSelectedCafeId(cafe.id)}
                         title={cafe.name} /* Show full name on hover */
                       >
@@ -926,21 +926,21 @@ export default function Home() {
                       </h3>
                       <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="md" />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {cafe.price_category && (
-                        <span className="bg-green-100 text-green-800 font-medium text-xs px-2 py-1 rounded-full border border-green-200">
+                        <span className="bg-green-100 text-green-800 font-medium text-xs px-2.5 py-1.5 rounded-full border border-green-200">
                           {cafe.price_category}
                         </span>
                       )}
-                      <div className="flex items-center bg-amber-50 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <div className="flex items-center bg-amber-50 px-2.5 py-1.5 rounded-full shadow-sm border border-amber-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         <span className="text-sm font-medium text-amber-700">
                           {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
                         </span>
                         {(cafe.review_count ?? 0) > 0 && (
-                          <span className="text-amber-500 text-xs ml-1">
+                          <span className="text-amber-500 text-xs ml-1.5">
                             ({cafe.review_count})
                           </span>
                         )}
@@ -993,9 +993,9 @@ export default function Home() {
                   <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
                   
                   {/* Metrics - with increased spacing from opening hours */}
-                  <div className="mt-6 grid grid-cols-2 gap-3 mb-4">
+                  <div className="mt-6 grid grid-cols-2 gap-4 mb-4">
                     {/* Grindability Score */}
-                    <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="bg-blue-50 p-3.5 rounded-lg shadow-sm border border-blue-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-blue-700">Grindability</span>
                         <span className="text-sm font-bold text-blue-700">
@@ -1011,7 +1011,7 @@ export default function Home() {
                     </div>
                     
                     {/* Vibe Score */}
-                    <div className="bg-pink-50 p-3 rounded-lg">
+                    <div className="bg-pink-50 p-3.5 rounded-lg shadow-sm border border-pink-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-pink-700">Vibe</span>
                         <span className="text-sm font-bold text-pink-700">
@@ -1027,7 +1027,7 @@ export default function Home() {
                     </div>
                     
                     {/* Coffee Quality Score */}
-                    <div className="bg-purple-50 p-3 rounded-lg">
+                    <div className="bg-purple-50 p-3.5 rounded-lg shadow-sm border border-purple-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
                         <span className="text-sm font-bold text-purple-700">
@@ -1043,7 +1043,7 @@ export default function Home() {
                     </div>
                     
                     {/* Student-Friendliness Score (formerly Service) */}
-                    <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="bg-green-50 p-3.5 rounded-lg shadow-sm border border-green-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-green-700">Friendliness</span>
                         <span className="text-sm font-bold text-green-700">
@@ -1062,7 +1062,7 @@ export default function Home() {
                   </div>
 
                   {/* Popular Times Section - Always render for consistent layout */}
-                  <div className="mt-5 px-3">
+                  <div className="mt-6 px-0">
                     {cafe.popular_times && (
                       <script dangerouslySetInnerHTML={{ __html: `console.log('Cafe popular_times data for ${cafe.name}:', ${JSON.stringify(cafe.popular_times)})` }} />
                     )}
@@ -1073,7 +1073,7 @@ export default function Home() {
                 </div>
 
                 {/* Reviews Section */}
-                <div className="border-t border-gray-100 pt-5 mt-5">
+                <div className="border-t border-gray-100 pt-6 mt-6">
                   <div className="flex justify-between items-center mb-4 px-3">
                     <h4 className="text-sm font-semibold text-gray-900 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
@@ -1116,18 +1116,27 @@ export default function Home() {
                     </div>
                   )}
 
-                  <button
-                    onClick={() => {
-                      setIsWriteReviewModalOpen(true);
-                      setCurrentReviewCafeId(cafe.id);
-                    }}
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                    </svg>
-                    Write a Review
-                  </button>
+                  {user && cafe.reviews && Array.isArray(cafe.reviews) && cafe.reviews.some(review => review && review.user_id === user.id) ? (
+                    <div className="w-full bg-gray-100 text-gray-600 px-4 py-3 rounded-b-lg border border-gray-200 mt-3 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      You've already reviewed this cafe
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsWriteReviewModalOpen(true);
+                        setCurrentReviewCafeId(cafe.id);
+                      }}
+                      className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      Write a Review
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1139,13 +1148,21 @@ export default function Home() {
           <CafeDetailModal 
             cafe={{
               ...cafes.find(cafe => cafe.id === selectedCafeId)!,
-              image_url: cafes.find(cafe => cafe.id === selectedCafeId)?.image_url || undefined
+              image_url: cafes.find(cafe => cafe.id === selectedCafeId)?.image_url || undefined,
+              // Explicitly set user_has_reviewed flag
+              user_has_reviewed: !!(user && cafes.some(cafe => 
+                cafe.id === selectedCafeId && 
+                cafe.reviews && 
+                Array.isArray(cafe.reviews) && 
+                cafe.reviews.some(review => review && review.user_id === user.id)
+              ))
             }}
             isOpen={!!selectedCafeId}
             onClose={() => setSelectedCafeId(null)}
             formatRating={formatRating}
             hasReviews={hasReviews}
             getScoreValue={getScoreValue}
+            onReviewChange={handleReviewChange}
             onReviewSubmit={() => {
               // Refresh cafe data to update metrics
               setIsLoading(true);
@@ -1167,47 +1184,76 @@ export default function Home() {
             setCurrentReviewCafeId('');
           }}>
             <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-              <ReviewForm 
-                cafeId={currentReviewCafeId} 
-                onSuccess={(reviewData) => {
-                  setIsWriteReviewModalOpen(false);
-                  setCurrentReviewCafeId('');
-                  
-                  // Refresh cafe data to update metrics
-                  setIsLoading(true);
-                  getCafes()
-                    .then((response) => {
-                      if (response?.data?.cafes) {
-                        setCafes(response.data.cafes);
-                        
-                        // Update trending cafes
-                        const updatedTrendingCafes = response.data.cafes
-                          .filter(cafe => {
-                            return cafe.grindability_score !== null || 
-                                  cafe.student_friendliness_score !== null || 
-                                  cafe.coffee_quality_score !== null || 
-                                  cafe.vibe_score !== null;
-                          })
-                          .sort((a, b) => {
-                            const scoreB = calculateGoldenBearScore(b) || 0;
-                            const scoreA = calculateGoldenBearScore(a) || 0;
-                            return scoreB - scoreA;
-                          })
-                          .slice(0, 3);
-                        setTrendingCafes(updatedTrendingCafes);
-                      }
-                    })
-                    .catch((e) => console.error("Failed to refresh cafes:", e))
-                    .finally(() => setIsLoading(false));
-                  
-                  // If the cafe detail modal is open for this cafe, refresh it
-                  if (selectedCafeId === currentReviewCafeId) {
-                    // Force a refresh of the cafe detail modal
-                    setSelectedCafeId(null);
-                    setTimeout(() => setSelectedCafeId(currentReviewCafeId), 10);
-                  }
-                }}
-              />
+              {/* Check if user has already reviewed this cafe */}
+              {user && cafes.find(cafe => 
+                cafe.id === currentReviewCafeId && 
+                cafe.reviews && 
+                Array.isArray(cafe.reviews) && 
+                cafe.reviews.some(review => review && review.user_id === user.id)
+              ) ? (
+                <div className="p-4">
+                  <div className="flex items-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 className="text-xl font-bold text-gray-800">Already Reviewed</h2>
+                  </div>
+                  <p className="text-gray-600 mb-6">You have already submitted a review for this cafe. You can edit your existing review instead.</p>
+                  <div className="flex justify-end">
+                    <button 
+                      onClick={() => {
+                        setIsWriteReviewModalOpen(false);
+                        setCurrentReviewCafeId('');
+                      }}
+                      className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ReviewForm 
+                  cafeId={currentReviewCafeId} 
+                  onSuccess={(reviewData) => {
+                    setIsWriteReviewModalOpen(false);
+                    setCurrentReviewCafeId('');
+                    
+                    // Refresh cafe data to update metrics
+                    setIsLoading(true);
+                    getCafes()
+                      .then((response) => {
+                        if (response?.data?.cafes) {
+                          setCafes(response.data.cafes);
+                          
+                          // Update trending cafes
+                          const updatedTrendingCafes = response.data.cafes
+                            .filter(cafe => {
+                              return cafe.grindability_score !== null || 
+                                    cafe.student_friendliness_score !== null || 
+                                    cafe.coffee_quality_score !== null || 
+                                    cafe.vibe_score !== null;
+                            })
+                            .sort((a, b) => {
+                              const scoreB = calculateGoldenBearScore(b) || 0;
+                              const scoreA = calculateGoldenBearScore(a) || 0;
+                              return scoreB - scoreA;
+                            })
+                            .slice(0, 3);
+                          setTrendingCafes(updatedTrendingCafes);
+                        }
+                      })
+                      .catch((e) => console.error("Failed to refresh cafes:", e))
+                      .finally(() => setIsLoading(false));
+                    
+                    // If the cafe detail modal is open for this cafe, refresh it
+                    if (selectedCafeId === currentReviewCafeId) {
+                      // Force a refresh of the cafe detail modal
+                      setSelectedCafeId(null);
+                      setTimeout(() => setSelectedCafeId(currentReviewCafeId), 10);
+                    }
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
