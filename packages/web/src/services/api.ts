@@ -101,31 +101,6 @@ export async function createReview(cafeId: string, data: {
   return res.json()
 }
 
-export async function createPost(id: string, data: { title: string, content: string, type: string, brew_method: string, difficulty_level: number, prep_time: number, ingredients: string[] }): Promise<ApiResponse<void>> {
-  const res = await fetch(`${API_URL}/api/posts/${id}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.message || 'Failed to create a post')
-  }
-  return res.json()
-}
-
-export async function getPosts(): Promise<ApiResponse<{ posts: any[] }>> {
-  const headers = await getAuthHeader()
-  const res = await fetch(`${API_URL}/api/posts`, { headers })
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.message || 'Failed to get posts')
-  }
-  return res.json()
-}
-
 export async function getUserReviews(): Promise<ApiResponse<{ reviews: (Review & { cafe_name: string })[] }>> {
   try {
     console.log('Fetching user reviews...');

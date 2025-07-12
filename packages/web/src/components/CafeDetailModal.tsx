@@ -33,6 +33,7 @@ interface CafeDetailModalProps {
   formatRating: (rating: number | null | undefined) => string;
   hasReviews: (cafe: any) => boolean;
   getScoreValue: (cafe: any, scoreField: string) => number;
+  onReviewSubmit?: () => void;
 }
 
 interface TooltipProps {
@@ -188,7 +189,8 @@ export function CafeDetailModal({
   onClose, 
   formatRating, 
   hasReviews, 
-  getScoreValue 
+  getScoreValue,
+  onReviewSubmit 
 }: CafeDetailModalProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { user } = useAuth();
