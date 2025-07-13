@@ -202,7 +202,7 @@ export default function HeroSectionWithRotatingBackground() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-              <span className="block">Discover the Best Coffee</span>
+              <span className="block">Discover the Best Cafes</span>
               <span className="block text-amber-300">in Berkeley</span>
             </h1>
             <p className="mt-3 max-w-md mx-auto text-base text-gray-200 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">

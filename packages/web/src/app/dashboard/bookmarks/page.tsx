@@ -452,14 +452,14 @@ export default function BookmarksPage() {
                 
                 {/* Popular Times Chart - moved after metrics */}
                 {bookmark.cafes.popular_times && (
-                  <div className="mt-6 mb-10"> {/* Increased bottom margin from mb-4 to mb-10 */}
+                  <div className="mt-6 mb-16"> {/* Increased bottom margin from mb-10 to mb-16 for more space */}
                     <PopularTimesChart data={bookmark.cafes.popular_times} />
                   </div>
                 )}
                 
                 <button
                   onClick={() => setModalCafeId(bookmark.cafes.id)}
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mt-4"
                 >
                   View Details
                 </button>

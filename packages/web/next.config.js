@@ -114,6 +114,12 @@ const nextConfig = {
         hostname: 'img.noodline.com',
         pathname: '/**',
       },
+      // Sports logos for Oski bear
+      {
+        protocol: 'https',
+        hostname: 'content.sportslogos.net',
+        pathname: '/**',
+      },
     ],
     // Optional: Configure image sizes for better performance
     formats: ['image/avif', 'image/webp'],

@@ -17,7 +17,7 @@ import type { Database } from "@berkeley-brew/api/src/types/database.types";
 // Helper function to format rating display
 function formatRating(rating: number | null | undefined): string {
   // Only return N/A if the rating is truly null/undefined or NaN
-  if (rating === null || rating === undefined || isNaN(Number(rating))) return "N/A";
+  if (rating === null || rating === undefined || isNaN(Number(rating))) return "N/Af";
   // Always format as a number with one decimal place
   return Number(rating).toFixed(1);
 }
