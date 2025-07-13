@@ -133,6 +133,7 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
   const [currentReviewCafeId, setCurrentReviewCafeId] = useState<string>('');
+  const [userReviewedCafes, setUserReviewedCafes] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   
   // Filter state
@@ -149,6 +150,16 @@ export default function Home() {
   // Function to handle review changes (edit/delete) and update cafe metrics
   const handleReviewChange = async (reviewData: any) => {
     console.log('Review changed:', reviewData);
+    
+    // If a review was deleted, remove the cafe from userReviewedCafes
+    if (reviewData?.action === 'delete' && reviewData?.cafeId) {
+      setUserReviewedCafes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reviewData.cafeId);
+        console.log('Removed cafe from reviewed cafes:', reviewData.cafeId);
+        return newSet;
+      });
+    }
     
     // Refresh cafe data to update metrics
     try {
@@ -278,6 +289,34 @@ export default function Home() {
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load cafes"))
       .finally(() => setIsLoading(false));
   }, []);
+
+  // Fetch user's reviewed cafes when user changes
+  useEffect(() => {
+    const fetchUserReviews = async () => {
+      if (!user) {
+        setUserReviewedCafes(new Set());
+        return;
+      }
+
+      try {
+        const { getUserReviews } = await import('../services/api');
+        const response = await getUserReviews();
+        
+        if (response?.data?.reviews && Array.isArray(response.data.reviews)) {
+          const reviewedCafeIds = new Set(
+            response.data.reviews.map((review: any) => review.cafe_id).filter(Boolean)
+          );
+          console.log('User has reviewed cafes:', Array.from(reviewedCafeIds));
+          setUserReviewedCafes(reviewedCafeIds);
+        }
+      } catch (error) {
+        console.error('Error fetching user reviews:', error);
+        setUserReviewedCafes(new Set());
+      }
+    };
+
+    fetchUserReviews();
+  }, [user]);
 
   // Ask for location if sorting by distance
   useEffect(() => {
@@ -1116,27 +1155,39 @@ export default function Home() {
                     </div>
                   )}
 
-                  {user && cafe.reviews && Array.isArray(cafe.reviews) && cafe.reviews.some(review => review && review.user_id === user.id) ? (
-                    <div className="w-full bg-gray-100 text-gray-600 px-4 py-3 rounded-b-lg border border-gray-200 mt-3 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      You've already reviewed this cafe
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setIsWriteReviewModalOpen(true);
-                        setCurrentReviewCafeId(cafe.id);
-                      }}
-                      className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      Write a Review
-                    </button>
-                  )}
+                  {(() => {
+                    // Check if user has already reviewed this cafe using the userReviewedCafes Set
+                    const hasUserReviewed = user && userReviewedCafes.has(cafe.id);
+                    
+                    console.log(`Checking review status for ${cafe.name}:`, {
+                      userId: user?.id,
+                      cafeId: cafe.id,
+                      hasUserReviewed,
+                      userReviewedCafes: Array.from(userReviewedCafes)
+                    });
+                    
+                    return hasUserReviewed ? (
+                      <div className="w-full bg-green-50 text-green-700 px-4 py-3 rounded-b-lg border border-green-200 mt-3 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Thanks for Your Contribution!
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setIsWriteReviewModalOpen(true);
+                          setCurrentReviewCafeId(cafe.id);
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                        Write a Review
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
@@ -1216,6 +1267,10 @@ export default function Home() {
                   cafeId={currentReviewCafeId} 
                   onSuccess={(reviewData) => {
                     setIsWriteReviewModalOpen(false);
+                    
+                    // Immediately add this cafe to the user's reviewed cafes set
+                    setUserReviewedCafes(prev => new Set([...prev, currentReviewCafeId]));
+                    
                     setCurrentReviewCafeId('');
                     
                     // Refresh cafe data to update metrics

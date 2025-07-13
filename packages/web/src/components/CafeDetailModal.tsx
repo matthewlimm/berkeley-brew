@@ -232,43 +232,70 @@ export function CafeDetailModal({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { user } = useAuth();
   
-  // Check if the current user has already reviewed this cafe
-  const hasUserReviewedCafe = React.useMemo(() => {
-    // If no user is logged in, they can't have reviewed anything
-    if (!user) return false;
-    
-    // For debugging only
+  // State to track if user has reviewed this cafe (dynamically updated)
+  const [hasUserReviewedCafe, setHasUserReviewedCafe] = useState(false);
+
+  // Check reviews status dynamically by accessing the CafeReviews component's state
+  const checkUserReviewStatus = React.useCallback(async () => {
+    if (!user) {
+      setHasUserReviewedCafe(false);
+      return;
+    }
+
     console.log('CafeDetailModal - Checking review status for:', {
       cafeId: cafe.id,
       cafeName: cafe.name,
       userId: user?.id
     });
-    
+
     // Check for user_has_reviewed flag (explicitly set by parent component)
     if (cafe.user_has_reviewed === true) {
-      return true;
+      console.log('Modal: User has reviewed via user_has_reviewed flag');
+      setHasUserReviewedCafe(true);
+      return;
     }
-    
+
     // Check reviews array if it exists
     if (cafe.reviews && Array.isArray(cafe.reviews)) {
-      for (const review of cafe.reviews) {
-        if (review && review.user_id === user.id) {
-          return true;
-        }
+      const hasReviewed = cafe.reviews.some(review => review && review.user_id === user.id);
+      if (hasReviewed) {
+        console.log('Modal: User has reviewed via reviews array');
+        setHasUserReviewedCafe(true);
+        return;
       }
     }
-    
+
     // Check user_reviews array if it exists
     if (cafe.user_reviews && Array.isArray(cafe.user_reviews)) {
-      for (const review of cafe.user_reviews) {
-        if (review && review.user_id === user.id) {
-          return true;
-        }
+      const hasReviewed = cafe.user_reviews.some(review => review && review.user_id === user.id);
+      if (hasReviewed) {
+        console.log('Modal: User has reviewed via user_reviews array');
+        setHasUserReviewedCafe(true);
+        return;
       }
     }
-    
-    return false;
+
+    // If no review found, try to get fresh data from the API
+    try {
+      const { getCafe } = await import('../services/api');
+      const response = await getCafe(cafe.id);
+      const freshReviews = response.data?.cafe.reviews || [];
+      
+      const hasReviewed = freshReviews.some((review: any) => review && review.user_id === user.id);
+      console.log('Modal: Fresh API check - User has reviewed:', hasReviewed);
+      setHasUserReviewedCafe(hasReviewed);
+    } catch (error) {
+      console.error('Error checking fresh review status:', error);
+      setHasUserReviewedCafe(false);
+    }
   }, [user, cafe]);
+
+  // Check review status when modal opens or user/cafe changes
+  useEffect(() => {
+    if (isOpen) {
+      checkUserReviewStatus();
+    }
+  }, [isOpen, checkUserReviewStatus]);
 
   // Close modal when Escape key is pressed
   useEffect(() => {
