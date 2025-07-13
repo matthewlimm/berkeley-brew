@@ -506,6 +506,9 @@ export function CafeDetailModal({
                   onSuccess={(reviewData) => {
                     setShowReviewForm(false);
                     
+                    // Update local state immediately
+                    setHasUserReviewedCafe(true);
+                    
                     // Add the new review directly to the reviews list for immediate display
                     if (cafeReviewsRef.current && user) {
                       console.log('Review data from server:', reviewData);
@@ -549,8 +552,8 @@ export function CafeDetailModal({
                       }
                     }
                     
-                    // Use the refreshCafeData function to update metrics
-                    refreshCafeData();
+                    // Use the refreshCafeData function to update metrics and home page state
+                    refreshCafeData({ action: 'add', cafeId: cafe.id, userId: user?.id });
                   }}
                   onCancel={() => setShowReviewForm(false)}
                 />

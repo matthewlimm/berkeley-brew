@@ -304,11 +304,11 @@ export default function BookmarksPage() {
 
               <div className="p-5">
                 {/* Cafe Name and Overall Rating */}
-                <div className="flex justify-between items-center mb-3"> {/* Changed from items-start to items-center */}
-                  <div className="flex items-center max-w-[60%] gap-3"> {/* Increased max width since no bookmark button */}
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center max-w-[60%] gap-3">
                     <h3 className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate"
                       onClick={() => setModalCafeId(bookmark.cafes.id)}
-                      title={bookmark.cafes.name} /* Show full name on hover */
+                      title={bookmark.cafes.name}
                     >
                       {bookmark.cafes.name}
                     </h3>
@@ -461,7 +461,7 @@ export default function BookmarksPage() {
                   onClick={() => setModalCafeId(bookmark.cafes.id)}
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mt-4"
                 >
-                  View Details
+                  View Reviews
                 </button>
               </div>
             </div>

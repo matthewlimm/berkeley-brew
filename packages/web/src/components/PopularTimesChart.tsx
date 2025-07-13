@@ -15,13 +15,15 @@ interface PopularTimesData {
 interface PopularTimesChartProps {
   data: any; // Accept any type from the database
   selectedDay?: number; // 0 = Monday, 1 = Tuesday, etc.
+  hasLiveData?: boolean; // Whether live data is available
 }
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({ 
   data, 
-  selectedDay: initialSelectedDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1 // Default to current day (0 = Monday in our data)
+  selectedDay: initialSelectedDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, // Default to current day (0 = Monday in our data)
+  hasLiveData = false
 }) => {
   // State for selected day
   const [selectedDay, setSelectedDay] = React.useState(initialSelectedDay);
@@ -150,23 +152,23 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   const isMockData = hourlyData && Array.isArray(hourlyData) && 
     hourlyData.length > 0 && hourlyData.every(val => val === 0);
   
-  // If we don't have valid hourly data or it's all zeros (mock data), show greyed out version with overlay
+  // If we don't have valid hourly data or it's all zeros (mock data), show greyed out version with same layout
   if (!hourlyData || !Array.isArray(hourlyData) || hourlyData.length === 0 || isMockData) {
     console.error('No valid hourly data found or using mock data');
     return (
-      <div className="w-full popular-times-container h-[200px] flex flex-col p-4 mb-6 bg-white rounded-lg shadow-sm border border-gray-200 relative">
+      <div className="w-full popular-times-container h-[260px] flex flex-col p-4 mb-2 bg-white rounded-lg shadow-sm border border-gray-200 relative">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-800">Popular Times</h3>
           <DaySelector />
         </div>
         
-        {/* Empty placeholder for current status indicator to maintain consistent height */}
+        {/* Status indicator - same as data version */}
         <div className="flex items-center mb-2 px-2 py-1 bg-gray-50 rounded-md inline-block w-auto">
           <div className="w-2.5 h-2.5 rounded-full bg-gray-300 mr-2"></div>
           <span className="text-xs text-gray-500 font-medium">No live data available</span>
         </div>
         
-        {/* Google-style bar chart with subtle grid lines - same structure as data state */}
+        {/* Google-style bar chart with same structure as data version */}
         <div className="flex flex-col">
           <div className="relative h-20 w-full">
             {/* Horizontal grid lines */}
@@ -197,11 +199,11 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
             </div>
           </div>
           
-          {/* Time labels - only show at intervals */}
+          {/* Time labels - same spacing as data version */}
           <div className="flex mt-3 mb-2 px-3">
             {[6, 9, 12, 15, 18, 21].map(hour => (
               <div key={hour} className="flex-1 text-center">
-                <span className="text-xs font-medium text-gray-400 px-1">
+                <span className="text-xs font-medium text-gray-600 px-1">
                   {hour % 12 || 12}{hour < 12 ? 'a' : 'p'}
                 </span>
               </div>
@@ -209,17 +211,18 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
           </div>
         </div>
         
-        <div className="flex justify-between mb-4 text-xs text-gray-400">
+        {/* Busyness indicators - same spacing as data version */}
+        <div className="flex justify-between mb-2 text-xs text-gray-600">
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1 shadow-sm"></span>
+            <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 shadow-sm"></span>
             <span>Not busy</span>
           </div>
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1 shadow-sm"></span>
+            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1 shadow-sm"></span>
             <span>Busy</span>
           </div>
           <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1 shadow-sm"></span>
+            <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1 shadow-sm"></span>
             <span>Very busy</span>
           </div>
         </div>
@@ -252,16 +255,62 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   // Component already defined above
 
   return (
-    <div className="w-full popular-times-container h-[200px] flex flex-col p-4 mb-6 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="w-full popular-times-container h-[260px] flex flex-col p-4 mb-2 bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-gray-800">Popular Times</h3>
         <DaySelector />
       </div>
       
-      {/* Current status indicator - always show "No live data available" */}
+      {/* Current status indicator */}
       <div className="flex items-center mb-2 px-2 py-1 bg-gray-50 rounded-md inline-block w-auto">
-        <div className="w-2.5 h-2.5 rounded-full bg-gray-300 mr-2"></div>
-        <span className="text-xs text-gray-500 font-medium">No live data available</span>
+        {(() => {
+          console.log('=== LIVE DATA DEBUG ===');
+          console.log('PopularTimesChart - hasLiveData prop:', hasLiveData);
+          console.log('PopularTimesChart - hourlyData:', hourlyData);
+          console.log('PopularTimesChart - currentHour:', currentHour);
+          console.log('PopularTimesChart - hourlyData length:', hourlyData?.length);
+          
+          // Show live status if we have valid hourly data (regardless of hasLiveData prop)
+          if (hourlyData && Array.isArray(hourlyData) && hourlyData.length > 0) {
+            // Get current hour's busyness level
+            const currentValue = hourlyData[currentHour] || 0;
+            console.log('PopularTimesChart - currentValue at hour', currentHour, ':', currentValue);
+            
+            let dotColor, textColor, busynessText;
+            
+            // Use same logic as bar colors for consistency
+            if (currentValue < 30) {
+              dotColor = 'bg-green-500';
+              textColor = 'text-green-700';
+              busynessText = 'Not busy right now';
+            } else if (currentValue < 70) {
+              dotColor = 'bg-yellow-500';
+              textColor = 'text-yellow-700';
+              busynessText = 'Busy right now';
+            } else {
+              dotColor = 'bg-red-500';
+              textColor = 'text-red-700';
+              busynessText = 'Very busy right now';
+            }
+            
+            console.log('PopularTimesChart - Showing live status:', busynessText, 'with color:', dotColor);
+            
+            return (
+              <>
+                <div className={`w-2.5 h-2.5 rounded-full ${dotColor} animate-pulse mr-2`}></div>
+                <span className={`text-xs ${textColor} font-medium`}>{busynessText}</span>
+              </>
+            );
+          } else {
+            console.log('PopularTimesChart - No valid hourly data, showing no live data');
+            return (
+              <>
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-300 mr-2"></div>
+                <span className="text-xs text-gray-500 font-medium">No live data available</span>
+              </>
+            );
+          }
+        })()}
       </div>
       
       {/* Google-style bar chart with subtle grid lines */}
@@ -321,7 +370,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
       </div>
       
-      <div className="flex justify-between mb-4 text-xs text-gray-600">
+      <div className="flex justify-between mb-2 text-xs text-gray-600">
         <div className="flex items-center">
           <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 shadow-sm"></span>
           <span>Not busy</span>

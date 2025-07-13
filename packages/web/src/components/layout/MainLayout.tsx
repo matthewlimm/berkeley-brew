@@ -40,6 +40,10 @@ export default function MainLayout({ children, isDashboardLayout = false }: Main
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center space-x-3 group">
                 <div className="relative">
+                  {/* Go Bears tooltip */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                    Go Bears! 🐻
+                  </div>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 120 120">
                     <defs>
                       <linearGradient id="bearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
