@@ -38,64 +38,21 @@ export default function MainLayout({ children, isDashboardLayout = false }: Main
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="flex items-center space-x-3 group">
+              <Link href="/" className="flex items-center group">
                 <div className="relative">
                   {/* Go Bears tooltip */}
                   <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
                     Go Bears! 🐻
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 120 120">
-                    <defs>
-                      <linearGradient id="bearGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#8B4513" />
-                        <stop offset="100%" stopColor="#A0522D" />
-                      </linearGradient>
-                      <linearGradient id="cupGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#D97706" />
-                        <stop offset="100%" stopColor="#92400E" />
-                      </linearGradient>
-                      <linearGradient id="steamGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stopColor="#E5E7EB" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="#F3F4F6" stopOpacity="0.3" />
-                      </linearGradient>
-                    </defs>
-                    
-                    {/* Coffee cup base */}
-                    <path d="M75 65 L85 65 Q90 65 90 70 L90 80 Q90 85 85 85 L75 85 Z" fill="url(#cupGradient)" stroke="#92400E" strokeWidth="1"/>
-                    
-                    {/* Coffee cup handle */}
-                    <path d="M85 70 Q95 70 95 75 Q95 80 85 80" fill="none" stroke="url(#cupGradient)" strokeWidth="2.5" strokeLinecap="round"/>
-                    
-                    {/* Steam wisps */}
-                    <path d="M77 62 Q79 58 77 54 Q75 50 77 46" fill="none" stroke="url(#steamGradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
-                    <path d="M80 62 Q82 58 80 54 Q78 50 80 46" fill="none" stroke="url(#steamGradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
-                    <path d="M83 62 Q85 58 83 54 Q81 50 83 46" fill="none" stroke="url(#steamGradient)" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-                    
-                    {/* Bear silhouette - simplified and more stylized */}
-                    <circle cx="45" cy="60" r="28" fill="url(#bearGradient)"/>
-                    
-                    {/* Bear ears */}
-                    <circle cx="30" cy="42" r="8" fill="url(#bearGradient)"/>
-                    <circle cx="60" cy="42" r="8" fill="url(#bearGradient)"/>
-                    <circle cx="30" cy="44" r="4" fill="#CD853F"/>
-                    <circle cx="60" cy="44" r="4" fill="#CD853F"/>
-                    
-                    {/* Bear facial features - minimalist */}
-                    <circle cx="38" cy="55" r="2.5" fill="#2D1810"/>
-                    <circle cx="52" cy="55" r="2.5" fill="#2D1810"/>
-                    <ellipse cx="45" cy="65" rx="3" ry="2" fill="#2D1810"/>
-                    
-                    {/* Subtle bear smile */}
-                    <path d="M40 70 Q45 73 50 70" fill="none" stroke="#2D1810" strokeWidth="1.5" strokeLinecap="round"/>
-                    
-                    {/* Coffee beans accent */}
-                    <ellipse cx="25" cy="85" rx="3" ry="5" fill="#8B4513" transform="rotate(25 25 85)"/>
-                    <path d="M25 83 L25 87" stroke="#654321" strokeWidth="0.5"/>
-                    <ellipse cx="35" cy="90" rx="2.5" ry="4" fill="#8B4513" transform="rotate(-15 35 90)"/>
-                    <path d="M35 88 L35 92" stroke="#654321" strokeWidth="0.5"/>
-                  </svg>
+                  <Image
+                    src="/logo.png"
+                    alt="Berkeley Brew Logo"
+                    width={80}
+                    height={80}
+                    className="h-20 w-20 group-hover:scale-105 transition-transform duration-200"
+                  />
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col -ml-2">
                   <span className="text-xl font-bold text-gray-800 group-hover:text-amber-700 transition-colors duration-200">Berkeley Brew</span>
                   <span className="text-xs text-amber-600 font-medium -mt-1">Cafe Discovery</span>
                 </div>
