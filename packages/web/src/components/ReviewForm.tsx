@@ -314,9 +314,11 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
         <EmojiRating 
           value={coffeeQualityScore} 
           onChange={setCoffeeQualityScore} 
-          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-700" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M8 10a2 2 0 114 0v3a3 3 0 01-3 3H7a3 3 0 01-3-3V5a1 1 0 011-1h2a1 1 0 011 1v1h1a2 2 0 012 2v2z"/>
-            <path d="M12 8a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V8z"/>
+          icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-700" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2 21h16v-1a1 1 0 00-1-1H3a1 1 0 00-1 1v1zM20 8h-2V5a3 3 0 00-3-3H5a3 3 0 00-3 3v8a4 4 0 004 4h6a4 4 0 004-4V9h2a2 2 0 012 2v2a2 2 0 01-2 2h-1v1h1a3 3 0 003-3v-2a3 3 0 00-3-3z"/>
+            <circle cx="6" cy="6" r="1"/>
+            <circle cx="10" cy="6" r="1"/>
+            <circle cx="14" cy="6" r="1"/>
           </svg>}
           label="Coffee Quality"
         />

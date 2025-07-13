@@ -201,7 +201,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
         
         {/* Legend to match chart view but greyed out - positioned exactly like the data state */}
-        <div className="flex justify-between mt-2 text-xs text-gray-400">
+        <div className="flex justify-between text-xs text-gray-400">
           <div className="flex items-center">
             <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1 shadow-sm"></span>
             <span>Not busy</span>
@@ -217,7 +217,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
         
         {/* Footer text to match chart view - positioned exactly like the data state */}
-        <div className="text-xs text-gray-400 mt-2 text-center italic">
+        <div className="text-xs text-gray-400 text-center italic">
           Based on Google Maps popular times data
         </div>
       </div>
@@ -308,7 +308,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
       </div>
       
-      <div className="flex justify-between mt-2 text-xs text-gray-600">
+      <div className="flex justify-between mb-4 text-xs text-gray-600">
         <div className="flex items-center">
           <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 shadow-sm"></span>
           <span>Not busy</span>
@@ -323,7 +323,7 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
       </div>
       
-      <div className="text-xs text-gray-400 mt-2 text-center italic">
+      <div className="text-xs text-gray-400 text-center italic">
         Based on Google Maps popular times data
       </div>
     </div>

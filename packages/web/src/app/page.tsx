@@ -660,7 +660,7 @@ export default function Home() {
       {/* Trending Cafes Section - Commented out for now */}
 
       {/* All Cafes Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
         <div className="flex justify-between items-center mb-6">
 
           <div className="mb-6 w-full">
@@ -936,7 +936,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
             {sortedCafes.map((cafe) => (
               <div
                 key={cafe.id}
@@ -1167,11 +1167,11 @@ export default function Home() {
                     });
                     
                     return hasUserReviewed ? (
-                      <div className="w-full bg-green-50 text-green-700 px-4 py-3 rounded-b-lg border border-green-200 mt-3 flex items-center justify-center">
+                      <div className="w-full bg-green-50 text-green-700 px-4 py-3 rounded-b-lg border border-green-200 mt-3 flex items-center justify-center min-h-[52px]">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
-                        Thanks for Your Contribution!
+                        <span className="text-sm font-medium">Thanks for Your Contribution!</span>
                       </div>
                     ) : (
                       <button
@@ -1179,12 +1179,12 @@ export default function Home() {
                           setIsWriteReviewModalOpen(true);
                           setCurrentReviewCafeId(cafe.id);
                         }}
-                        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center"
+                        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-3 rounded-b-lg hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 font-medium shadow-sm transition-all duration-200 ease-in-out mt-3 flex items-center justify-center min-h-[52px]"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
                         </svg>
-                        Write a Review
+                        <span className="text-sm font-medium">Write a Review</span>
                       </button>
                     );
                   })()}
