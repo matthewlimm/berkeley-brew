@@ -286,8 +286,12 @@ export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeI
   }
 
   if (error || !status) {
-    // Fallback to just showing nothing
-    return null;
+    // Always render something to maintain consistent card heights
+    return (
+      <div className="flex items-center text-xs text-gray-600 min-h-[16px]">
+        <span className="text-red-600 font-medium">Temporarily Closed</span>
+      </div>
+    );
   }
 
   const getStatusDisplay = () => {

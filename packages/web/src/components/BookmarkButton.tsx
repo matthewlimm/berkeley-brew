@@ -11,9 +11,10 @@ interface BookmarkButtonProps {
   className?: string
   size?: 'sm' | 'md' | 'lg'
   showText?: boolean
+  onBookmarkChange?: (cafeId: string, isBookmarked: boolean) => void
 }
 
-export default function BookmarkButton({ cafeId, className = '', size = 'md', showText = false }: BookmarkButtonProps) {
+export default function BookmarkButton({ cafeId, className = '', size = 'md', showText = false, onBookmarkChange }: BookmarkButtonProps) {
   const { user } = useAuth()
   const { isBookmarked, addBookmark, removeBookmark, isLoading } = useBookmarks()
 
@@ -31,10 +32,15 @@ export default function BookmarkButton({ cafeId, className = '', size = 'md', sh
     }
 
     try {
-      if (isBookmarked(cafeId)) {
+      const wasBookmarked = isBookmarked(cafeId)
+      if (wasBookmarked) {
         await removeBookmark(cafeId)
+        // Call callback with new state (now unbookmarked)
+        onBookmarkChange?.(cafeId, false)
       } else {
         await addBookmark(cafeId)
+        // Call callback with new state (now bookmarked)
+        onBookmarkChange?.(cafeId, true)
       }
     } catch (err) {
       console.error('Error toggling bookmark:', err)

@@ -936,7 +936,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ gridAutoRows: "auto", gridAutoFlow: "row" }}>
             {sortedCafes.map((cafe) => (
               <div
                 key={cafe.id}
@@ -945,17 +945,27 @@ export default function Home() {
               >
                 {/* Cafe Image - Clickable */}
                 <div 
-                  className="h-52 bg-cover bg-center cursor-pointer hover:opacity-95 transition-opacity" 
+                  className="relative h-52 bg-cover bg-center cursor-pointer hover:opacity-95 transition-opacity" 
                   style={{ 
                     backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
                   }}
                   onClick={() => setSelectedCafeId(cafe.id)}
-                ></div>
+                >
+                  {/* Bookmark button */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent opening modal when clicking bookmark button
+                    }}
+                    className="absolute top-4 right-4 z-10 bg-white bg-opacity-70 rounded-full p-2 hover:bg-opacity-100 transition-all duration-200"
+                  >
+                    <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="md" />
+                  </div>
+                </div>
                 
                 <div className="p-6">
                   {/* Cafe Name and Overall Rating */}
                   <div className="flex justify-between items-center mb-3"> {/* Changed from items-start to items-center */}
-                    <div className="flex items-center max-w-[50%] gap-3"> {/* Reduced max width for more aggressive truncation */}
+                    <div className="flex items-center max-w-[75%] gap-2"> {/* Further increased max width for more title space */}
                       <h3 
                         className="text-xl font-bold text-gray-800 cursor-pointer hover:text-amber-600 transition-colors truncate"
                         onClick={() => setSelectedCafeId(cafe.id)}
@@ -963,9 +973,8 @@ export default function Home() {
                       >
                         {cafe.name}
                       </h3>
-                      <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="md" />
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2"> {/* Reduced gap between elements */}
                       {cafe.price_category && (
                         <span className="bg-green-100 text-green-800 font-medium text-xs px-2.5 py-1.5 rounded-full border border-green-200">
                           {cafe.price_category}

@@ -121,6 +121,7 @@ export default function BookmarksPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<{cafeId: string, cafeName: string} | null>(null)
 
   // Function to handle review changes (edit/delete) and update cafe metrics
   const handleReviewChange = async (reviewData: any) => {
@@ -223,6 +224,18 @@ export default function BookmarksPage() {
     }
   }
 
+  // Handle bookmark changes from the detail modal
+  const handleBookmarkChange = (cafeId: string, isBookmarked: boolean) => {
+    if (!isBookmarked) {
+      // If bookmark was removed, update local state immediately
+      setBookmarks(prev => prev.filter(bookmark => bookmark.cafe_id !== cafeId))
+      // Also close the modal since the cafe is no longer bookmarked
+      setModalCafeId(null)
+      // Refresh the bookmarks context
+      refreshBookmarks()
+    }
+  }
+
   // We already have a formatRating function defined at the top level
 
   return (
@@ -278,7 +291,7 @@ export default function BookmarksPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent opening modal when clicking remove button
-                    handleRemoveBookmark(bookmark.cafes.id);
+                    setConfirmRemove({ cafeId: bookmark.cafes.id, cafeName: bookmark.cafes.name });
                   }}
                   className="absolute top-4 right-4 z-10 bg-white bg-opacity-70 rounded-full p-2 hover:bg-opacity-100 transition-all duration-200"
                   aria-label="Remove bookmark"
@@ -292,14 +305,13 @@ export default function BookmarksPage() {
               <div className="p-5">
                 {/* Cafe Name and Overall Rating */}
                 <div className="flex justify-between items-center mb-3"> {/* Changed from items-start to items-center */}
-                  <div className="flex items-center max-w-[50%] gap-3"> {/* Reduced max width for more aggressive truncation */}
+                  <div className="flex items-center max-w-[60%] gap-3"> {/* Increased max width since no bookmark button */}
                     <h3 className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-amber-600 transition-colors truncate"
                       onClick={() => setModalCafeId(bookmark.cafes.id)}
                       title={bookmark.cafes.name} /* Show full name on hover */
                     >
                       {bookmark.cafes.name}
                     </h3>
-                    <BookmarkButton key={`bookmark-${bookmark.cafes.id}`} cafeId={bookmark.cafes.id} size="md" />
                   </div>
                   <div className="flex items-center gap-3">
                     {bookmark.cafes.price_category && (
@@ -477,7 +489,42 @@ export default function BookmarksPage() {
           hasReviews={hasReviews}
           getScoreValue={getScoreValue}
           onReviewChange={handleReviewChange}
+          onBookmarkChange={handleBookmarkChange}
         />
+      )}
+
+      {/* Confirm Remove Modal */}
+      {confirmRemove && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setConfirmRemove(null)}>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5l-6.928-12c-.77-1.333-2.694-1.333-3.464 0L.928 18.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <h2 className="text-lg font-bold text-gray-900">Remove Bookmark</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to remove <strong>{confirmRemove.cafeName}</strong> from your bookmarks?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmRemove(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleRemoveBookmark(confirmRemove.cafeId);
+                  setConfirmRemove(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -43,6 +43,7 @@ interface CafeDetailModalProps {
   getScoreValue: (cafe: any, scoreField: string) => number;
   onReviewSubmit?: () => void;
   onReviewChange?: (reviewData: any) => void;
+  onBookmarkChange?: (cafeId: string, isBookmarked: boolean) => void;
 }
 
 interface TooltipProps {
@@ -200,7 +201,8 @@ export function CafeDetailModal({
   hasReviews, 
   getScoreValue,
   onReviewSubmit,
-  onReviewChange
+  onReviewChange,
+  onBookmarkChange
 }: CafeDetailModalProps) {
   // Create a ref to access the CafeReviews component
   const cafeReviewsRef = useRef<any>(null);
@@ -352,7 +354,7 @@ export function CafeDetailModal({
           <div className="flex justify-between items-center mb-6"> {/* Changed from items-start to items-center */}
             <div className="flex items-center gap-4"> {/* Increased gap between title and bookmark */}
               <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">{cafe.name}</h2>
-              <BookmarkButton cafeId={cafe.id} size="lg" />  
+              <BookmarkButton cafeId={cafe.id} size="lg" onBookmarkChange={onBookmarkChange} />
             </div>
             <div className="flex items-center text-gray-700 gap-4"> {/* Added gap between price and rating */}
               {cafe.price_category && (
