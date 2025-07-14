@@ -143,6 +143,11 @@ export default function Home() {
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   
+  // Animation state for smooth sorting/filtering
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [previousCafeIds, setPreviousCafeIds] = useState<string[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
   // Refs for click outside handling
   const priceDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
@@ -252,7 +257,12 @@ export default function Home() {
         }
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load cafes"))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setIsLoading(false);
+        // Set initial load to false after all animations complete
+        // Wait a bit longer to ensure animations finish
+        setTimeout(() => setIsInitialLoad(false), 5000); // 5 seconds should be enough for any number of cafes
+      });
   }, []);
 
   // Fetch user's reviewed cafes when user changes
@@ -335,15 +345,6 @@ export default function Home() {
     filteredCafes = filteredCafes.filter(cafe => cafe.location === selectedLocation);
     console.log('Filtered by Location:', selectedLocation, filteredCafes.length, 'cafes remaining');
   }
-  
-  // Log active filters
-  useEffect(() => {
-    console.log('Active filters:', { 
-      openNow: isOpenNowActive, 
-      price: selectedPrice, 
-      location: selectedLocation 
-    });
-  }, [isOpenNowActive, selectedPrice, selectedLocation]);
   
   // Sorting logic
   let sortedCafes = [...filteredCafes];
@@ -458,7 +459,7 @@ export default function Home() {
       <HeroSectionWithRotatingBackground />
 
       {/* All Cafes Section */}
-      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex justify-between items-center mb-6">
           <div className="mb-6 w-full">
             <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
@@ -479,8 +480,8 @@ export default function Home() {
                   <option value="mostReviewed">Most Reviewed</option>
                   <option value="grindability">Grindability</option>
                   <option value="vibe">Vibe</option>
-                  <option value="studentFriendliness">Student Friendliness</option>
-                  <option value="coffeeQuality">Coffee Quality</option>
+                  <option value="studentFriendliness">Friendly</option>
+                  <option value="coffeeQuality">Coffee</option>
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-500">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -498,7 +499,11 @@ export default function Home() {
               {/* Open Now button */}
               <button 
                 onClick={() => setIsOpenNowActive(!isOpenNowActive)}
-                className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all ${isOpenNowActive ? 'bg-amber-500 text-white' : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50'}`}
+                className={`w-[130px] px-3 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 whitespace-nowrap ${
+                  isOpenNowActive 
+                    ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
+                    : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
+                }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -513,13 +518,17 @@ export default function Home() {
                     setIsPriceDropdownOpen(!isPriceDropdownOpen);
                     setIsLocationDropdownOpen(false);
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all ${selectedPrice ? 'bg-amber-500 text-white' : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50'}`}
+                  className={`w-[120px] px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 ${
+                    selectedPrice 
+                      ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
+                      : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
+                  }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {selectedPrice || 'Price'}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="truncate">{selectedPrice || 'Price'}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isPriceDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -577,14 +586,18 @@ export default function Home() {
                     setIsLocationDropdownOpen(!isLocationDropdownOpen);
                     setIsPriceDropdownOpen(false);
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all ${selectedLocation ? 'bg-amber-500 text-white' : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50'}`}
+                  className={`w-[140px] px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 ${
+                    selectedLocation 
+                      ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
+                      : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
+                  }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  {selectedLocation ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1) : 'Location'}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span>{selectedLocation ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1) : 'Location'}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -661,7 +674,7 @@ export default function Home() {
                     setSelectedPrice(null);
                     setSelectedLocation(null);
                   }}
-                  className="px-4 py-2.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 shadow-sm ml-1"
+                  className="w-[140px] px-3 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 shadow-sm whitespace-nowrap"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -687,10 +700,16 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-4">
-            {sortedCafes.map((cafe) => (
+            {sortedCafes.map((cafe, index) => (
               <div
                 key={cafe.id}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100"
+                className={`bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 ${
+                  isInitialLoad ? 'animate-fade-in-up opacity-0' : 'opacity-100'
+                }`}
+                style={isInitialLoad ? {
+                  animationDelay: `${(index + 1) * 100}ms`,
+                  animationFillMode: 'forwards'
+                } : {}}
               >
                 <div className="flex h-32">
                   {/* Cafe Image - Left side, compact */}
@@ -704,31 +723,24 @@ export default function Home() {
                         backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
                       }}
                     />
-                    
-                    {/* Bookmark button */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded-full p-1.5 hover:bg-opacity-100 transition-all duration-200"
-                    >
-                      <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="sm" />
-                    </div>
                   </div>
 
                   {/* Middle content area */}
                   <div className="flex-1 p-3 flex flex-col justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 truncate mb-1"
-                        title={cafe.name}
-                      >
-                        <span 
-                          className="cursor-pointer hover:text-amber-600 transition-colors"
-                          onClick={() => setSelectedCafeId(cafe.id)}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate"
+                          title={cafe.name}
                         >
-                          {cafe.name}
-                        </span>
-                      </h3>
+                          <span 
+                            className="cursor-pointer hover:text-amber-600 transition-colors"
+                            onClick={() => setSelectedCafeId(cafe.id)}
+                          >
+                            {cafe.name}
+                          </span>
+                        </h3>
+                        <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="sm" />
+                      </div>
                       
                       {/* Address and Distance */}
                       <div className="flex items-center gap-2 mb-2">

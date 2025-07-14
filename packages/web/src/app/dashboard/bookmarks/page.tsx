@@ -315,11 +315,11 @@ export default function BookmarksPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     {bookmark.cafes.price_category && (
-                      <span className="bg-green-100 text-green-800 font-medium text-xs px-2.5 py-1.5 rounded-full border border-green-200">
+                      <span className="bg-green-100 text-green-800 font-medium text-sm px-2 py-1 rounded border border-green-200">
                         {bookmark.cafes.price_category}
                       </span>
                     )}
-                    <div className="flex items-center bg-amber-50 px-2.5 py-1.5 rounded-full shadow-sm border border-amber-100">
+                    <div className="flex items-center bg-amber-50 px-2 py-1 rounded shadow-sm border border-amber-100">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
@@ -436,7 +436,7 @@ export default function BookmarksPage() {
                   {/* Student Friendliness Score */}
                   <div className="bg-green-50 p-3 rounded-lg shadow-sm border border-green-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-green-700">Friendliness</span>
+                      <span className="text-sm font-medium text-green-700">Friendly</span>
                       <span className="text-sm font-bold text-green-700">
                         {hasScore(bookmark.cafes, 'student_friendliness_score') ? formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score')) : "N/A"}
                       </span>

@@ -358,11 +358,11 @@ export function CafeDetailModal({
             </div>
             <div className="flex items-center text-gray-700 gap-4"> {/* Added gap between price and rating */}
               {cafe.price_category && (
-                <span className="bg-green-100 text-green-800 font-medium text-sm px-2.5 py-1.5 rounded-full border border-green-200">
+                <div className="flex items-center bg-green-100 text-green-800 font-medium text-sm px-2 py-1 rounded border border-green-200">
                   {cafe.price_category}
-                </span>
+                </div>
               )}
-              <div className="flex items-center bg-amber-50 px-3 py-2 rounded-full shadow-sm border border-amber-100">
+              <div className="flex items-center bg-amber-50 px-2 py-1 rounded shadow-sm border border-amber-100">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
@@ -431,11 +431,11 @@ export function CafeDetailModal({
               </div>
             </div>
             
-            {/* Coffee Quality Score */}
+            {/* Coffee Score */}
             <div className="bg-purple-50 p-4 rounded-lg shadow-sm border-2 border-purple-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium text-purple-700">Coffee Quality</span>
+                  <span className="text-sm font-medium text-purple-700">Coffee</span>
                   <CoffeeQualityTooltip />
                 </div>
                 <span className="text-sm font-bold text-purple-700">
@@ -450,11 +450,11 @@ export function CafeDetailModal({
               </div>
             </div>
             
-            {/* Student-Friendliness Score */}
+            {/* Friendly Score */}
             <div className="bg-green-50 p-4 rounded-lg shadow-sm border-2 border-green-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium text-green-700">Student-Friendly</span>
+                  <span className="text-sm font-medium text-green-700">Friendly</span>
                   <StudentFriendlyTooltip />
                 </div>
                 <span className="text-sm font-bold text-green-700">

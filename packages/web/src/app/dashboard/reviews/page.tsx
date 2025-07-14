@@ -474,7 +474,7 @@ export default function MyReviewsPage() {
               {renderRatingInput('grindability_score', 'Grindability', editFormData.grindability_score)}
               {renderRatingInput('vibe_score', 'Vibe', editFormData.vibe_score)}
               {renderRatingInput('coffee_quality_score', 'Coffee Quality', editFormData.coffee_quality_score)}
-              {renderRatingInput('student_friendliness_score', 'Friendliness', editFormData.student_friendliness_score)}
+              {renderRatingInput('student_friendliness_score', 'Friendly', editFormData.student_friendliness_score)}
               
               {/* Content textarea */}
               <div className="mb-4">

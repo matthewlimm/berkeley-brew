@@ -320,7 +320,7 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
             <circle cx="10" cy="6" r="1"/>
             <circle cx="14" cy="6" r="1"/>
           </svg>}
-          label="Coffee Quality"
+          label="Coffee"
         />
         
         <EmojiRating 
@@ -329,7 +329,7 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
           icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-700" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd" />
           </svg>}
-          label="Student-Friendliness"
+          label="Friendly"
         />
         </div>
 
