@@ -249,8 +249,63 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
   // Find the current hour (0-23)
   const currentHour = new Date().getHours();
   
-  // Calculate the max value for scaling
-  const maxValue = Math.max(...hourlyData.filter(v => typeof v === 'number'), 1); // Ensure we don't divide by zero
+  // Calculate dynamic busyness thresholds based on actual data
+  const validValues = hourlyData.filter(v => typeof v === 'number' && v > 0);
+  const minValue = validValues.length > 0 ? Math.min(...validValues) : 0;
+  const maxValue = validValues.length > 0 ? Math.max(...validValues) : 100;
+  const range = maxValue - minValue;
+  
+  // Create dynamic thresholds based on data distribution
+  const threshold25 = minValue + (range * 0.25);
+  const threshold50 = minValue + (range * 0.50);
+  const threshold75 = minValue + (range * 0.75);
+  const threshold90 = minValue + (range * 0.90);
+  
+  // Function to get busyness level and label based on dynamic thresholds
+  // Using colorblind-friendly palette with good contrast
+  const getBusynessInfo = (value: number) => {
+    if (value <= threshold25) {
+      return {
+        level: 'quiet',
+        label: 'Quiet time',
+        color: 'bg-slate-400',
+        dotColor: 'bg-slate-500',
+        textColor: 'text-slate-700'
+      };
+    } else if (value <= threshold50) {
+      return {
+        level: 'low',
+        label: 'Usually not busy',
+        color: 'bg-cyan-400',
+        dotColor: 'bg-cyan-500',
+        textColor: 'text-cyan-700'
+      };
+    } else if (value <= threshold75) {
+      return {
+        level: 'moderate',
+        label: 'Getting busy',
+        color: 'bg-purple-400',
+        dotColor: 'bg-purple-500',
+        textColor: 'text-purple-700'
+      };
+    } else if (value <= threshold90) {
+      return {
+        level: 'busy',
+        label: 'Very busy',
+        color: 'bg-amber-400',
+        dotColor: 'bg-amber-500',
+        textColor: 'text-amber-700'
+      };
+    } else {
+      return {
+        level: 'peak',
+        label: 'As busy as it gets',
+        color: 'bg-rose-600',
+        dotColor: 'bg-rose-600',
+        textColor: 'text-rose-700'
+      };
+    }
+  };
 
   // Component already defined above
 
@@ -276,29 +331,16 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
             const currentValue = hourlyData[currentHour] || 0;
             console.log('PopularTimesChart - currentValue at hour', currentHour, ':', currentValue);
             
-            let dotColor, textColor, busynessText;
+            // Use dynamic thresholds for live status
+            const busynessInfo = getBusynessInfo(currentValue);
+            const liveLabel = busynessInfo.label + ' right now';
             
-            // Use same logic as bar colors for consistency
-            if (currentValue < 30) {
-              dotColor = 'bg-green-500';
-              textColor = 'text-green-700';
-              busynessText = 'Not busy right now';
-            } else if (currentValue < 70) {
-              dotColor = 'bg-yellow-500';
-              textColor = 'text-yellow-700';
-              busynessText = 'Busy right now';
-            } else {
-              dotColor = 'bg-red-500';
-              textColor = 'text-red-700';
-              busynessText = 'Very busy right now';
-            }
-            
-            console.log('PopularTimesChart - Showing live status:', busynessText, 'with color:', dotColor);
+            console.log('PopularTimesChart - Showing live status:', liveLabel, 'with color:', busynessInfo.dotColor);
             
             return (
               <>
-                <div className={`w-2.5 h-2.5 rounded-full ${dotColor} animate-pulse mr-2`}></div>
-                <span className={`text-xs ${textColor} font-medium`}>{busynessText}</span>
+                <div className={`w-2.5 h-2.5 rounded-full ${busynessInfo.dotColor} animate-pulse mr-2`}></div>
+                <span className={`text-xs ${busynessInfo.textColor} font-medium`}>{liveLabel}</span>
               </>
             );
           } else {
@@ -328,14 +370,11 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
               // Get the value for this hour
               const value = hourlyData[hour] || 0;
               
-              // Determine color based on busyness
-              let barColor;
-              if (value < 30) barColor = 'bg-green-400';
-              else if (value < 70) barColor = 'bg-yellow-400';
-              else barColor = 'bg-red-400';
+              // Use dynamic thresholds for bar color
+              const busynessInfo = getBusynessInfo(value);
               
-              // Calculate height - use fixed heights for better visibility
-              const heightPx = Math.max(4, Math.round((value / 100) * 60));
+              // Calculate height - use relative scaling based on max value for better visibility
+              const heightPx = Math.max(4, Math.round((value / maxValue) * 60));
               
               // Highlight current hour
               const isCurrentHour = hour === currentHour;
@@ -345,11 +384,11 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
                 <div key={hour} className="flex-1 flex flex-col items-center px-0.5">
                   <div className="h-full flex items-end justify-center w-full">
                     <div 
-                      className={`w-3/5 ${barColor} rounded-sm ${highlightClass} transition-all duration-300 hover:opacity-80`}
+                      className={`w-3/5 ${busynessInfo.color} rounded-sm ${highlightClass} transition-all duration-300 hover:opacity-80`}
                       style={{ 
                         height: `${heightPx}px`,
                       }}
-                      title={`${hour}:00 - ${value}% busy`}
+                      title={`${hour}:00 - ${busynessInfo.label} (${value}% busy)`}
                     />
                   </div>
                 </div>
@@ -372,16 +411,24 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
       
       <div className="flex justify-between mb-2 text-xs text-gray-600">
         <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 shadow-sm"></span>
+          <span className="inline-block w-2 h-2 bg-slate-500 rounded-full mr-1 shadow-sm"></span>
+          <span>Quiet</span>
+        </div>
+        <div className="flex items-center">
+          <span className="inline-block w-2 h-2 bg-cyan-500 rounded-full mr-1 shadow-sm"></span>
           <span>Not busy</span>
         </div>
         <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1 shadow-sm"></span>
-          <span>Busy</span>
+          <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-1 shadow-sm"></span>
+          <span>Getting busy</span>
         </div>
         <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1 shadow-sm"></span>
+          <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1 shadow-sm"></span>
           <span>Very busy</span>
+        </div>
+        <div className="flex items-center">
+          <span className="inline-block w-2 h-2 bg-rose-600 rounded-full mr-1 shadow-sm"></span>
+          <span>Peak</span>
         </div>
       </div>
       
