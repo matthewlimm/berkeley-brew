@@ -25,7 +25,6 @@ function formatRelativeTimestamp(dateString: string, nowString: string): string 
 
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { getCafe } from '../services/api';
-import type { Database } from '@berkeley-brew/api/src/types/database.types';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { ReviewForm } from './ReviewForm';
@@ -40,7 +39,18 @@ type User = {
 };
 
 // Define the review type from the database
-type ReviewRow = Database['public']['Tables']['reviews']['Row'];
+type ReviewRow = {
+  id: string;
+  cafe_id: string | null;
+  content: string;
+  created_at: string | null;
+  golden_bear_score: number | null;
+  grindability_score: number | null;
+  student_friendliness_score: number | null;
+  coffee_quality_score: number | null;
+  vibe_score: number | null;
+  user_id: string | null;
+};
 
 // Extend the base Review type to include the user property
 type ExtendedReview = ReviewRow & {
@@ -183,8 +193,8 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
       
       // Load avatar URLs for users who have reviews
       const userIds = reviewsData
-        .filter(review => review.user_id)
-        .map(review => review.user_id as string);
+        .filter((review: ExtendedReview) => review.user_id)
+        .map((review: ExtendedReview) => review.user_id as string);
       
       if (userIds.length > 0) {
         fetchAvatarUrls(userIds);
@@ -422,7 +432,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
               <div className="flex items-center">
                 <div className="w-2 h-2 rounded-full bg-blue-600 mr-1"></div>
                 <span className="text-gray-600">Grindability:</span>
-                <span className="text-sm font-semibold text-amber-700 ml-1">{review.golden_bear_score}</span>
+                <span className="text-sm font-semibold text-amber-700 ml-1">{review.grindability_score}</span>
               </div>
               
               <div className="flex items-center">

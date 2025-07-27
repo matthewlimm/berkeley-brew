@@ -12,8 +12,6 @@ import HeroSectionWithRotatingBackground from "@/components/HeroSectionWithRotat
 import BookmarkButton from "@/components/BookmarkButton";
 // Import UI components as needed
 import { ReviewForm } from "../components/ReviewForm";
-import type { Database } from "@berkeley-brew/api/src/types/database.types";
-
 // Helper function to format rating display
 function formatRating(rating: number | null | undefined): string {
   // Only return N/A if the rating is truly null/undefined or NaN
@@ -67,7 +65,7 @@ function getScoreValue(cafe: any, scoreField: string): number {
 }
 
 // Calculate Golden Bear score function
-const calculateGoldenBearScore = (cafe: Database['public']['Tables']['cafes']['Row']) => {
+const calculateGoldenBearScore = (cafe: any) => {
   const scores = [
     cafe.grindability_score,
     cafe.student_friendliness_score,
@@ -97,7 +95,7 @@ type BusinessHours = {
 };
 
 // Extended cafe type to include API response fields
-type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
+type ExtendedCafe = {
   average_rating?: number | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -109,8 +107,8 @@ type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
   name: string;
   id: string;
-  image_url?: string | null;
-  address?: string | null;
+  image_url?: string | null | undefined;
+  address?: string | null | undefined;
   grindability_score?: number | null;
   student_friendliness_score?: number | null;
   coffee_quality_score?: number | null;
@@ -118,6 +116,7 @@ type ExtendedCafe = Database['public']['Tables']['cafes']['Row'] & {
   golden_bear_score?: number | null;
   realtime?: any;
   popular_times?: any;
+  user_has_reviewed?: boolean;
 };
 
 export default function Home() {
@@ -491,10 +490,10 @@ export default function Home() {
       <HeroSectionWithRotatingBackground />
 
       {/* All Cafes Section */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="flex justify-between items-center mb-6">
           <div className="mb-6 w-full">
-            <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
+            <div className="bg-white border border-amber-200 rounded-lg px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-sm">
               <div className="flex flex-col">
                 <label htmlFor="sort-dropdown" className="text-sm font-semibold text-amber-700 mb-1">Sort & Explore Cafes</label>
                 <span className="text-xs text-gray-500">Choose how to order the list below.</span>
@@ -502,7 +501,7 @@ export default function Home() {
               <div className="relative w-full sm:w-auto">
                 <select
                   id="sort-dropdown"
-                  className="border border-amber-400 rounded-lg px-4 py-2 text-sm bg-gradient-to-r from-amber-50 to-yellow-100 focus:ring-amber-400 focus:border-amber-500 shadow-sm transition-all duration-150 ease-in-out hover:border-amber-600 hover:bg-amber-100 appearance-none pr-10"
+                  className="w-full border border-amber-400 rounded-lg px-4 py-2 text-sm bg-gradient-to-r from-amber-50 to-yellow-100 focus:ring-amber-400 focus:border-amber-500 shadow-sm transition-all duration-150 ease-in-out hover:border-amber-600 hover:bg-amber-100 appearance-none pr-10"
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as any)}
                   style={{ minWidth: 180 }}
@@ -522,7 +521,7 @@ export default function Home() {
                 </span>
               </div>
               {sortBy === 'distance' && !userLocation && (
-                <span className="text-xs text-red-500 ml-2">Allow location access to sort by distance</span>
+                <span className="text-xs text-red-500 sm:ml-2">Allow location access to sort by distance</span>
               )}
             </div>
             
@@ -744,7 +743,8 @@ export default function Home() {
                   position: openBusinessHoursDropdown === cafe.id ? 'relative' : 'static'
                 }}
               >
-                <div className="flex h-32">
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex h-32">
                   {/* Cafe Image - Left side, compact */}
                   <div 
                     className="relative w-48 h-32 flex-shrink-0 cursor-pointer hover:opacity-95 transition-opacity" 
@@ -928,6 +928,186 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+
+                {/* Mobile Layout */}
+                <div className="sm:hidden p-3">
+                  {/* Mobile Header */}
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Cafe Image - Mobile */}
+                    <div 
+                      className="relative w-20 h-20 flex-shrink-0 cursor-pointer hover:opacity-95 transition-opacity rounded-lg overflow-hidden" 
+                      onClick={() => setSelectedCafeId(cafe.id)}
+                    >
+                      <div
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ 
+                          backgroundImage: `url(${cafe.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'})`
+                        }}
+                      />
+                    </div>
+
+                    {/* Mobile Title and Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate"
+                          title={cafe.name}
+                        >
+                          <span 
+                            className="cursor-pointer hover:text-amber-600 transition-colors"
+                            onClick={() => setSelectedCafeId(cafe.id)}
+                          >
+                            {cafe.name}
+                          </span>
+                        </h3>
+                        <BookmarkButton key={`bookmark-${cafe.id}`} cafeId={cafe.id} size="sm" />
+                      </div>
+                      
+                      {/* Address */}
+                      <p className="text-gray-600 text-sm truncate mb-1">
+                        {(() => {
+                          if (cafe.address) {
+                            const parts = cafe.address.split(',');
+                            if (parts.length >= 2) {
+                              return parts[0].trim() + ', ' + parts[1].trim();
+                            } else {
+                              return cafe.address;
+                            }
+                          }
+                          return '';
+                        })()}
+                      </p>
+
+                      {/* Rating and Distance */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center bg-amber-50 px-2 py-1 rounded shadow-sm border border-amber-100">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-amber-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="text-xs font-medium text-amber-700">
+                            {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
+                          </span>
+                          {(cafe.review_count ?? 0) > 0 && (
+                            <span className="text-amber-500 text-xs ml-1">
+                              ({cafe.review_count})
+                            </span>
+                          )}
+                        </div>
+                        
+                        {cafe.price_category && (
+                          <span className="bg-green-100 text-green-800 font-medium text-xs px-2 py-1 rounded border border-green-200">
+                            {cafe.price_category}
+                          </span>
+                        )}
+                        
+                        {userLocation && typeof cafe.latitude === 'number' && typeof cafe.longitude === 'number' && !isNaN(Number(cafe.latitude)) && !isNaN(Number(cafe.longitude)) && (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs font-medium border border-amber-100 flex-shrink-0">
+                            {(() => {
+                              const distMeters = haversineDistance(userLocation.lat, userLocation.lng, Number(cafe.latitude), Number(cafe.longitude));
+                              const metersPerMile = 1609.34;
+                              const metersPerFoot = 0.3048;
+                              const distMiles = distMeters / metersPerMile;
+                              if (distMiles < 0.1) {
+                                const distFeet = distMeters / metersPerFoot;
+                                return `${Math.round(distFeet)} ft`;
+                              } else {
+                                return `${distMiles.toFixed(2)} mi`;
+                              }
+                            })()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Opening Hours */}
+                  <div className="text-sm text-gray-600 mb-3">
+                    <CafeOpeningHours 
+                      name={cafe.name} 
+                      placeId={cafe.place_id} 
+                      businessHours={cafe.business_hours}
+                      cafeId={cafe.id}
+                      isOpen={openBusinessHoursDropdown === cafe.id}
+                      onToggle={(cafeId) => {
+                        if (openBusinessHoursDropdown !== cafeId) {
+                          setHasBusinessHoursBeenOpened(true);
+                        }
+                        setOpenBusinessHoursDropdown(openBusinessHoursDropdown === cafeId ? null : cafeId);
+                      }}
+                    />
+                  </div>
+
+                  {/* Mobile Metrics */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <div className="flex items-center bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                      <span className="text-xs text-blue-700 font-medium mr-1">Grind</span>
+                      <span className="text-xs font-bold text-blue-700">
+                        {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'grindability_score')) : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex items-center bg-pink-50 px-2 py-1 rounded border border-pink-100">
+                      <span className="text-xs text-pink-700 font-medium mr-1">Vibe</span>
+                      <span className="text-xs font-bold text-pink-700">
+                        {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'vibe_score')) : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex items-center bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                      <span className="text-xs text-amber-700 font-medium mr-1">Coffee</span>
+                      <span className="text-xs font-bold text-amber-700">
+                        {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'coffee_quality_score')) : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex items-center bg-green-50 px-2 py-1 rounded border border-green-100">
+                      <span className="text-xs text-green-700 font-medium mr-1">Friendly</span>
+                      <span className="text-xs font-bold text-green-700">
+                        {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'student_friendliness_score')) : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mobile Actions */}
+                  <div className="flex items-center justify-between">
+                    {/* Write Review Button */}
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const hasUserReviewed = user && userReviewedCafes.has(cafe.id);
+                        
+                        return hasUserReviewed ? (
+                          <div className="text-sm text-green-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Reviewed
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setIsWriteReviewModalOpen(true);
+                              setCurrentReviewCafeId(cafe.id);
+                            }}
+                            className="text-sm text-white font-medium bg-orange-600 hover:bg-orange-700 px-3 py-1.5 rounded transition-colors shadow-sm"
+                          >
+                            Write Review
+                          </button>
+                        );
+                      })()}
+                    </div>
+                    
+                    {/* Popular Times */}
+                    <div className="flex items-center gap-2">
+                      {cafe.popular_times && (
+                        <button
+                          onClick={() => setExpandedCafeId(expandedCafeId === cafe.id ? null : cafe.id)}
+                          className="text-xs text-amber-600 hover:text-amber-700 font-medium flex items-center"
+                        >
+                          Popular Times
+                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 ml-1 transition-transform ${expandedCafeId === cafe.id ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Expanded Popular Times Chart */}
                 {expandedCafeId === cafe.id && cafe.popular_times && (
@@ -958,6 +1138,7 @@ export default function Home() {
             cafe={{
               ...cafes.find(cafe => cafe.id === selectedCafeId)!,
               image_url: cafes.find(cafe => cafe.id === selectedCafeId)?.image_url || undefined,
+              address: cafes.find(cafe => cafe.id === selectedCafeId)?.address || undefined,
               user_has_reviewed: !!(user && userReviewedCafes.has(selectedCafeId))
             }}
             isOpen={!!selectedCafeId}

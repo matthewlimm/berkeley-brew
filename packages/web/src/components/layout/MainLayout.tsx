@@ -49,46 +49,30 @@ export default function MainLayout({ children, isDashboardLayout = false }: Main
                     alt="Berkeley Brew Logo"
                     width={80}
                     height={80}
-                    className="h-20 w-20 group-hover:scale-105 transition-transform duration-200"
+                    className="h-16 w-16 sm:h-20 sm:w-20 group-hover:scale-105 transition-transform duration-200"
                   />
                 </div>
                 <div className="flex flex-col -ml-2">
-                  <span className="text-xl font-bold text-gray-800 group-hover:text-amber-700 transition-colors duration-200">Berkeley Brew</span>
-                  <span className="text-xs text-amber-600 font-medium -mt-1">Cafe Discovery</span>
+                  <span className="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-amber-700 transition-colors duration-200">Berkeley Brew</span>
+                  <span className="text-xs text-amber-600 font-medium -mt-1 hidden sm:inline">Cafe Discovery</span>
                 </div>
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            {isMobile && (
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
-              >
-                <span className="sr-only">Open main menu</span>
-                {/* Hamburger icon */}
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            )}
-
             {/* Desktop navigation */}
-            {!isMobile && (
-              <div className="hidden md:ml-6 md:flex md:space-x-8">
-              </div>
-            )}
+            <div className="hidden md:ml-6 md:flex md:space-x-8">
+            </div>
 
             {/* User authentication */}
-            <div className="ml-6 flex items-center">
+            <div className="ml-3 sm:ml-6 flex items-center">
               {user ? (
                 <UserProfileMenu />
               ) : (
-                <div className="flex space-x-4 items-center">
-                  <Link href="/auth/login" className="text-amber-600 hover:text-amber-500 font-medium px-4 py-2">
+                <div className="flex space-x-2 sm:space-x-4 items-center">
+                  <Link href="/auth/login" className="text-amber-600 hover:text-amber-500 font-medium px-2 sm:px-4 py-2 text-sm">
                     Login
                   </Link>
-                  <Link href="/auth/signup" className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                  <Link href="/auth/signup" className="bg-amber-600 hover:bg-amber-700 text-white px-2 sm:px-4 py-2 rounded-md text-sm font-medium">
                     Sign up
                   </Link>
                 </div>
@@ -136,18 +120,6 @@ export default function MainLayout({ children, isDashboardLayout = false }: Main
         </div>
       </footer>
 
-      {/* Mobile bottom navigation */}
-      {isMobile && (
-        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex">
-
-          <Link href="/dashboard" className="flex-1 flex flex-col items-center justify-center py-2 text-xs text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span>Profile</span>
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

@@ -350,31 +350,31 @@ export function CafeDetailModal({
         ></div>
 
         <div className="p-8">
-          {/* Cafe Name, Bookmark Button, and Overall Rating */}
-          <div className="flex justify-between items-center mb-6"> {/* Changed from items-start to items-center */}
-            <div className="flex items-center gap-4"> {/* Increased gap between title and bookmark */}
-              <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">{cafe.name}</h2>
-              <BookmarkButton cafeId={cafe.id} size="lg" onBookmarkChange={onBookmarkChange} />
-            </div>
-            <div className="flex items-center text-gray-700 gap-4"> {/* Added gap between price and rating */}
-              {cafe.price_category && (
-                <div className="flex items-center bg-green-100 text-green-800 font-medium text-sm px-2 py-1 rounded border border-green-200">
-                  {cafe.price_category}
-                </div>
-              )}
-              <div className="flex items-center bg-amber-50 px-2 py-1 rounded shadow-sm border border-amber-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="text-base font-medium text-amber-700">
-                  {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
-                </span>
-                {(cafe.review_count ?? 0) > 0 && (
-                  <span className="text-amber-500 text-sm ml-1.5">
-                    ({cafe.review_count})
-                  </span>
-                )}
+          {/* Cafe Name and Bookmark Button */}
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">{cafe.name}</h2>
+            <BookmarkButton cafeId={cafe.id} size="lg" onBookmarkChange={onBookmarkChange} />
+          </div>
+
+          {/* Price and Rating underneath title */}
+          <div className="flex items-center text-gray-700 gap-4 mb-6">
+            {cafe.price_category && (
+              <div className="flex items-center bg-green-100 text-green-800 font-medium text-sm px-2 py-1 rounded border border-green-200">
+                {cafe.price_category}
               </div>
+            )}
+            <div className="flex items-center bg-amber-50 px-2 py-1 rounded shadow-sm border border-amber-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <span className="text-base font-medium text-amber-700">
+                {hasReviews(cafe) ? formatRating(cafe.average_rating) : "N/A"}
+              </span>
+              {(cafe.review_count ?? 0) > 0 && (
+                <span className="text-amber-500 text-sm ml-1.5">
+                  ({cafe.review_count})
+                </span>
+              )}
             </div>
           </div>
 
@@ -388,7 +388,14 @@ export function CafeDetailModal({
 
           {/* Opening Hours */}
           <div className="mb-6">
-            <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
+            <CafeOpeningHours 
+              name={cafe.name} 
+              placeId={cafe.place_id} 
+              businessHours={cafe.business_hours}
+              cafeId={cafe.id}
+              isOpen={false}
+              onToggle={() => {}}
+            />
           </div>
           
           {/* Metrics */}

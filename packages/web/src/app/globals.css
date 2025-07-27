@@ -135,4 +135,44 @@
   left: 100%;
 }
 
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Ensure proper touch targets */
+  .filter-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve modal sizing on mobile */
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Better spacing for mobile cards */
+  .cafe-card-mobile {
+    padding: 12px;
+  }
+  
+  /* Ensure dropdowns don't go off-screen */
+  .dropdown-mobile {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+  }
+}
+
+/* Improve scrolling on mobile */
+@media (max-width: 768px) {
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on inputs */
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
 /* Custom styles can be added below */

@@ -162,7 +162,7 @@ export default function HeroSectionWithRotatingBackground() {
   const currentImage = backgrounds[currentIndex];
 
   return (
-    <div className="relative h-[500px] md:h-[600px] overflow-hidden">
+    <div className="relative h-[400px] sm:h-[500px] md:h-[600px] overflow-hidden">
       {/* Black overlay for transition */}
       <div 
         className={`absolute inset-0 bg-black z-20 transition-opacity duration-500 ease-in-out ${isTransitioning ? 'opacity-100' : 'opacity-0'}`}
@@ -181,14 +181,14 @@ export default function HeroSectionWithRotatingBackground() {
       <div className="absolute inset-0 bg-black bg-opacity-40 z-10" />
       
       {/* Location and Attribution Label */}
-      <div className={`absolute bottom-6 right-6 md:bottom-10 md:right-10 z-30 transition-opacity duration-500 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="bg-black bg-opacity-70 rounded-lg px-4 py-2 shadow-md">
+      <div className={`absolute bottom-3 right-3 sm:bottom-6 sm:right-6 md:bottom-10 md:right-10 z-30 transition-opacity duration-500 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+        <div className="bg-black bg-opacity-70 rounded-lg px-2 py-1 sm:px-4 sm:py-2 shadow-md">
           <div className="flex flex-col space-y-1">
             <div className="flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm font-medium text-white">{currentImage.description} · {currentImage.location}</span>
+              <span className="text-xs sm:text-sm font-medium text-white">{currentImage.description} · {currentImage.location}</span>
             </div>
             <div className="text-xs text-gray-300">
               Photo by {currentImage.photographer} on Unsplash
@@ -199,13 +199,13 @@ export default function HeroSectionWithRotatingBackground() {
       
       {/* Content */}
       <div className="relative z-30 h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
           <div className="text-center">
-            <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
               <span className="block">Discover the Best Cafes</span>
               <span className="block text-amber-300">in Berkeley</span>
             </h1>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-200 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            <p className="mt-3 max-w-sm sm:max-w-md mx-auto text-sm sm:text-base text-gray-200 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
               Find your perfect study spot, coffee chat, or caffeine fix from the best local cafes around campus.
             </p>
             {/* Buttons removed as requested */}
