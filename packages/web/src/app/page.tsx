@@ -143,6 +143,9 @@ export default function Home() {
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   
+  // Business hours dropdown state - only one can be open at a time
+  const [openBusinessHoursDropdown, setOpenBusinessHoursDropdown] = useState<string | null>(null);
+  
   // Animation state for smooth sorting/filtering
   const [isFiltering, setIsFiltering] = useState(false);
   const [previousCafeIds, setPreviousCafeIds] = useState<string[]>([]);
@@ -218,6 +221,34 @@ export default function Home() {
       if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target as Node)) {
         setIsLocationDropdownOpen(false);
       }
+      
+      // Close business hours dropdown when clicking outside
+      if (openBusinessHoursDropdown) {
+        const target = event.target as Node;
+        // Check if click is outside any business hours dropdown
+        const businessHoursDropdowns = document.querySelectorAll('[data-business-hours-dropdown]');
+        const businessHoursButtons = document.querySelectorAll('[data-business-hours-button]');
+        
+        let isOutside = true;
+        
+        // Check if click is inside any dropdown
+        businessHoursDropdowns.forEach(dropdown => {
+          if (dropdown.contains(target)) {
+            isOutside = false;
+          }
+        });
+        
+        // Check if click is on any button
+        businessHoursButtons.forEach(button => {
+          if (button.contains(target)) {
+            isOutside = false;
+          }
+        });
+        
+        if (isOutside) {
+          setOpenBusinessHoursDropdown(null);
+        }
+      }
     }
     
     // Add event listener
@@ -227,7 +258,7 @@ export default function Home() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [openBusinessHoursDropdown]);
 
   // Load cafes on mount
   useEffect(() => {
@@ -703,13 +734,14 @@ export default function Home() {
             {sortedCafes.map((cafe, index) => (
               <div
                 key={cafe.id}
-                className={`bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 ${
-                  isInitialLoad ? 'animate-fade-in-up opacity-0' : 'opacity-100'
+                className={`bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 ${
+                  isInitialLoad && openBusinessHoursDropdown !== cafe.id ? 'animate-fade-in-up opacity-0' : 'opacity-100'
                 }`}
-                style={isInitialLoad ? {
-                  animationDelay: `${(index + 1) * 100}ms`,
-                  animationFillMode: 'forwards'
-                } : {}}
+                style={{
+                  ...(isInitialLoad && openBusinessHoursDropdown !== cafe.id ? { animationFillMode: 'forwards' } : {}),
+                  zIndex: openBusinessHoursDropdown === cafe.id ? 999999 : 'auto',
+                  position: openBusinessHoursDropdown === cafe.id ? 'relative' : 'static'
+                }}
               >
                 <div className="flex h-32">
                   {/* Cafe Image - Left side, compact */}
@@ -777,7 +809,14 @@ export default function Home() {
 
                       {/* Opening Hours */}
                       <div className="text-sm text-gray-600 mb-2">
-                        <CafeOpeningHours name={cafe.name} placeId={cafe.place_id} businessHours={cafe.business_hours} />
+                        <CafeOpeningHours 
+                          name={cafe.name} 
+                          placeId={cafe.place_id} 
+                          businessHours={cafe.business_hours}
+                          cafeId={cafe.id}
+                          isOpen={openBusinessHoursDropdown === cafe.id}
+                          onToggle={(cafeId) => setOpenBusinessHoursDropdown(openBusinessHoursDropdown === cafeId ? null : cafeId)}
+                        />
                       </div>
                     </div>
 

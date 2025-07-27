@@ -6,6 +6,9 @@ interface CafeOpeningHoursProps {
   name: string;
   placeId?: string | null;
   businessHours?: any; // JSONB from database containing opening_hours data
+  cafeId: string;
+  isOpen: boolean;
+  onToggle: (cafeId: string) => void;
 }
 
 interface OpeningStatus {
@@ -16,11 +19,10 @@ interface OpeningStatus {
   allHours?: Record<number, string>; // All business hours by day number (0=Sunday, 1=Monday, etc.)
 }
 
-export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeId, businessHours }) => {
+export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeId, businessHours, cafeId, isOpen, onToggle }) => {
   const [status, setStatus] = useState<OpeningStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAllHours, setShowAllHours] = useState<boolean>(false);
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   useEffect(() => {
@@ -333,11 +335,12 @@ export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeI
               <span className="ml-1">· {status.hoursToday}</span>
             )}
             <button 
-              onClick={() => setShowAllHours(!showAllHours)}
+              onClick={() => onToggle(cafeId)}
               className="ml-1 text-amber-600 hover:text-amber-800 focus:outline-none"
               aria-label="Toggle all hours"
+              data-business-hours-button
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showAllHours ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
@@ -346,8 +349,15 @@ export const CafeOpeningHours: React.FC<CafeOpeningHoursProps> = ({ name, placeI
       </div>
       
       {/* Dropdown for all hours - only show when business hours are available */}
-      {showAllHours && hasBusinessHours && status.allHours && (
-        <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-200 p-2 text-xs w-48 animate-fadeIn">
+      {isOpen && hasBusinessHours && status.allHours && (
+        <div className="absolute mt-1 bg-white shadow-2xl rounded-md border border-gray-200 p-2 text-xs w-48 animate-fadeIn ring-1 ring-black ring-opacity-5" 
+             style={{ 
+               zIndex: 999999,
+               position: 'absolute',
+               top: '100%',
+               left: '0'
+             }}
+             data-business-hours-dropdown>
           <div className="font-medium text-gray-700 mb-1 pb-1 border-b border-gray-100">
             Business Hours
           </div>

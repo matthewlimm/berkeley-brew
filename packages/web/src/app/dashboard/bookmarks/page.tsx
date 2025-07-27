@@ -122,6 +122,7 @@ export default function BookmarksPage() {
   const [hasLoaded, setHasLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
   const [confirmRemove, setConfirmRemove] = useState<{cafeId: string, cafeName: string} | null>(null)
+  const [openBusinessHoursDropdown, setOpenBusinessHoursDropdown] = useState<string | null>(null)
 
   // Function to handle review changes (edit/delete) and update cafe metrics
   const handleReviewChange = async (reviewData: any) => {
@@ -146,6 +147,46 @@ export default function BookmarksPage() {
       setIsLoading(false);
     }
   };
+
+  // Click outside handler for business hours dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (openBusinessHoursDropdown) {
+        const target = event.target as Node;
+        // Check if click is outside any business hours dropdown
+        const businessHoursDropdowns = document.querySelectorAll('[data-business-hours-dropdown]');
+        const businessHoursButtons = document.querySelectorAll('[data-business-hours-button]');
+        
+        let isOutside = true;
+        
+        // Check if click is inside any dropdown
+        businessHoursDropdowns.forEach(dropdown => {
+          if (dropdown.contains(target)) {
+            isOutside = false;
+          }
+        });
+        
+        // Check if click is on any button
+        businessHoursButtons.forEach(button => {
+          if (button.contains(target)) {
+            isOutside = false;
+          }
+        });
+        
+        if (isOutside) {
+          setOpenBusinessHoursDropdown(null);
+        }
+      }
+    }
+    
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openBusinessHoursDropdown]);
 
   // Get user location
   useEffect(() => {
@@ -270,7 +311,11 @@ export default function BookmarksPage() {
           {bookmarks.map((bookmark) => (
             <div
               key={bookmark.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100"
+              style={{
+                zIndex: openBusinessHoursDropdown === bookmark.cafes.id ? 999999 : 'auto',
+                position: openBusinessHoursDropdown === bookmark.cafes.id ? 'relative' : 'static'
+              }}
             >
               {/* Cafe Image */}
               <div className="relative h-52 w-full cursor-pointer hover:opacity-95 transition-opacity" onClick={() => setModalCafeId(bookmark.cafes.id)}>
@@ -379,7 +424,10 @@ export default function BookmarksPage() {
                 <div className="mb-2 text-sm text-gray-600">
                   <CafeOpeningHours 
                     name={bookmark.cafes.name}
-                    businessHours={bookmark.cafes.business_hours || {}} 
+                    businessHours={bookmark.cafes.business_hours || {}}
+                    cafeId={bookmark.cafes.id}
+                    isOpen={openBusinessHoursDropdown === bookmark.cafes.id}
+                    onToggle={(cafeId) => setOpenBusinessHoursDropdown(openBusinessHoursDropdown === cafeId ? null : cafeId)}
                   />
                 </div>
                 
@@ -452,7 +500,7 @@ export default function BookmarksPage() {
                 
                 {/* Popular Times Chart - moved after metrics */}
                 {bookmark.cafes.popular_times && (
-                  <div className="mt-6 mb-16"> {/* Increased bottom margin from mb-10 to mb-16 for more space */}
+                  <div className="mt-6 mb-4"> {/* Reduced bottom margin from mb-16 to mb-4 */}
                     <PopularTimesChart data={bookmark.cafes.popular_times} />
                   </div>
                 )}
