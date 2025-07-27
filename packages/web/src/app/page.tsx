@@ -150,6 +150,7 @@ export default function Home() {
   const [isFiltering, setIsFiltering] = useState(false);
   const [previousCafeIds, setPreviousCafeIds] = useState<string[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [hasBusinessHoursBeenOpened, setHasBusinessHoursBeenOpened] = useState(false);
   
   // Refs for click outside handling
   const priceDropdownRef = useRef<HTMLDivElement>(null);
@@ -735,10 +736,10 @@ export default function Home() {
               <div
                 key={cafe.id}
                 className={`bg-white rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 ${
-                  isInitialLoad && openBusinessHoursDropdown !== cafe.id ? 'animate-fade-in-up opacity-0' : 'opacity-100'
+                  isInitialLoad && !hasBusinessHoursBeenOpened && openBusinessHoursDropdown !== cafe.id ? 'animate-fade-in-up opacity-0' : 'opacity-100'
                 }`}
                 style={{
-                  ...(isInitialLoad && openBusinessHoursDropdown !== cafe.id ? { animationFillMode: 'forwards' } : {}),
+                  ...(isInitialLoad && !hasBusinessHoursBeenOpened && openBusinessHoursDropdown !== cafe.id ? { animationFillMode: 'forwards' } : {}),
                   zIndex: openBusinessHoursDropdown === cafe.id ? 999999 : 'auto',
                   position: openBusinessHoursDropdown === cafe.id ? 'relative' : 'static'
                 }}
@@ -815,7 +816,12 @@ export default function Home() {
                           businessHours={cafe.business_hours}
                           cafeId={cafe.id}
                           isOpen={openBusinessHoursDropdown === cafe.id}
-                          onToggle={(cafeId) => setOpenBusinessHoursDropdown(openBusinessHoursDropdown === cafeId ? null : cafeId)}
+                          onToggle={(cafeId) => {
+                            if (openBusinessHoursDropdown !== cafeId) {
+                              setHasBusinessHoursBeenOpened(true);
+                            }
+                            setOpenBusinessHoursDropdown(openBusinessHoursDropdown === cafeId ? null : cafeId);
+                          }}
                         />
                       </div>
                     </div>
