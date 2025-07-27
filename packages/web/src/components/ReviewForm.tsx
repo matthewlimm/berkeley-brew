@@ -261,9 +261,8 @@ export function ReviewForm({ cafeId, onSuccess, onCancel }: ReviewFormProps) {
   const getEmojiForRating = (category: React.ReactNode, value: number) => {
     const emojis = {
       'Grindability': ['😴', '📚', '📝', '💻', '🧠'],
-      'Student-Friendliness': ['😠', '😐', '🙂', '😊', '😁'],
-      'Friendliness': ['😠', '😐', '🙂', '😊', '😁'], // Added to match page.tsx label change
-      'Coffee Quality': ['🤮', '🫤', '☕', '😋', '🤤'],
+      'Friendly': ['🚫', '👋', '🙌', '🎓', '🏆'],
+      'Coffee': ['💧', '🍵', '☕', '🔥', '☄️'],
       'Vibe': ['👎', '😕', '😐', '🎵', '🎉']
     };
     
