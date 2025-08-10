@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd packages/web && pnpm build",
-  "devCommand": "cd packages/web && pnpm dev",
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "outputDirectory": "packages/web/.next"
 }
