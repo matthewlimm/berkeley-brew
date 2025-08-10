@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "build": "echo 'No build needed for Vercel serverless'",
-    "vercel-build": "pnpm install && tsc",
+    "build": "tsc",
+    "vercel-build": "pnpm install && tsc && mkdir -p public",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "generate:types": "npx supabase@\">=1.8.1\" gen types typescript --db-url \"${DATABASE_URL}\" > src/types/supabase.ts"
