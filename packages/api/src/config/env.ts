@@ -2,17 +2,19 @@ import { config } from 'dotenv'
 import { z } from 'zod'
 import path from 'path'
 
-// Load environment variables from root directory
-const result = config({
-  path: path.resolve(__dirname, '../../../../.env')
-})
+// Only load .env file in development
+if (process.env.NODE_ENV !== 'production') {
+  const result = config({
+    path: path.resolve(__dirname, '../../../../.env')
+  })
 
-if (result.error) {
-  console.error('❌ Error loading .env file:', result.error)
-  process.exit(1)
+  if (result.error) {
+    console.error('❌ Error loading .env file:', result.error)
+    process.exit(1)
+  } else {
+    console.log('Environment loaded from:', result.parsed ? Object.keys(result.parsed).length + ' variables' : 'no variables found')
+  }
 }
-
-console.log('Environment loaded from:', result.parsed ? Object.keys(result.parsed).length + ' variables' : 'no variables found')
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
