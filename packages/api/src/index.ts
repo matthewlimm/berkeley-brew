@@ -47,12 +47,11 @@ app.use((req, res) => {
   })
 })
 
-// For Vercel serverless deployment
-if (process.env.NODE_ENV === 'production') {
-  // Export the app for Vercel
-  module.exports = app
-} else {
-  // Local development server
+// Export the app for Vercel
+export default app
+
+// Local development server
+if (process.env.NODE_ENV !== 'production' && require.main === module) {
   const startServer = async () => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
