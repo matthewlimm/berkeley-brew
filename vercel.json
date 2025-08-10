@@ -7,7 +7,10 @@
     },
     {
       "src": "packages/api/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     }
   ],
   "routes": [
@@ -19,10 +22,5 @@
       "src": "/(.*)",
       "dest": "packages/web/$1"
     }
-  ],
-  "functions": {
-    "packages/api/src/index.ts": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
