@@ -1,11 +1,11 @@
-import type { Database } from '@berkeley-brew/api/src/db'
+import type { Database } from '../../../api/src/types/database.types'
 import { supabase } from '@/lib/supabase'
 import { UUID } from 'crypto'
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
 type Review = Database['public']['Tables']['reviews']['Row']
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // Helper function to get auth headers
 async function getAuthHeader(): Promise<Record<string, string>> {

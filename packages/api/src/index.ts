@@ -47,36 +47,43 @@ app.use((req, res) => {
   })
 })
 
-const startServer = async () => {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      await new Promise((resolve, reject) => {
-        const server = app.listen(currentPort, () => {
-          console.log(`🚀 API server running on port ${currentPort}`)
-          resolve(true)
+// For Vercel serverless deployment
+if (process.env.NODE_ENV === 'production') {
+  // Export the app for Vercel
+  module.exports = app
+} else {
+  // Local development server
+  const startServer = async () => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        await new Promise((resolve, reject) => {
+          const server = app.listen(currentPort, () => {
+            console.log(`🚀 API server running on port ${currentPort}`)
+            resolve(true)
+          })
+          
+          server.on('error', (error: any) => {
+            if (error.code === 'EADDRINUSE') {
+              const nextPort = currentPort + 1
+              console.log(`Port ${currentPort} is in use, trying ${nextPort}`)
+              currentPort = nextPort
+              server.close()
+              reject(error)
+            } else {
+              reject(error)
+            }
+          })
         })
-        
-        server.on('error', (error: any) => {
-          if (error.code === 'EADDRINUSE') {
-            const nextPort = currentPort + 1
-            console.log(`Port ${currentPort} is in use, trying ${nextPort}`)
-            currentPort = nextPort
-            server.close()
-            reject(error)
-          } else {
-            reject(error)
-          }
-        })
-      })
-      return // Server started successfully
-    } catch (error) {
-      if (attempt === maxRetries - 1) {
-        console.error(`Failed to start server after ${maxRetries} attempts`)
-        process.exit(1)
+        return // Server started successfully
+      } catch (error) {
+        if (attempt === maxRetries - 1) {
+          console.error(`Failed to start server after ${maxRetries} attempts`)
+          process.exit(1)
+        }
+        // Continue to next attempt
       }
-      // Continue to next attempt
     }
   }
-}
 
-startServer()
+  startServer()
+}
