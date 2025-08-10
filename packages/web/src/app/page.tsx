@@ -102,9 +102,9 @@ type ExtendedCafe = {
   review_count?: number | null;
   reviews?: any[];
   place_id?: string | null;
-  business_hours?: BusinessHours;
-  price_category?: '$' | '$$' | '$$$' | null;
-  location?: 'campus' | 'northside' | 'southside' | 'downtown' | 'outer' | null;
+  business_hours?: any; // Use any to handle Json type from API
+  price_category?: string | null; // Use string to handle any price category from API
+  location?: string | null; // Use string to handle any location from API
   name: string;
   id: string;
   image_url?: string | null | undefined;

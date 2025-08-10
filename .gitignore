@@ -83,4 +83,4 @@ Thumbs.db
 # Deployment
 netlify.toml
 .env.example
-DEPLOYMENT.md
+DEPLOYMENT_GUIDE.md

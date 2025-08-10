@@ -130,7 +130,11 @@ export const updateReview = async (req: Request, res: Response, next: NextFuncti
       console.error('Exception in updateReview:', err);
       next(new AppError('An error occurred while updating the review', 500));
     }
-  };
+  } catch (err) {
+    console.error('Outer exception in updateReview:', err);
+    next(new AppError('An error occurred while updating the review', 500));
+  }
+};
 
 interface ReviewData {
   cafe_id: string;

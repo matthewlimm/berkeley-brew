@@ -23,7 +23,7 @@ interface ExtendedCafe {
   user_has_reviewed?: boolean; // Some pages have a direct flag
   place_id?: string | null;
   business_hours?: any;
-  price_category?: "$" | "$$" | "$$$" | null;
+  price_category?: string | null; // Use string to handle any price category from API
 
   popular_times?: any;
   
