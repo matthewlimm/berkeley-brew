@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../db';
+import { supabase, serviceRoleClient } from '../db';
 import { AppError } from '../utils/appError';
 
 /**
@@ -15,7 +15,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
         }
         
         // Get user profile from database using service role client to bypass RLS
-        const { data, error } = await supabase
+        const { data, error } = await serviceRoleClient
             .from('users')
             .select('*')
             .eq('id', user.id)
@@ -42,8 +42,8 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
             
             console.log('Creating user profile with data:', insertData);
             
-            // Try to insert the user profile
-            const { data: newUser, error: insertError } = await supabase
+            // Try to insert the user profile using service role client
+            const { data: newUser, error: insertError } = await serviceRoleClient
                 .from('users')
                 .upsert(insertData)
                 .select()
@@ -99,7 +99,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             return next(new AppError('No update data provided', 400));
         }
         
-        // First, try to directly update the user record
+        // First, try to directly update the user record using service role client
         // This will succeed if the user exists, fail if they don't
         console.log('Attempting direct update for user ID:', user.id);
         
@@ -116,7 +116,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         console.log('Avatar URL value:', avatar_url);
         console.log('Avatar URL type:', typeof avatar_url);
         
-        const { data: updatedUser, error: updateError } = await supabase
+        const { data: updatedUser, error: updateError } = await serviceRoleClient
             .from('users')
             .update(updateData)
             .eq('id', user.id)
@@ -127,8 +127,8 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         if (!updateError) {
             console.log('User updated successfully:', updatedUser);
             
-            // Also update user metadata in auth
-            const { error: authError } = await supabase.auth.admin.updateUserById(
+            // Also update user metadata in auth using service role client
+            const { error: authError } = await serviceRoleClient.auth.admin.updateUserById(
                 user.id,
                 {
                     user_metadata: {
@@ -154,7 +154,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         console.log('Update failed, checking if user exists in users table with ID:', user.id);
         console.log('Update error:', updateError);
         
-        const { data: existingUser, error: checkError } = await supabase
+        const { data: existingUser, error: checkError } = await serviceRoleClient
             .from('users')
             .select('*')
             .eq('id', user.id)
@@ -180,7 +180,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             console.log('Insert data:', insertData);
             
             // Use upsert instead of insert to handle race conditions
-            const { data: newUser, error: createError } = await supabase
+            const { data: newUser, error: createError } = await serviceRoleClient
                 .from('users')
                 .upsert(insertData, { onConflict: 'id' })
                 .select()
@@ -191,7 +191,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
                 
                 // One more attempt - try upsert instead
                 console.log('Attempting upsert as a fallback');
-                const { data: upsertUser, error: upsertError } = await supabase
+                const { data: upsertUser, error: upsertError } = await serviceRoleClient
                     .from('users')
                     .upsert(insertData)
                     .select()
@@ -205,7 +205,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
                 console.log('User upserted successfully:', upsertUser);
                 
                 // Also update user metadata in auth
-                const { error: authError } = await supabase.auth.admin.updateUserById(
+                const { error: authError } = await serviceRoleClient.auth.admin.updateUserById(
                     user.id,
                     {
                         user_metadata: {
@@ -230,7 +230,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             console.log('New user created successfully:', newUser);
             
             // Also update user metadata in auth
-            const { error: authError } = await supabase.auth.admin.updateUserById(
+            const { error: authError } = await serviceRoleClient.auth.admin.updateUserById(
                 user.id,
                 {
                     user_metadata: {
@@ -267,7 +267,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         console.log('Upsert data:', upsertData);
         
         // Use service role client to bypass RLS policies
-        const { data: upsertedUser, error: upsertError } = await supabase
+        const { data: upsertedUser, error: upsertError } = await serviceRoleClient
             .from('users')
             .upsert(upsertData, {
                 onConflict: 'id'
@@ -283,7 +283,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         console.log('User upserted successfully:', upsertedUser);
         
         // Also update user metadata in auth
-        const { error: authError } = await supabase.auth.admin.updateUserById(
+        const { error: authError } = await serviceRoleClient.auth.admin.updateUserById(
             user.id,
             {
                 user_metadata: {
@@ -323,8 +323,8 @@ export const getUserReviews = async (req: Request, res: Response, next: NextFunc
         
         console.log('Fetching reviews for user:', user.id);
         
-        // Get user reviews from database
-        const { data, error } = await supabase
+        // Get user reviews from database using service role client
+        const { data, error } = await serviceRoleClient
             .from('reviews')
             .select(`
                 *,
