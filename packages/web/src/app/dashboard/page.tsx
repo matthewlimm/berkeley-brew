@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
-  const { user, updateUserProfile } = useAuth();
+  const { user, session, updateUserProfile } = useAuth();
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -20,12 +20,40 @@ export default function DashboardPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user) {
-      // Set initial values from user data if available
-      setName(user.user_metadata?.name || '');
-      setUsername(user.user_metadata?.username || '');
-      setAvatarUrl(user.user_metadata?.avatar_url || '');
-    }
+    const loadUserProfile = async () => {
+      if (user) {
+        try {
+          // First try to get profile data from the API
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/profile`, {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token || ''}`
+            }
+          });
+          
+          if (response.ok) {
+            const profileData = await response.json();
+            const profile = profileData.data?.user;
+            
+            if (profile) {
+              console.log('Loaded user profile from API:', profile);
+              setName(profile.full_name || '');
+              setUsername(profile.username || '');
+              setAvatarUrl(profile.avatar_url || '');
+              return;
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to load profile from API, using metadata:', error);
+        }
+        
+        // Fallback to user metadata if API call fails
+        setName(user.user_metadata?.name || '');
+        setUsername(user.user_metadata?.username || '');
+        setAvatarUrl(user.user_metadata?.avatar_url || '');
+      }
+    };
+    
+    loadUserProfile();
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
