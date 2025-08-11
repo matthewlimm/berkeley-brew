@@ -56,6 +56,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // URL to redirect to after sign in
-  return NextResponse.redirect(new URL('/dashboard', origin));
+  // URL to redirect to after sign in with verification success parameter
+  return NextResponse.redirect(new URL('/dashboard?verified=true', origin));
 }
