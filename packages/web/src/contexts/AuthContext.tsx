@@ -74,13 +74,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         username: defaultUsername 
       })
       
-      // Use a simpler sign-up approach with minimal metadata
-      // This reduces the chance of database errors
+      // Sign up with Supabase Auth
       const { error, data } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
-          // Only include minimal metadata to avoid database errors
+          data: {
+            name,
+            username: defaultUsername
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
@@ -96,29 +98,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Debug user creation
       console.log('User created successfully with ID:', data.user.id)
+      console.log('User metadata:', data.user.user_metadata)
       
-      // After successful signup, update the user metadata separately
-      // This approach is more reliable than setting metadata during signup
-      if (data.user) {
+      // Create user profile in database via API
+      // This ensures the user record exists in our users table
+      if (data.user && name && defaultUsername) {
         try {
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: {
-              name,
+          console.log('Creating user profile in database...')
+          
+          // Call our API to create the user profile
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/profile`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${data.session?.access_token}`
+            },
+            body: JSON.stringify({
+              full_name: name,
               username: defaultUsername
-            }
+            })
           })
           
-          if (updateError) {
-            console.warn('Could not update user metadata, but signup was successful:', updateError)
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            console.warn('Failed to create user profile in database:', errorData)
+            // Don't throw error here - signup was successful, profile creation can be done later
           } else {
-            console.log('User metadata updated successfully')
+            const profileData = await response.json()
+            console.log('User profile created in database:', profileData)
           }
-        } catch (updateError) {
-          console.warn('Error updating user metadata, but signup was successful:', updateError)
+        } catch (profileError) {
+          console.warn('Error creating user profile in database:', profileError)
+          // Don't throw error here - signup was successful, profile creation can be done later
         }
       }
       
-      // Redirect to verification page or login
+      // Redirect to verification page
       router.push('/auth/verify')
     } catch (error) {
       console.error('Error signing up:', error)
