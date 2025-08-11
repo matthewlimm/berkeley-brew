@@ -7,8 +7,22 @@ const router = express.Router();
 
 // Helper function to create a Supabase client with JWT token
 const createSupabaseClientWithToken = (token: string) => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables:', {
+      supabaseUrl: !!supabaseUrl,
+      supabaseAnonKey: !!supabaseAnonKey,
+      env: {
+        SUPABASE_URL: !!process.env.SUPABASE_URL,
+        NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      }
+    });
+    throw new Error('Supabase configuration is missing');
+  }
   
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {

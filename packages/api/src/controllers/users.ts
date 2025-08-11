@@ -110,9 +110,11 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         
         if (username) updateData.username = username;
         if (full_name) updateData.full_name = full_name;
-        if (avatar_url) updateData.avatar_url = avatar_url;
+        if (avatar_url !== undefined) updateData.avatar_url = avatar_url; // Allow empty string
         
         console.log('Update data:', updateData);
+        console.log('Avatar URL value:', avatar_url);
+        console.log('Avatar URL type:', typeof avatar_url);
         
         const { data: updatedUser, error: updateError } = await serviceRoleClient
             .from('users')
@@ -253,20 +255,23 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         // User exists, update the record
         console.log('User exists but update failed, trying again with a different approach');
         
-        // Try upsert as a more reliable approach
+        // Try upsert as a more reliable approach with service role client
         const upsertData = {
             id: user.id,
-            username: username || existingUser.username,
-            full_name: full_name || existingUser.full_name,
-            avatar_url: avatar_url || existingUser.avatar_url,
+            username: username !== undefined ? username : existingUser.username,
+            full_name: full_name !== undefined ? full_name : existingUser.full_name,
+            avatar_url: avatar_url !== undefined ? avatar_url : existingUser.avatar_url,
             updated_at: new Date().toISOString()
         };
         
         console.log('Upsert data:', upsertData);
         
+        // Use service role client to bypass RLS policies
         const { data: upsertedUser, error: upsertError } = await serviceRoleClient
             .from('users')
-            .upsert(upsertData)
+            .upsert(upsertData, {
+                onConflict: 'id'
+            })
             .select()
             .single();
             
