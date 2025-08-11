@@ -95,7 +95,7 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             console.log('Using name field for full_name:', full_name);
         }
         
-        if (!username && !full_name && !avatar_url) {
+        if (username === undefined && full_name === undefined && avatar_url === undefined) {
             return next(new AppError('No update data provided', 400));
         }
         
@@ -167,22 +167,22 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             // User doesn't exist, we need to create them
             console.log('Creating new user record');
             
-            // Prepare insert data
+            // Prepare insert data with all required fields
             const insertData = {
                 id: user.id,
-                username: username || user.email?.split('@')[0] || null,
-                full_name: full_name || null,
-                avatar_url: avatar_url || null,
+                username: username || user.user_metadata?.username || user.email?.split('@')[0] || null,
+                full_name: full_name || user.user_metadata?.name || null,
+                avatar_url: avatar_url !== undefined ? avatar_url : (user.user_metadata?.avatar_url || null),
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
             
             console.log('Insert data:', insertData);
             
-            // Try to insert the user
+            // Use upsert instead of insert to handle race conditions
             const { data: newUser, error: createError } = await serviceRoleClient
                 .from('users')
-                .insert(insertData)
+                .upsert(insertData, { onConflict: 'id' })
                 .select()
                 .single();
                 
