@@ -1,0 +1,6 @@
+# Dependencies for API scripts (GitHub Actions)
+# Install unofficial populartimes directly from GitHub
+git+https://github.com/m-wrzr/populartimes@master
+psycopg2-binary>=2.9
+requests>=2.32
+googlemaps>=4.10
