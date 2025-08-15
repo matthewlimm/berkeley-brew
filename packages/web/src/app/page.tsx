@@ -343,10 +343,52 @@ export default function Home() {
   if (isOpenNowActive) {
     console.log('Applying Open Now filter...');
     console.log('Before filtering:', filteredCafes.length, 'cafes');
+
+    // Helper: compute open status from structured hours (fallback to open_now)
+    const computeIsOpenNow = (businessHours: any): boolean => {
+      if (!businessHours) return false;
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const periods = businessHours.periods || businessHours.opening_hours?.periods;
+      const openNowFlag = businessHours.open_now ?? businessHours.opening_hours?.open_now;
+
+      if (!Array.isArray(periods) || periods.length === 0) {
+        return openNowFlag === true;
+      }
+
+      const today = periods.find((p: any) => p?.open?.day === currentDay);
+      if (!today || !today.open || !today.close || !today.open.time || !today.close.time) {
+        return openNowFlag === true;
+      }
+
+      const parse = (t: string) => {
+        const hh = parseInt(t.slice(0,2), 10);
+        const mm = parseInt(t.slice(2), 10);
+        return hh * 60 + mm;
+      };
+
+      const openMins = parse(String(today.open.time));
+      const closeMins = parse(String(today.close.time));
+      const buffer = 15; // minutes
+
+      if (Number.isNaN(openMins) || Number.isNaN(closeMins)) {
+        return openNowFlag === true;
+      }
+
+      // Overnight handling: close < open means past midnight close
+      if (closeMins < openMins) {
+        // open from openMins to 24h, or 0 to closeMins-buffer
+        return (currentMinutes >= openMins) || (currentMinutes < (closeMins - buffer));
+      }
+
+      // Same-day window
+      return (currentMinutes >= openMins) && (currentMinutes < (closeMins - buffer));
+    };
     
-    // Use the backend-provided open_now flag which is now reliably calculated
     const openCafes = filteredCafes.filter(cafe => {
-      const isOpen = cafe.business_hours?.open_now === true;
+      const isOpen = computeIsOpenNow(cafe.business_hours);
       console.log(`${cafe.name}: ${isOpen ? 'OPEN' : 'CLOSED'}`);
       return isOpen;
     });
@@ -354,11 +396,8 @@ export default function Home() {
     filteredCafes = openCafes;
     console.log('After Open Now filtering:', filteredCafes.length, 'cafes remaining');
     
-    // If no cafes are open, add a debug message
     if (filteredCafes.length === 0) {
       console.log('WARNING: No cafes are currently open!');
-      
-      // For debugging: show a sample of business hours from all cafes
       cafes.slice(0, 3).forEach(cafe => {
         console.log(`Sample business hours for ${cafe.name}:`, cafe.business_hours);
       });

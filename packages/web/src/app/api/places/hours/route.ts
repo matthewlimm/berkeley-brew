@@ -19,10 +19,16 @@ export async function GET(request: NextRequest) {
     }
     
     if (!GOOGLE_MAPS_API_KEY) {
-      return NextResponse.json(
-        { status: 'error', message: 'Google Maps API key is not configured' },
-        { status: 500 }
-      );
+      // Graceful fallback to avoid client 500s when key isn't configured
+      return NextResponse.json({
+        status: 'success',
+        data: {
+          isOpen: false,
+          status: 'closed',
+          statusText: 'Hours not available',
+          hoursToday: undefined,
+        }
+      }, { status: 200 });
     }
     
     // Call Google Places API to get details including opening hours
@@ -32,19 +38,35 @@ export async function GET(request: NextRequest) {
     );
     
     if (!response.ok) {
-      throw new Error(`Google Places API error: ${response.statusText}`);
+      // Graceful fallback when Google responds with HTTP error
+      return NextResponse.json({
+        status: 'success',
+        data: {
+          isOpen: false,
+          status: 'closed',
+          statusText: 'Hours not available',
+          hoursToday: undefined,
+        }
+      }, { status: 200 });
     }
     
     const data = await response.json();
     
     if (data.status !== 'OK') {
-      return NextResponse.json(
-        { status: 'error', message: `Google Places API error: ${data.status}` },
-        { status: 500 }
-      );
+      // Graceful fallback instead of 500 to avoid noisy client errors
+      return NextResponse.json({
+        status: 'success',
+        data: {
+          isOpen: false,
+          status: 'closed',
+          statusText: 'Hours not available',
+          hoursToday: undefined,
+        }
+      }, { status: 200 });
     }
     
     const placeDetails = data.result;
+    const placeName = placeDetails?.name || 'Unknown place';
     const openingHours = placeDetails.opening_hours;
     
     if (!openingHours) {
@@ -128,13 +150,13 @@ export async function GET(request: NextRequest) {
         // If we've calculated that it should be closed because it's past closing time,
         // override Google's open_now flag
         isOpen = false;
-        console.log(`Overriding Google's open status for ${name}: It's past closing time (${Math.floor(closeTimeMinutes/60)}:${String(closeTimeMinutes%60).padStart(2, '0')})`);
+        console.log(`Overriding Google's open status for ${placeName}: It's past closing time (${Math.floor(closeTimeMinutes/60)}:${String(closeTimeMinutes%60).padStart(2, '0')})`);
       } else if (openingHours.open_now === undefined) {
         // If Google's open_now is undefined, use our calculation
         isOpen = calculatedIsOpen;
       } else if (openingHours.open_now !== calculatedIsOpen) {
         // Log discrepancy for debugging but don't override in other cases
-        console.log(`Discrepancy for ${name}: Google says ${openingHours.open_now ? 'open' : 'closed'}, calculation says ${calculatedIsOpen ? 'open' : 'closed'}`);
+        console.log(`Discrepancy for ${placeName}: Google says ${openingHours.open_now ? 'open' : 'closed'}, calculation says ${calculatedIsOpen ? 'open' : 'closed'}`);
       }
     }
     
