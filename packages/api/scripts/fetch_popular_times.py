@@ -46,12 +46,14 @@ DB_PASSWORD = DB_CONFIG["password"] or os.environ.get("DB_PASSWORD", "")
 def get_db_connection():
     """Create a connection to the database."""
     try:
+        sslmode = DB_CONFIG.get("sslmode", "require")
         conn = psycopg2.connect(
             host=DB_HOST,
             port=DB_PORT,
             dbname=DB_NAME,
             user=DB_USER,
-            password=DB_PASSWORD
+            password=DB_PASSWORD,
+            sslmode=sslmode
         )
         return conn
     except Exception as e:
@@ -61,7 +63,14 @@ def get_db_connection():
 def load_place_ids_from_csv():
     """Load place IDs from the CSV file."""
     place_ids = {}
-    csv_file = "cafe_place_ids.csv"
+    # Resolve CSV path robustly: prefer script directory, then repo path, then CWD
+    script_dir = os.path.dirname(__file__)
+    candidates = [
+        os.path.join(script_dir, "cafe_place_ids.csv"),
+        os.path.join(os.getcwd(), "packages/api/scripts/cafe_place_ids.csv"),
+        os.path.join(os.getcwd(), "cafe_place_ids.csv"),
+    ]
+    csv_file = next((p for p in candidates if os.path.exists(p)), candidates[0])
     
     try:
         with open(csv_file, 'r', encoding='utf-8') as f:
@@ -140,22 +149,66 @@ def update_cafe_popular_times(cafe_id, popular_times_data):
 
 def fetch_popular_times(name, address, lat, lng, place_id=None):
     """Fetch popular times data for a location using the populartimes library."""
+    # Helper: resolve a canonical Google Place ID using Places API Find Place (textquery)
+    def _resolve_place_id(q_name, q_address=None, q_lat=None, q_lng=None):
+        try:
+            import json
+            import urllib.parse
+            import urllib.request
+
+            query = q_name.strip()
+            if q_address:
+                query = f"{query} {q_address}".strip()
+
+            params = {
+                "input": query,
+                "inputtype": "textquery",
+                "fields": "place_id,formatted_address,name",
+                "key": API_KEY,
+            }
+
+            # Add location bias if coordinates provided to improve accuracy
+            if q_lat is not None and q_lng is not None:
+                # Bias to a small circle around the provided lat/lng (500m)
+                params["locationbias"] = f"circle:500@{q_lat},{q_lng}"
+
+            url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?" + urllib.parse.urlencode(params)
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+            status = data.get("status")
+            candidates = data.get("candidates", [])
+            if status == "OK" and candidates:
+                pid = candidates[0].get("place_id")
+                gname = candidates[0].get("name")
+                gaddr = candidates[0].get("formatted_address")
+                logger.info(f"Resolved place_id for {q_name}: {pid} (Google name: {gname}, addr: {gaddr})")
+                return pid
+            else:
+                logger.warning(f"Find Place returned status={status} for {q_name} (candidates={len(candidates)})")
+                return None
+        except Exception as e:
+            logger.error(f"Error resolving place_id for {q_name}: {e}")
+            return None
+
     try:
-        if place_id:
-            # Try to get by place ID first (most reliable)
-            logger.info(f"Fetching popular times for {name} using place ID: {place_id}")
-            result = populartimes.get_id(API_KEY, place_id)
-            return result
-        else:
-            # Fallback to search by name and address
-            logger.warning(f"No place ID for {name}, trying with name and address")
-            result = populartimes.get_id(API_KEY, f"{name} {address}")
-            
-            # If no popular times data, try again with just coordinates
-            if "populartimes" not in result and lat and lng:
-                result = populartimes.get_from_coordinates(API_KEY, lat, lng)
-            
-            return result
+        # Always resolve via Google Places Find Place API by default
+        logger.info(f"Resolving place ID for {name} via Google Places Find Place API (default)")
+        resolved_place_id = _resolve_place_id(name, address, lat, lng)
+
+        # Fallback to provided place_id if resolution failed
+        if not resolved_place_id and place_id:
+            logger.warning(f"Find Place failed for {name}; falling back to provided place_id={place_id}")
+            resolved_place_id = place_id
+
+        if not resolved_place_id:
+            logger.error(f"Could not resolve place ID for {name}; skipping populartimes fetch")
+            return None
+
+        # Fetch popular times using the canonical place_id
+        logger.info(f"Fetching popular times for {name} using place ID: {resolved_place_id}")
+        result = populartimes.get_id(API_KEY, resolved_place_id)
+        return result
     except Exception as e:
         logger.error(f"Error fetching popular times for {name}: {e}")
         return None
