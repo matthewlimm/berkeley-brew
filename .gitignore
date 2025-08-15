@@ -84,3 +84,5 @@ Thumbs.db
 netlify.toml
 .env.example
 DEPLOYMENT_GUIDE.md
+
+TODO.txt
