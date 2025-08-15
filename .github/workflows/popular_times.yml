@@ -1,0 +1,59 @@
+name: Popular Times Scheduler
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # every hour (UTC)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: popular-times
+  cancel-in-progress: true
+
+jobs:
+  run-script:
+    name: Run fetch_popular_times.py
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            # Install libraries used by the script
+            pip install populartimes psycopg2-binary requests googlemaps
+          fi
+
+      - name: Run popular times script
+        env:
+          # Google key for populartimes/geocoding
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+
+          # Postgres/Supabase connection (set these in GitHub repo secrets)
+          # If your db_config reads a single DATABASE_URL, set that one.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+
+          # If you use Supabase directly somewhere in the script or helpers
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/fetch_popular_times.py
