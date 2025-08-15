@@ -2,7 +2,7 @@ name: Popular Times Scheduler
 
 on:
   schedule:
-    - cron: "0 * * * *"  # every hour (UTC)
+    - cron: "0 0 * * *"  # every day at midnight (UTC)
   workflow_dispatch: {}
 
 permissions:
