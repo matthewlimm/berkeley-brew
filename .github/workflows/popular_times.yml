@@ -23,6 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug workspace
+        run: |
+          echo "PWD:" && pwd
+          echo "Listing files:" && ls -la
+          echo "requirements.txt (packages/api):" && sed -n '1,120p' requirements.txt || true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -33,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt || pip install "git+https://github.com/m-wrzr/populartimes@master"
 
       - name: Run popular times script
         env:
