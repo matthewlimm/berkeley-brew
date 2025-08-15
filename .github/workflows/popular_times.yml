@@ -27,16 +27,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
+          cache-dependency-path: packages/api/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            # Install libraries used by the script
-            pip install populartimes psycopg2-binary requests googlemaps
-          fi
+          pip install -r requirements.txt
 
       - name: Run popular times script
         env:
