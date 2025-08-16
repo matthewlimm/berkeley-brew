@@ -334,8 +334,30 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
         const golden_bear_score = (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4;
         
         console.log('Inserting review into database...');
-        // Insert the review using the service role client (bypasses RLS)
-        const { data: insertedReview, error } = await supabase
+        
+        // Get the user's JWT token from the request
+        const userToken = req.headers.authorization?.split(' ')[1];
+        
+        if (!userToken) {
+            console.error('No JWT token found in request');
+            return next(new AppError('Authentication token required', 401));
+        }
+        
+        // Create a Supabase client with the user's JWT token to respect RLS
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabaseUrl = process.env.SUPABASE_URL!;
+        const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
+        
+        const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${userToken}`
+                }
+            }
+        });
+        
+        // Insert the review using the authenticated client (respects RLS)
+        const { data: insertedReview, error } = await userSupabase
             .from('reviews')
             .insert({
                 cafe_id: cafeId,
