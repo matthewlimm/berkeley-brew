@@ -49,24 +49,13 @@ jobs:
           echo "SUPABASE_URL exists: ${{ secrets.SUPABASE_URL != '' }}"
           echo "SUPABASE_ANON_KEY exists: ${{ secrets.SUPABASE_ANON_KEY != '' }}"
 
-      - name: Run popular times script
+      - name: Run popular times script (Supabase REST API version)
         env:
           # Google key for populartimes/geocoding
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-
-          # Database connection - construct DATABASE_URL for better compatibility
-          DATABASE_URL: postgresql://postgres:${{ secrets.DB_PASSWORD }}@db.vbtvfxvthhsjanfeojjt.supabase.co:5432/postgres?sslmode=require
           
-          # Fallback individual database variables
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
-          PGHOST: db.vbtvfxvthhsjanfeojjt.supabase.co
-          PGPORT: 5432
-          PGUSER: postgres
-          PGDATABASE: postgres
-          
-          # Supabase connection (already available)
+          # Supabase connection via REST API (more reliable than direct PostgreSQL)
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          python scripts/fetch_popular_times.py
+          python scripts/fetch_popular_times_supabase.py --limit 5
