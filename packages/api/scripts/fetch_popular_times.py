@@ -33,27 +33,46 @@ if not API_KEY:
     logger.error("Example: export GOOGLE_MAPS_API_KEY=your_api_key")
     exit(1)
 
-# Import database configuration
-from db_config import DB_CONFIG
-
-# Get database connection parameters from config
-DB_HOST = DB_CONFIG["host"]
-DB_PORT = DB_CONFIG["port"]
-DB_NAME = DB_CONFIG["dbname"]
-DB_USER = DB_CONFIG["user"]
-DB_PASSWORD = DB_CONFIG["password"] or os.environ.get("DB_PASSWORD", "")
-
 def get_db_connection():
-    """Create a connection to the database."""
+    """Create a connection to the database with IPv4 preference."""
     try:
+        # Try DATABASE_URL first (more reliable in GitHub Actions)
+        database_url = os.environ.get("DATABASE_URL")
+        if database_url:
+            logger.info("Using DATABASE_URL for connection")
+            conn = psycopg2.connect(database_url)
+            return conn
+        
+        # Fallback to individual parameters
+        from db_config import DB_CONFIG
+        DB_HOST = DB_CONFIG["host"]
+        DB_PORT = DB_CONFIG["port"]
+        DB_NAME = DB_CONFIG["dbname"]
+        DB_USER = DB_CONFIG["user"]
+        DB_PASSWORD = DB_CONFIG["password"] or os.environ.get("DB_PASSWORD", "")
+        
+        logger.info(f"Using individual parameters for connection to {DB_HOST}")
         sslmode = DB_CONFIG.get("sslmode", "require")
+        
+        # Force IPv4 by resolving hostname
+        import socket
+        try:
+            # Get IPv4 address to avoid IPv6 issues in GitHub Actions
+            ipv4_host = socket.getaddrinfo(DB_HOST, None, socket.AF_INET)[0][4][0]
+            logger.info(f"Resolved {DB_HOST} to IPv4: {ipv4_host}")
+            actual_host = ipv4_host
+        except Exception as resolve_error:
+            logger.warning(f"Could not resolve to IPv4, using original hostname: {resolve_error}")
+            actual_host = DB_HOST
+        
         conn = psycopg2.connect(
-            host=DB_HOST,
+            host=actual_host,
             port=DB_PORT,
             dbname=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
-            sslmode=sslmode
+            sslmode=sslmode,
+            connect_timeout=30
         )
         return conn
     except Exception as e:
