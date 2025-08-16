@@ -74,9 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error getting session:', error)
       }
       
-      // Debug session information
-      console.log('Current session:', session)
-      console.log('Current user:', session?.user)
       
       setSession(session)
       setUser(session?.user || null)
@@ -115,11 +112,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Default username to email prefix if not provided
       const defaultUsername = username || email.split('@')[0]
       
-      console.log('Attempting to sign up user with:', { 
-        email, 
-        name, 
-        username: defaultUsername 
-      })
       
       // Sign up with Supabase Auth
       const { error, data } = await supabase.auth.signUp({ 
@@ -143,16 +135,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error('No user returned from signup')
       }
       
-      // Debug user creation
-      console.log('User created successfully with ID:', data.user.id)
-      console.log('User metadata:', data.user.user_metadata)
-      
       // Create user profile in database via API
       // This ensures the user record exists in our users table
       if (data.user && name && defaultUsername) {
         try {
-          console.log('Creating user profile in database...')
-          
           // Call our API to create the user profile
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/user/profile`, {
             method: 'PUT',
@@ -170,9 +156,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const errorData = await response.json().catch(() => ({}))
             console.warn('Failed to create user profile in database:', errorData)
             // Don't throw error here - signup was successful, profile creation can be done later
-          } else {
-            const profileData = await response.json()
-            console.log('User profile created in database:', profileData)
           }
         } catch (profileError) {
           console.warn('Error creating user profile in database:', profileError)
@@ -265,20 +248,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data.username = user.email.split('@')[0]
       }
       
-      console.log('Updating user profile with data:', data)
-      
       // First update the user profile in the database via API
       // If this fails, the error will immediately propagate and skip all subsequent operations
-      const apiResult = await apiUpdateUserProfile({
+      await apiUpdateUserProfile({
         full_name: data.name,  // Convert 'name' to 'full_name' for the API
         username: data.username,
         avatar_url: data.avatar_url
       })
-      console.log('API update result:', apiResult)
       
       // Only continue if API update was successful
       // Then update user metadata in Supabase Auth
-      const { error, data: userData } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: {
           ...currentMetadata,
           name: data.name,
@@ -291,9 +271,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error updating Supabase Auth:', error)
         throw error
       }
-      
-      console.log('Auth update result:', userData)
-      console.log('Profile updated successfully in both Auth and Database')
       
       // Refresh the session to get the updated user data
       const { data: { session } } = await supabase.auth.getSession()

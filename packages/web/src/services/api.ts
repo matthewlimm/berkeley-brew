@@ -10,20 +10,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 // Helper function to get auth headers
 async function getAuthHeader(): Promise<Record<string, string>> {
   try {
-    console.log('Getting auth header...');
-    // Use the imported supabase client instead of dynamic import
     const session = await supabase.auth.getSession();
-    console.log('Session data available:', !!session?.data);
-    
     const token = session?.data?.session?.access_token;
-    console.log('Token available:', !!token);
     
     if (!token) {
-      console.warn('No authentication token found!');
       return {};
     }
     
-    console.log('Auth token (first 10 chars):', token.substring(0, 10) + '...');
     return {
       'Authorization': `Bearer ${token}`
     };
@@ -78,12 +71,6 @@ export async function createReview(cafeId: string, data: {
   };
   const authHeaders = await getAuthHeader()
   
-  // Debug request headers
-  console.log('Review submission headers:', {
-    'Content-Type': 'application/json',
-    ...authHeaders
-  })
-  
   const res = await fetch(`${API_URL}/api/cafes/${cafeId}/reviews`, {
     method: 'POST',
     headers: {
@@ -103,23 +90,15 @@ export async function createReview(cafeId: string, data: {
 
 export async function getUserReviews(): Promise<ApiResponse<{ reviews: (Review & { cafe_name: string })[] }>> {
   try {
-    console.log('Fetching user reviews...');
     const headers = await getAuthHeader();
-    console.log('Auth headers:', headers);
-    console.log('API URL:', `${API_URL}/api/user/reviews`);
-    
     const res = await fetch(`${API_URL}/api/user/reviews`, { headers });
-    console.log('Response status:', res.status);
     
     if (!res.ok) {
       const error = await res.json();
-      console.error('Error response:', error);
       throw new Error(error.message || 'Failed to fetch user reviews');
     }
     
-    const data = await res.json();
-    console.log('User reviews data:', data);
-    return data;
+    return res.json();
   } catch (error) {
     console.error('Error in getUserReviews:', error);
     throw error;
@@ -135,13 +114,8 @@ export async function updateReview(reviewId: string, data: {
   vibe_score: number;
 }): Promise<ApiResponse<{ review: any }>> {
   try {
-    console.log('Updating review:', reviewId, data);
     const headers = await getAuthHeader();
-    console.log('Auth headers:', headers);
-    
-    // The correct endpoint URL based on the backend routes
     const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
-    console.log('Update review URL:', url);
     
     const res = await fetch(url, {
       method: 'PUT',
@@ -152,17 +126,13 @@ export async function updateReview(reviewId: string, data: {
       body: JSON.stringify(data)
     });
     
-    console.log('Update review response status:', res.status);
-    
     if (!res.ok) {
       const error = await res.json();
       console.error('Error updating review:', error);
       throw new Error(error.message || 'Failed to update review');
     }
     
-    const result = await res.json();
-    console.log('Update review result:', result);
-    return result;
+    return res.json();
   } catch (error) {
     console.error('Error in updateReview:', error);
     throw error;
@@ -171,20 +141,13 @@ export async function updateReview(reviewId: string, data: {
 
 export async function deleteReview(reviewId: string): Promise<ApiResponse<null>> {
   try {
-    console.log('Deleting review:', reviewId);
     const headers = await getAuthHeader();
-    console.log('Auth headers:', headers);
-    
-    // The correct endpoint URL based on the backend routes
     const url = `${API_URL}/api/cafes/reviews/${reviewId}`;
-    console.log('Delete review URL:', url);
     
     const res = await fetch(url, {
       method: 'DELETE',
       headers
     });
-    
-    console.log('Delete review response status:', res.status);
     
     if (!res.ok) {
       const error = await res.json();
@@ -192,9 +155,7 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse<null>>
       throw new Error(error.message || 'Failed to delete review');
     }
     
-    const result = await res.json();
-    console.log('Delete review result:', result);
-    return result;
+    return res.json();
   } catch (error) {
     console.error('Error in deleteReview:', error);
     throw error;
@@ -203,26 +164,19 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse<null>>
 
 export async function getUserProfile(): Promise<ApiResponse<{ user: any }>> {
   try {
-    console.log('Fetching user profile...');
     const headers = await getAuthHeader();
-    console.log('Auth headers:', headers);
     
     const res = await fetch(`${API_URL}/api/user/profile`, { 
       headers,
       credentials: 'include'
     });
     
-    console.log('Profile fetch response status:', res.status);
-    
     if (!res.ok) {
       const error = await res.json();
-      console.error('Error response:', error);
       throw new Error(error.message || 'Failed to fetch user profile');
     }
     
-    const data = await res.json();
-    console.log('User profile data:', data);
-    return data;
+    return res.json();
   } catch (error) {
     console.error('Error in getUserProfile:', error);
     throw error;
@@ -239,14 +193,6 @@ export async function updateUserProfile(data: { username?: string; full_name?: s
     avatar_url: data.avatar_url
   }
   
-  // Debug request data and headers
-  console.log('Profile update request data (original):', data)
-  console.log('Profile update request data (modified for API):', apiData)
-  console.log('Profile update headers:', {
-    'Content-Type': 'application/json',
-    ...headers
-  })
-  
   try {
     const res = await fetch(`${API_URL}/api/user/profile`, {
       method: 'PATCH',
@@ -257,8 +203,6 @@ export async function updateUserProfile(data: { username?: string; full_name?: s
       body: JSON.stringify(apiData),
       credentials: 'include'
     })
-    
-    console.log('Profile update response status:', res.status)
     
     if (!res.ok) {
       let errorMessage = `Failed to update user profile: ${res.status}`
@@ -277,9 +221,7 @@ export async function updateUserProfile(data: { username?: string; full_name?: s
       throw error
     }
     
-    const responseData = await res.json()
-    console.log('Profile update success response:', responseData)
-    return responseData
+    return res.json()
   } catch (error) {
     console.error('Profile update fetch error:', error)
     throw error

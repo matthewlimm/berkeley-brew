@@ -18,28 +18,17 @@ export default function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const errorMessageRef = useRef('');
   
-  // Debug when errorMessage changes
-  useEffect(() => {
-    console.log('errorMessage state changed to:', errorMessage);
-  }, [errorMessage]);
-  
   // Custom error setter that persists the message using direct DOM manipulation
   const setErrorMessagePersistent = (message: string) => {
-    console.log('setErrorMessagePersistent called with:', message);
     errorMessageRef.current = message;
-    console.log('errorMessageRef.current set to:', errorMessageRef.current);
     setErrorMessage(message);
     
     // If message is not empty, force display using multiple approaches
     if (message) {
       // Approach 1: Force re-render with a small delay
       setTimeout(() => {
-        console.log('Timeout running, errorMessage state:', errorMessage);
-        console.log('Timeout running, errorMessageRef.current:', errorMessageRef.current);
-        
         // Force re-render by setting state again
         if (errorMessageRef.current === message) {
-          console.log('Forcing re-render with setErrorMessage');
           setErrorMessage(message);
         }
       }, 10);
@@ -48,14 +37,12 @@ export default function DashboardPage() {
       setTimeout(() => {
         const errorContainer = document.querySelector('[data-error-banner]');
         if (errorContainer) {
-          console.log('Found error container, ensuring visibility');
           errorContainer.classList.remove('hidden');
           const errorText = errorContainer.querySelector('[data-error-text]');
           if (errorText) {
             errorText.textContent = message;
           }
         } else {
-          console.log('Error container not found, trying to force another re-render');
           // Try one more time to set the state
           if (errorMessageRef.current === message) {
             setErrorMessage(message);
@@ -99,7 +86,6 @@ export default function DashboardPage() {
             const profile = profileData.data?.user;
             
             if (profile) {
-              console.log('Loaded user profile from API:', profile);
               setName(profile.full_name || '');
               setUsername(profile.username || '');
               setAvatarUrl(profile.avatar_url || '');
@@ -117,14 +103,9 @@ export default function DashboardPage() {
       }
     };
     
-    console.log('useEffect running - errorMessage:', errorMessage, 'preventProfileReload:', preventProfileReloadRef.current);
-    
     // Don't reload profile if there's an error being displayed or if we're preventing reloads
     if (!errorMessage && !preventProfileReloadRef.current) {
-      console.log('Conditions met, calling loadUserProfile');
       loadUserProfile();
-    } else {
-      console.log('Profile reload prevented due to error or ref');
     }
   }, [user, session, errorMessage]);
 
@@ -150,33 +131,19 @@ export default function DashboardPage() {
         setProfileUpdated(false);
       }, 5000);
     } catch (error) {
-      // Debug logging to see what error we're getting
-      console.error('Dashboard caught error:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error constructor:', error?.constructor?.name);
-      console.error('Error message:', (error as Error)?.message);
-      console.error('Error status:', (error as any)?.status);
+      console.error('Profile update failed:', error);
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      // Debug the error message matching
-      console.log('Checking error message:', errorMessage);
-      console.log('Contains "Username already taken":', errorMessage.includes('Username already taken'));
-      console.log('Contains "already taken":', errorMessage.includes('already taken'));
-      
       // Check if it's a username conflict error
       if (errorMessage.includes('Username already taken') || errorMessage.includes('already taken')) {
-        console.log('Setting username conflict error message');
         const conflictMessage = 'Username already taken. Please choose a different username.';
         setErrorMessagePersistent(conflictMessage);
         preventProfileReloadRef.current = true; // Prevent profile reloads
-        console.log('Error message state after setting:', conflictMessage);
       } else {
-        console.log('Setting generic error message');
         const genericMessage = `Failed to update profile: ${errorMessage}`;
         setErrorMessagePersistent(genericMessage);
         preventProfileReloadRef.current = true; // Prevent profile reloads
-        console.log('Error message state after setting:', genericMessage);
       }
     } finally {
       setIsLoading(false);
