@@ -46,17 +46,12 @@ jobs:
           # Google key for populartimes/geocoding
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 
-          # Postgres/Supabase connection (set these in GitHub repo secrets)
-          # If your db_config reads a single DATABASE_URL, set that one.
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
-
-          # If you use Supabase directly somewhere in the script or helpers
+          # Database connection - use available secrets
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+          
+          # Supabase connection (already available)
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           python scripts/fetch_popular_times.py
