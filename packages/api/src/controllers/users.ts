@@ -99,6 +99,20 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
             return next(new AppError('No update data provided', 400));
         }
         
+        // Check for username conflicts if username is being updated
+        if (username) {
+            const { data: existingUserWithUsername, error: usernameCheckError } = await serviceRoleClient
+                .from('users')
+                .select('id, username')
+                .eq('username', username)
+                .neq('id', user.id) // Exclude current user
+                .single();
+                
+            if (!usernameCheckError && existingUserWithUsername) {
+                return next(new AppError('Username already taken. Please choose a different username.', 409));
+            }
+        }
+        
         // First, try to directly update the user record using service role client
         // This will succeed if the user exists, fail if they don't
         console.log('Attempting direct update for user ID:', user.id);

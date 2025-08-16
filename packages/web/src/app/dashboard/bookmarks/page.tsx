@@ -289,8 +289,8 @@ export default function BookmarksPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-16">
-          <div className="animate-spin rounded-full h-14 w-14 border-t-3 border-b-3 border-amber-600"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -432,66 +432,72 @@ export default function BookmarksPage() {
                 </div>
                 
                 {/* Metrics - with increased spacing from opening hours */}
-                <div className="mt-6 grid grid-cols-2 gap-3 mb-4">
+                <div className="mt-6 grid grid-cols-4 sm:grid-cols-2 gap-0.5 sm:gap-3 mb-4">
                   {/* Grindability Score */}
-                  <div className="bg-blue-50 p-3 rounded-lg shadow-sm border border-blue-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-blue-700">Grindability</span>
-                      <span className="text-sm font-bold text-blue-700">
+                  <div className="bg-blue-50 p-1 sm:p-3 rounded shadow-sm border border-blue-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm font-medium text-blue-700 leading-tight">
+                        <span className="sm:hidden">Grind</span>
+                        <span className="hidden sm:inline">Grindability</span>
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-blue-700">
                         {hasScore(bookmark.cafes, 'grindability_score') ? formatRating(getScoreValue(bookmark.cafes, 'grindability_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="w-full bg-blue-200 rounded-full h-2 mt-1.5">
+                    <div className="w-full bg-blue-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
                       <div 
-                        className="bg-blue-600 h-2 rounded-full" 
+                        className="bg-blue-600 h-1 sm:h-2 rounded-full" 
                         style={{ width: hasScore(bookmark.cafes, 'grindability_score') ? `${getScoreValue(bookmark.cafes, 'grindability_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
                   
                   {/* Vibe Score */}
-                  <div className="bg-pink-50 p-3 rounded-lg shadow-sm border border-pink-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-pink-700">Vibe</span>
-                      <span className="text-sm font-bold text-pink-700">
+                  <div className="bg-pink-50 p-1 sm:p-3 rounded shadow-sm border border-pink-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm font-medium text-pink-700 leading-tight">Vibe</span>
+                      <span className="text-xs sm:text-sm font-bold text-pink-700">
                         {hasScore(bookmark.cafes, 'vibe_score') ? formatRating(getScoreValue(bookmark.cafes, 'vibe_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="w-full bg-pink-200 rounded-full h-2 mt-1.5">
+                    <div className="w-full bg-pink-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
                       <div 
-                        className="bg-pink-600 h-2 rounded-full" 
+                        className="bg-pink-600 h-1 sm:h-2 rounded-full" 
                         style={{ width: hasScore(bookmark.cafes, 'vibe_score') ? `${getScoreValue(bookmark.cafes, 'vibe_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
                   
                   {/* Coffee Quality Score */}
-                  <div className="bg-amber-50 p-3 rounded-lg shadow-sm border border-amber-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-amber-700">Coffee</span>
-                      <span className="text-sm font-bold text-amber-700">
+                  <div className="bg-amber-50 p-1 sm:p-3 rounded shadow-sm border border-amber-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm font-medium text-amber-700 leading-tight">Coffee</span>
+                      <span className="text-xs sm:text-sm font-bold text-amber-700">
                         {hasScore(bookmark.cafes, 'coffee_quality_score') ? formatRating(getScoreValue(bookmark.cafes, 'coffee_quality_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="w-full bg-amber-200 rounded-full h-2 mt-1.5">
+                    <div className="w-full bg-amber-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
                       <div 
-                        className="bg-amber-600 h-2 rounded-full" 
+                        className="bg-amber-600 h-1 sm:h-2 rounded-full" 
                         style={{ width: hasScore(bookmark.cafes, 'coffee_quality_score') ? `${getScoreValue(bookmark.cafes, 'coffee_quality_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
                   
                   {/* Student Friendliness Score */}
-                  <div className="bg-green-50 p-3 rounded-lg shadow-sm border border-green-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-green-700">Friendly</span>
-                      <span className="text-sm font-bold text-green-700">
+                  <div className="bg-green-50 p-1 sm:p-3 rounded shadow-sm border border-green-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm font-medium text-green-700 leading-tight">
+                        <span className="sm:hidden">Friend</span>
+                        <span className="hidden sm:inline">Friendly</span>
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-green-700">
                         {hasScore(bookmark.cafes, 'student_friendliness_score') ? formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="w-full bg-green-200 rounded-full h-2 mt-1.5">
+                    <div className="w-full bg-green-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
                       <div 
-                        className="bg-green-600 h-2 rounded-full" 
+                        className="bg-green-600 h-1 sm:h-2 rounded-full" 
                         style={{ width: hasScore(bookmark.cafes, 'student_friendliness_score') ? `${getScoreValue(bookmark.cafes, 'student_friendliness_score') * 20}%` : '0%' }}
                       ></div>
                     </div>
@@ -546,9 +552,11 @@ export default function BookmarksPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setConfirmRemove(null)}>
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5l-6.928-12c-.77-1.333-2.694-1.333-3.464 0L.928 18.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
               <h2 className="text-lg font-bold text-gray-900">Remove Bookmark</h2>
             </div>
             <p className="text-gray-600 mb-6">

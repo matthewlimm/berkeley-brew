@@ -244,8 +244,8 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
               console.error('Error checking storage:', storageError);
             }
             
-            // Use default avatar if no avatar_url
-            urlMap[user.id] = `https://ui-avatars.com/api/?name=${encodeURIComponent((user.id || '').substring(0, 2))}&background=random`;
+            // Don't set any URL - let the component show the fallback div
+            // urlMap[user.id] will remain undefined, triggering the fallback display
           }
         }
         setAvatarUrls(urlMap);
@@ -373,7 +373,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
                 {/* User Avatar */}
-                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
+                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                   {review.user_id && avatarUrls[review.user_id] ? (
                     <Image 
                       src={avatarUrls[review.user_id]}
@@ -391,7 +391,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-amber-100 flex items-center justify-center text-amber-800 font-medium text-sm border-2 border-amber-200">
+                    <div className="w-full h-full rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-medium text-sm">
                       <span className="text-center leading-none flex items-center justify-center w-full h-full">
                         {review.user?.username ? review.user.username[0].toUpperCase() : 'A'}
                       </span>

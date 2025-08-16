@@ -201,6 +201,34 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse<null>>
   }
 }
 
+export async function getUserProfile(): Promise<ApiResponse<{ user: any }>> {
+  try {
+    console.log('Fetching user profile...');
+    const headers = await getAuthHeader();
+    console.log('Auth headers:', headers);
+    
+    const res = await fetch(`${API_URL}/api/user/profile`, { 
+      headers,
+      credentials: 'include'
+    });
+    
+    console.log('Profile fetch response status:', res.status);
+    
+    if (!res.ok) {
+      const error = await res.json();
+      console.error('Error response:', error);
+      throw new Error(error.message || 'Failed to fetch user profile');
+    }
+    
+    const data = await res.json();
+    console.log('User profile data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in getUserProfile:', error);
+    throw error;
+  }
+}
+
 export async function updateUserProfile(data: { username?: string; full_name?: string; name?: string; avatar_url?: string }): Promise<ApiResponse<{ user: any }>> {
   const headers = await getAuthHeader()
   
@@ -233,9 +261,20 @@ export async function updateUserProfile(data: { username?: string; full_name?: s
     console.log('Profile update response status:', res.status)
     
     if (!res.ok) {
-      const errorData = await res.json()
-      console.error('Profile update error response:', errorData)
-      throw new Error(errorData.message || `Failed to update user profile: ${res.status}`)
+      let errorMessage = `Failed to update user profile: ${res.status}`
+      
+      try {
+        const errorData = await res.json()
+        console.error('Profile update error response:', errorData)
+        errorMessage = errorData.message || errorMessage
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError)
+      }
+      
+      const error = new Error(errorMessage)
+      // Preserve the status code for specific error handling
+      ;(error as any).status = res.status
+      throw error
     }
     
     const responseData = await res.json()

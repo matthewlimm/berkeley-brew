@@ -16,11 +16,60 @@ export default function DashboardPage() {
   const [uploading, setUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const errorMessageRef = useRef('');
+  
+  // Debug when errorMessage changes
+  useEffect(() => {
+    console.log('errorMessage state changed to:', errorMessage);
+  }, [errorMessage]);
+  
+  // Custom error setter that persists the message using direct DOM manipulation
+  const setErrorMessagePersistent = (message: string) => {
+    console.log('setErrorMessagePersistent called with:', message);
+    errorMessageRef.current = message;
+    console.log('errorMessageRef.current set to:', errorMessageRef.current);
+    setErrorMessage(message);
+    
+    // If message is not empty, force display using multiple approaches
+    if (message) {
+      // Approach 1: Force re-render with a small delay
+      setTimeout(() => {
+        console.log('Timeout running, errorMessage state:', errorMessage);
+        console.log('Timeout running, errorMessageRef.current:', errorMessageRef.current);
+        
+        // Force re-render by setting state again
+        if (errorMessageRef.current === message) {
+          console.log('Forcing re-render with setErrorMessage');
+          setErrorMessage(message);
+        }
+      }, 10);
+      
+      // Approach 2: DOM manipulation backup
+      setTimeout(() => {
+        const errorContainer = document.querySelector('[data-error-banner]');
+        if (errorContainer) {
+          console.log('Found error container, ensuring visibility');
+          errorContainer.classList.remove('hidden');
+          const errorText = errorContainer.querySelector('[data-error-text]');
+          if (errorText) {
+            errorText.textContent = message;
+          }
+        } else {
+          console.log('Error container not found, trying to force another re-render');
+          // Try one more time to set the state
+          if (errorMessageRef.current === message) {
+            setErrorMessage(message);
+          }
+        }
+      }, 100);
+    }
+  };
   const [successMessage, setSuccessMessage] = useState('');
   const [profileUpdated, setProfileUpdated] = useState(false);
   const [activeTab, setActiveTab] = useState('profile'); // Track active tab
   const [showVerificationBanner, setShowVerificationBanner] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const preventProfileReloadRef = useRef(false);
 
   useEffect(() => {
     // Check if user just verified their email
@@ -68,8 +117,16 @@ export default function DashboardPage() {
       }
     };
     
-    loadUserProfile();
-  }, [user, session]);
+    console.log('useEffect running - errorMessage:', errorMessage, 'preventProfileReload:', preventProfileReloadRef.current);
+    
+    // Don't reload profile if there's an error being displayed or if we're preventing reloads
+    if (!errorMessage && !preventProfileReloadRef.current) {
+      console.log('Conditions met, calling loadUserProfile');
+      loadUserProfile();
+    } else {
+      console.log('Profile reload prevented due to error or ref');
+    }
+  }, [user, session, errorMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +150,34 @@ export default function DashboardPage() {
         setProfileUpdated(false);
       }, 5000);
     } catch (error) {
-      setErrorMessage(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Debug logging to see what error we're getting
+      console.error('Dashboard caught error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error constructor:', error?.constructor?.name);
+      console.error('Error message:', (error as Error)?.message);
+      console.error('Error status:', (error as any)?.status);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Debug the error message matching
+      console.log('Checking error message:', errorMessage);
+      console.log('Contains "Username already taken":', errorMessage.includes('Username already taken'));
+      console.log('Contains "already taken":', errorMessage.includes('already taken'));
+      
+      // Check if it's a username conflict error
+      if (errorMessage.includes('Username already taken') || errorMessage.includes('already taken')) {
+        console.log('Setting username conflict error message');
+        const conflictMessage = 'Username already taken. Please choose a different username.';
+        setErrorMessagePersistent(conflictMessage);
+        preventProfileReloadRef.current = true; // Prevent profile reloads
+        console.log('Error message state after setting:', conflictMessage);
+      } else {
+        console.log('Setting generic error message');
+        const genericMessage = `Failed to update profile: ${errorMessage}`;
+        setErrorMessagePersistent(genericMessage);
+        preventProfileReloadRef.current = true; // Prevent profile reloads
+        console.log('Error message state after setting:', genericMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -332,7 +416,7 @@ export default function DashboardPage() {
         <div className="mt-5 md:mt-0 md:col-span-2">
           <form onSubmit={handleSubmit}>
             <div className="shadow-md rounded-xl overflow-hidden border border-gray-100">
-              <div className="px-6 py-6 bg-white space-y-8 sm:p-8">
+              <div className="px-6 pt-2 pb-6 bg-white space-y-4 sm:px-8 sm:pt-3 sm:pb-8">
                 {/* Success message */}
                 {(successMessage || profileUpdated) && (
                   <div id="success-message-container" className="rounded-md p-4 bg-green-100 border border-green-400 mb-4">
@@ -347,19 +431,22 @@ export default function DashboardPage() {
                   </div>
                 )}
                 
-                {/* Error message */}
-                {errorMessage && (
-                  <div className="rounded-md p-4 bg-red-100 border border-red-400 mb-4">
-                    <div className="flex items-center">
-                      <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-sm font-medium text-red-800">
-                        {errorMessage}
-                      </p>
-                    </div>
+                {/* Error message - Always rendered but conditionally visible */}
+                <div 
+                  data-error-banner 
+                  className={`rounded-md p-4 bg-red-100 border border-red-400 mb-4 ${
+                    (!errorMessage && !errorMessageRef.current) ? 'hidden' : ''
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <p data-error-text className="text-sm font-medium text-red-800">
+                      {errorMessage || errorMessageRef.current}
+                    </p>
                   </div>
-                )}
+                </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
@@ -394,10 +481,8 @@ export default function DashboardPage() {
                           }}
                         />
                       ) : (
-                        <div className="flex items-center justify-center h-full bg-amber-50 text-amber-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
+                        <div className="flex items-center justify-center h-full bg-amber-100 text-amber-700 font-medium text-4xl">
+                          {(username || user?.user_metadata?.username || user?.email)?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                       )}
                       {uploading && (
@@ -547,7 +632,14 @@ export default function DashboardPage() {
                       className="focus:ring-amber-500 focus:border-amber-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300"
                       placeholder="Your username"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        // Clear error when user changes username
+                        if (errorMessage) {
+                          setErrorMessage('');
+                          preventProfileReloadRef.current = false;
+                        }
+                      }}
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">This will be displayed on your reviews and posts.</p>

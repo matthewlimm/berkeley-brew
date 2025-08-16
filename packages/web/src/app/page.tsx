@@ -1076,27 +1076,27 @@ export default function Home() {
                   </div>
 
                   {/* Mobile Metrics */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    <div className="flex items-center bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="flex items-center bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                       <span className="text-xs text-blue-700 font-medium mr-1">Grind</span>
                       <span className="text-xs font-bold text-blue-700">
                         {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'grindability_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="flex items-center bg-pink-50 px-2 py-1 rounded border border-pink-100">
+                    <div className="flex items-center bg-pink-50 px-1.5 py-0.5 rounded border border-pink-100">
                       <span className="text-xs text-pink-700 font-medium mr-1">Vibe</span>
                       <span className="text-xs font-bold text-pink-700">
                         {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'vibe_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="flex items-center bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                    <div className="flex items-center bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
                       <span className="text-xs text-amber-700 font-medium mr-1">Coffee</span>
                       <span className="text-xs font-bold text-amber-700">
                         {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'coffee_quality_score')) : "N/A"}
                       </span>
                     </div>
-                    <div className="flex items-center bg-green-50 px-2 py-1 rounded border border-green-100">
-                      <span className="text-xs text-green-700 font-medium mr-1">Friendly</span>
+                    <div className="flex items-center bg-green-50 px-1.5 py-0.5 rounded border border-green-100">
+                      <span className="text-xs text-green-700 font-medium mr-1">Friend</span>
                       <span className="text-xs font-bold text-green-700">
                         {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'student_friendliness_score')) : "N/A"}
                       </span>

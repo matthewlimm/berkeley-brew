@@ -4,17 +4,27 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { updateUserProfile as apiUpdateUserProfile } from '@/services/api'
+import { getUserProfile, updateUserProfile as apiUpdateUserProfile } from '@/services/api'
+
+type UserProfile = {
+  id: string
+  full_name?: string
+  username?: string
+  avatar_url?: string
+  email?: string
+}
 
 type AuthContextType = {
   user: User | null
   session: Session | null
+  userProfile: UserProfile | null
   isLoading: boolean
   signUp: (email: string, password: string, name?: string, username?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateUserProfile: (data: { name?: string; username?: string; avatar_url?: string }) => Promise<void>
+  refreshUserProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -22,8 +32,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+
+  // Function to fetch user profile from database
+  const refreshUserProfile = async () => {
+    if (!user) {
+      setUserProfile(null)
+      return
+    }
+    
+    try {
+      const response = await getUserProfile()
+      if (response.data && response.data.user) {
+        setUserProfile(response.data.user)
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Fall back to auth metadata if database fetch fails
+      if (user.user_metadata) {
+        setUserProfile({
+          id: user.id,
+          full_name: user.user_metadata.name,
+          username: user.user_metadata.username,
+          avatar_url: user.user_metadata.avatar_url,
+          email: user.email
+        })
+      }
+    }
+  }
 
   useEffect(() => {
     // Get initial session
@@ -60,6 +98,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Fetch user profile when user changes
+  useEffect(() => {
+    if (user) {
+      refreshUserProfile()
+    } else {
+      setUserProfile(null)
+    }
+  }, [user])
 
   const signUp = async (email: string, password: string, name?: string, username?: string) => {
     try {
@@ -221,19 +268,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Updating user profile with data:', data)
       
       // First update the user profile in the database via API
-      try {
-        // Map the frontend field names to the backend field names
-        const apiResult = await apiUpdateUserProfile({
-          full_name: data.name,  // Convert 'name' to 'full_name' for the API
-          username: data.username,
-          avatar_url: data.avatar_url
-        })
-        console.log('API update result:', apiResult)
-      } catch (apiError) {
-        console.error('Error updating profile in API:', apiError)
-        throw apiError
-      }
+      // If this fails, the error will immediately propagate and skip all subsequent operations
+      const apiResult = await apiUpdateUserProfile({
+        full_name: data.name,  // Convert 'name' to 'full_name' for the API
+        username: data.username,
+        avatar_url: data.avatar_url
+      })
+      console.log('API update result:', apiResult)
       
+      // Only continue if API update was successful
       // Then update user metadata in Supabase Auth
       const { error, data: userData } = await supabase.auth.updateUser({
         data: {
@@ -257,6 +300,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session) {
         setUser(session.user)
       }
+      
+      // Only refresh the user profile from database if update was successful
+      await refreshUserProfile()
     } catch (error) {
       console.error('Error updating profile:', error)
       throw error
@@ -268,12 +314,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     user,
     session,
+    userProfile,
     isLoading,
     signUp,
     signIn,
     signOut,
     resetPassword,
     updateUserProfile,
+    refreshUserProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

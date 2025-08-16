@@ -95,21 +95,45 @@ router.get('/', requireAuth, async (req, res) => {
 
     if (error) throw error;
     
-    // If reviews are included, calculate average ratings
+    // If reviews are included, calculate average ratings and subscores
     if (includeReviews && data) {
       const bookmarksWithAvgRating = data.map((bookmark: any) => {
         if (bookmark.cafes && bookmark.cafes.reviews) {
           const reviews = bookmark.cafes.reviews.filter((r: any) => r && r.golden_bear_score !== undefined);
+          
+          // Calculate average overall rating
           const avgRating = reviews.length > 0
             ? reviews.reduce((sum: number, r: any) => sum + Number(r.golden_bear_score), 0) / reviews.length
             : null;
+          
+          // Calculate average subscores - helper function
+          const calculateAverage = (field: string) => {
+            const validScores = reviews
+              .map((r: any) => r[field])
+              .filter((score: any) => score !== null && score !== undefined && !isNaN(Number(score)));
+              
+            return validScores.length > 0
+              ? validScores.reduce((sum: number, score: any) => sum + Number(score), 0) / validScores.length
+              : null;
+          };
+          
+          const grindabilityAvg = calculateAverage('grindability_score');
+          const studentFriendlinessAvg = calculateAverage('student_friendliness_score');
+          const coffeeQualityAvg = calculateAverage('coffee_quality_score');
+          const vibeAvg = calculateAverage('vibe_score');
           
           return {
             ...bookmark,
             cafes: {
               ...bookmark.cafes,
               average_rating: avgRating,
-              review_count: reviews.length
+              review_count: reviews.length,
+              // Override cafe-level scores with calculated averages from reviews
+              grindability_score: grindabilityAvg,
+              student_friendliness_score: studentFriendlinessAvg,
+              coffee_quality_score: coffeeQualityAvg,
+              vibe_score: vibeAvg,
+              golden_bear_score: avgRating
             }
           };
         }

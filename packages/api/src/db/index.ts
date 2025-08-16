@@ -12,6 +12,9 @@ if (!supabaseUrl || !supabaseServiceKey) {
 // Create client with service role key to bypass RLS policies
 export const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+// Export as serviceRoleClient for clarity in backend code
+export const serviceRoleClient = supabase
+
 // Create a client with anon key for operations that should respect RLS
 export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey)
 
