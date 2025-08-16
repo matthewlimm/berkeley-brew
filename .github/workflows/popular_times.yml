@@ -16,6 +16,7 @@ jobs:
   run-script:
     name: Run fetch_popular_times.py
     runs-on: ubuntu-latest
+    environment: berkeley-brew-api
     defaults:
       run:
         working-directory: packages/api
