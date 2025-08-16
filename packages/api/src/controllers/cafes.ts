@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { z } from 'zod'
-import { supabase, type Database } from '../db'
+import { supabase, serviceRoleClient, type Database } from '../db'
 import { AppError } from '../middleware/errorHandler'
 
 type Cafe = Database['public']['Tables']['cafes']['Row']
@@ -380,7 +380,9 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
         
         // Update cafe scores after review creation
         if (cafeId) {
+            console.log('Updating cafe scores for cafeId:', cafeId);
             await updateCafeScores(cafeId);
+            console.log('Cafe scores update completed');
         }
 
         res.status(201).json({
@@ -592,6 +594,8 @@ const deleteReview = async (req: Request, res: Response, next: NextFunction) => 
 
 // Helper function to update cafe scores after review changes
 const updateCafeScores = async (cafeId: string) => {
+    console.log('updateCafeScores called for cafe:', cafeId);
+    
     // Get all reviews for the cafe
     const { data: reviews, error } = await supabase
         .from('reviews')
@@ -603,12 +607,17 @@ const updateCafeScores = async (cafeId: string) => {
         return
     }
     
+    console.log('Found reviews for cafe score calculation:', reviews.length);
+    console.log('Reviews data:', reviews);
+    
     // Calculate average scores
     const calculateAverage = (field: string) => {
         const validScores = reviews
             .map((r: any) => r[field])
             .filter((score: any) => score !== null && score !== undefined && !isNaN(Number(score)))
             
+        console.log(`Valid ${field} scores:`, validScores);
+        
         return validScores.length > 0
             ? validScores.reduce((sum: number, score: any) => sum + Number(score), 0) / validScores.length
             : null
@@ -620,8 +629,66 @@ const updateCafeScores = async (cafeId: string) => {
     const vibeAvg = calculateAverage('vibe_score')
     const goldenBearAvg = calculateAverage('golden_bear_score')
     
-    // Update the cafe with new average scores
-    await supabase
+    console.log('Calculated averages:', {
+        grindabilityAvg,
+        studentFriendlinessAvg,
+        coffeeQualityAvg,
+        vibeAvg,
+        goldenBearAvg
+    });
+    
+    // First, let's verify the cafe exists
+    const { data: existingCafe, error: fetchError } = await serviceRoleClient
+        .from('cafes')
+        .select('id, name')
+        .eq('id', cafeId)
+        .single();
+        
+    console.log('Cafe exists check:', existingCafe, 'Error:', fetchError);
+    
+    if (fetchError || !existingCafe) {
+        console.error('Cafe not found for update:', cafeId);
+        return;
+    }
+    
+    // Update the cafe with new average scores using service role client (bypasses RLS)
+    console.log('Attempting to update cafe with ID:', cafeId);
+    console.log('Update payload:', {
+        grindability_score: grindabilityAvg,
+        student_friendliness_score: studentFriendlinessAvg,
+        coffee_quality_score: coffeeQualityAvg,
+        vibe_score: vibeAvg,
+        golden_bear_score: goldenBearAvg,
+    });
+    
+    // Debug: Check what client we're actually using
+    console.log('Service role client config check:');
+    console.log('SUPABASE_URL:', process.env.SUPABASE_URL?.substring(0, 30) + '...');
+    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Skip RPC and use regular update with enhanced debugging
+    console.log('Using regular update approach...');
+    
+    // Try a simple test update first
+    console.log('Testing simple update...');
+    const { error: testError, count: testCount } = await serviceRoleClient
+        .from('cafes')
+        .update({
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', cafeId)
+        
+    console.log('Test update error:', testError);
+    console.log('Test update affected rows:', testCount);
+    
+    if (testError) {
+        console.error('Even simple update failed:', testError);
+        return;
+    }
+    
+    // Now try the full update
+    console.log('Performing full score update...');
+    const { error: updateError, count: updateCount } = await serviceRoleClient
         .from('cafes')
         .update({
             grindability_score: grindabilityAvg,
@@ -632,6 +699,33 @@ const updateCafeScores = async (cafeId: string) => {
             updated_at: new Date().toISOString()
         })
         .eq('id', cafeId)
+        
+    console.log('Full update affected rows:', updateCount);
+    console.log('Update query error:', updateError);
+        
+    if (updateError) {
+        console.error('Error updating cafe scores:', updateError);
+    } else {
+        console.log('Update query executed successfully (no error)');
+        
+        // Verify the update worked by fetching the updated cafe
+        const { data: verificationResult, error: verifyError } = await serviceRoleClient
+            .from('cafes')
+            .select('id, name, grindability_score, student_friendliness_score, coffee_quality_score, vibe_score, golden_bear_score')
+            .eq('id', cafeId)
+            .single();
+            
+        if (verifyError) {
+            console.error('Error verifying cafe update:', verifyError);
+        } else {
+            console.log('Verification: Cafe after update:', verificationResult);
+            if (verificationResult && verificationResult.golden_bear_score === goldenBearAvg) {
+                console.log('✅ Cafe scores successfully updated and verified!');
+            } else {
+                console.error('❌ Cafe scores may not have been updated properly');
+            }
+        }
+    }
 }
 
 export { getAllCafes, getCafeById, addCafeReview, updateReview, deleteReview }

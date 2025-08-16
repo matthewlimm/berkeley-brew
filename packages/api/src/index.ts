@@ -10,6 +10,7 @@ import cafeRouter from './routes/cafes'
 import userRouter from './routes/users'
 import placesRouter from './routes/places'
 import bookmarksRouter from './routes/bookmarks'
+import debugRouter from './routes/debug'
 
 const app = express()
 const port = 3001 // Fixed port for API server
@@ -62,6 +63,7 @@ app.use('/api/cafes', cafeRouter)
 app.use('/api/user', userRouter)
 app.use('/api/places', placesRouter)
 app.use('/api/bookmarks', bookmarksRouter)
+app.use('/api/debug', debugRouter)
 
 // Health check
 app.get('/health', (req, res) => {
