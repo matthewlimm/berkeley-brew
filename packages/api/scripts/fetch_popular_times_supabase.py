@@ -69,7 +69,7 @@ def get_cafes_from_supabase():
         logger.error(f"Error fetching cafes from Supabase: {e}")
         raise
 
-def update_cafe_popular_times_supabase(cafe_id, popular_times_data):
+def update_cafe_popular_times_supabase(cafe_id, popular_times_data, place_id=None):
     """Update the popular times data for a cafe using Supabase REST API."""
     try:
         url = f"{SUPABASE_URL}/rest/v1/cafes"
@@ -79,6 +79,11 @@ def update_cafe_popular_times_supabase(cafe_id, popular_times_data):
             'popular_times': popular_times_data,
             'popular_times_updated_at': datetime.now().isoformat()
         }
+        
+        # Also update place_id if provided (when script resolves a better one)
+        if place_id:
+            data['place_id'] = place_id
+            logger.info(f"Also updating place_id for cafe {cafe_id}: {place_id}")
         
         params = {'id': f'eq.{cafe_id}'}
         
@@ -118,7 +123,11 @@ def load_place_ids_from_csv():
         return {}
 
 def fetch_popular_times(name, address, lat, lng, place_id=None):
-    """Fetch popular times data for a location using the populartimes library."""
+    """Fetch popular times data for a location using the populartimes library.
+    
+    Returns:
+        tuple: (popular_times_data, resolved_place_id) or (None, None) on failure
+    """
     # Helper: resolve a canonical Google Place ID using Places API Find Place (textquery)
     def _resolve_place_id(q_name, q_address=None, q_lat=None, q_lng=None):
         try:
@@ -165,6 +174,7 @@ def fetch_popular_times(name, address, lat, lng, place_id=None):
         # Always resolve via Google Places Find Place API by default
         logger.info(f"Resolving place ID for {name} via Google Places Find Place API (default)")
         resolved_place_id = _resolve_place_id(name, address, lat, lng)
+        csv_place_id = place_id  # Keep track of original CSV place ID
 
         # Fallback to provided place_id if resolution failed
         if not resolved_place_id and place_id:
@@ -173,15 +183,20 @@ def fetch_popular_times(name, address, lat, lng, place_id=None):
 
         if not resolved_place_id:
             logger.error(f"Could not resolve place ID for {name}; skipping populartimes fetch")
-            return None
+            return None, None
 
         # Fetch popular times using the canonical place_id
         logger.info(f"Fetching popular times for {name} using place ID: {resolved_place_id}")
         result = populartimes.get_id(API_KEY, resolved_place_id)
-        return result
+        
+        # Return both the data and the resolved Place ID
+        # Only return the Place ID if it's different from CSV or if there was no CSV Place ID
+        place_id_to_update = resolved_place_id if (not csv_place_id or resolved_place_id != csv_place_id) else None
+        return result, place_id_to_update
+        
     except Exception as e:
         logger.error(f"Error fetching popular times for {name}: {e}")
-        return None
+        return None, None
         
 def create_empty_popular_times_data(name, address):
     """Create empty popular times data structure for cafes with no data."""
@@ -225,20 +240,21 @@ def process_cafes(limit=None, use_place_ids=True, use_empty_data=True):
         
         if place_id:
             logger.info(f"Found place ID for {name}: {place_id}")
-            popular_times_data = fetch_popular_times(name, address, lat, lng, place_id)
+            popular_times_data, place_id_to_update = fetch_popular_times(name, address, lat, lng, place_id)
         else:
             logger.warning(f"No place ID found for {name}, trying without place ID")
-            popular_times_data = fetch_popular_times(name, address, lat, lng)
+            popular_times_data, place_id_to_update = fetch_popular_times(name, address, lat, lng)
         
         if popular_times_data and "populartimes" in popular_times_data:
-            update_cafe_popular_times_supabase(cafe_id, popular_times_data)
+            update_cafe_popular_times_supabase(cafe_id, popular_times_data, place_id_to_update)
             logger.info(f"Updated popular times for {name}")
         else:
             if use_empty_data:
                 # Create empty data structure for cafes with no popular times
                 logger.warning(f"No popular times data found for {name}, using empty data")
                 empty_data = create_empty_popular_times_data(name, address)
-                update_cafe_popular_times_supabase(cafe_id, empty_data)
+                # Only update place_id if we resolved one, even if no popular times data
+                update_cafe_popular_times_supabase(cafe_id, empty_data, place_id_to_update)
                 logger.info(f"Updated with empty popular times for {name}")
             else:
                 logger.warning(f"No popular times data found for {name}, skipping")
