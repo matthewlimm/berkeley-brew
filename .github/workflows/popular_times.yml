@@ -16,7 +16,6 @@ jobs:
   run-script:
     name: Run fetch_popular_times.py
     runs-on: ubuntu-latest
-    environment: berkeley-brew-api
     defaults:
       run:
         working-directory: packages/api
@@ -41,6 +40,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt || pip install "git+https://github.com/m-wrzr/populartimes@master"
+
+      - name: Debug secrets availability
+        run: |
+          echo "Checking secret availability..."
+          echo "GOOGLE_MAPS_API_KEY exists: ${{ secrets.GOOGLE_MAPS_API_KEY != '' }}"
+          echo "DB_PASSWORD exists: ${{ secrets.DB_PASSWORD != '' }}"
+          echo "SUPABASE_URL exists: ${{ secrets.SUPABASE_URL != '' }}"
+          echo "SUPABASE_ANON_KEY exists: ${{ secrets.SUPABASE_ANON_KEY != '' }}"
 
       - name: Run popular times script
         env:
