@@ -58,4 +58,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          python scripts/fetch_popular_times_supabase.py --limit 5
+          python scripts/fetch_popular_times_supabase.py
