@@ -253,15 +253,16 @@ const getCafeById = async (req: Request, res: Response, next: NextFunction) => {
 
 // Add a review to a cafe
 const addCafeReview = async (req: Request, res: Response, next: NextFunction) => {
-    // Define insertedReview at the top level of the function
-    let reviewData: any = null;
-    
     try {
+        console.log('Creating review with data:', req.body);
+        console.log('User from request:', req.user);
+
         const { id: cafeId } = req.params
         
         // Validate request body
         const validation = reviewSchema.safeParse(req.body)
         if (!validation.success) {
+            console.error('Validation failed:', validation.error);
             return next(new AppError('Invalid review data: ' + validation.error.message, 400))
         }
 
@@ -271,11 +272,11 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
         const user = req.user
         
         if (!user) {
+            console.error('User not authenticated');
             return next(new AppError('Authentication required', 401))
         }
         
-        // Debug user info
-        console.log('User from request:', user.id, user.email)
+        console.log('User from request:', user.id, user.email);
 
         // Check if cafe exists
         const { data: cafe, error: cafeError } = await supabase
@@ -285,22 +286,24 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             .single()
 
         if (cafeError || !cafe) {
+            console.error('Cafe not found:', cafeId);
             return next(new AppError('Cafe not found', 404))
         }
 
         // Check if user has already reviewed this cafe
         const { data: existingReview, error: reviewCheckError } = await supabase
             .from('reviews')
-            .select()
+            .select('id')
             .eq('cafe_id', cafeId)
             .eq('user_id', user.id)
             .single()
 
         if (existingReview) {
+            console.error('User has already reviewed this cafe');
             return next(new AppError('You have already reviewed this cafe', 400))
         }
 
-        // First, ensure the user exists in the public.users table
+        // Ensure the user exists in the public.users table
         const { data: existingUser, error: userCheckError } = await supabase
             .from('users')
             .select('id')
@@ -309,7 +312,7 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
             
         // If user doesn't exist in public schema, create them
         if (!existingUser) {
-            // Get name from user metadata if available
+            console.log('Creating user in public.users table');
             const fullName = user.user_metadata?.name || user.user_metadata?.full_name || '';
             
             const { error: createUserError } = await supabase
@@ -322,85 +325,52 @@ const addCafeReview = async (req: Request, res: Response, next: NextFunction) =>
                 });
                 
             if (createUserError) {
+                console.error('Failed to create user profile:', createUserError);
                 return next(new AppError('Failed to create user profile: ' + createUserError.message, 500));
             }
         }
         
-        // Add the review directly to the database
-        console.log('Attempting to insert review with user_id:', user.id, 'for cafe_id:', cafeId)
+        // Calculate golden bear score
+        const golden_bear_score = (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4;
         
-        try {
-            // The issue is that we're using the service role key, which bypasses RLS
-            // But we need to tell Supabase which user we're acting on behalf of
-            
-            // Get the JWT token from the request
-            const token = req.headers.authorization?.split(' ')[1] || '';
-            
-            // Create a new Supabase client with the anon key
-            const { createClient } = await import('@supabase/supabase-js');
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-            
-            // Create a client with the auth header already set
-            const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
-                global: {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            });
-            
-            // Verify the session is valid
-            const { data: authData, error: authError } = await anonClient.auth.getUser();
-            
-            if (authError) {
-                console.error('Auth session error:', authError);
-                return next(new AppError('Authentication error: ' + authError.message, 401));
-            }
-            
-            console.log('Auth user verified successfully:', !!authData.user);
-            
-            // Now insert the review with the client that respects RLS and return the inserted data
-            const { data: insertedReview, error } = await anonClient
-                .from('reviews')
-                .insert({
-                    cafe_id: cafeId,
-                    user_id: user.id,
-                    content,
-                    grindability_score,
-                    student_friendliness_score,
-                    coffee_quality_score,
-                    vibe_score,
-                    golden_bear_score: (grindability_score + student_friendliness_score + coffee_quality_score + vibe_score) / 4
-                })
-                .select('*')
+        console.log('Inserting review into database...');
+        // Insert the review using the service role client (bypasses RLS)
+        const { data: insertedReview, error } = await supabase
+            .from('reviews')
+            .insert({
+                cafe_id: cafeId,
+                user_id: user.id,
+                content,
+                grindability_score,
+                student_friendliness_score,
+                coffee_quality_score,
+                vibe_score,
+                golden_bear_score
+            })
+            .select('*')
 
-            if (error) {
-                console.error('Review insert error:', error)
-                return next(new AppError('Failed to create review: ' + error.message, 500))
-            }
-            
-            console.log('Review created successfully with proper authentication')
-            console.log('Inserted review data:', insertedReview)
-            
-            // Store the review data at the function scope level
-            if (insertedReview && insertedReview.length > 0) {
-                reviewData = insertedReview[0];
-            }
-        } catch (err) {
-            console.error('Unexpected error during review creation:', err)
-            return next(new AppError('Unexpected error during review creation', 500))
+        if (error) {
+            console.error('Review insert error:', error);
+            return next(new AppError('Failed to create review: ' + error.message, 500));
+        }
+        
+        console.log('Review created successfully:', insertedReview);
+        
+        // Update cafe scores after review creation
+        if (cafeId) {
+            await updateCafeScores(cafeId);
         }
 
         res.status(201).json({
             status: 'success',
             data: { 
                 message: 'Review submitted successfully',
-                review: reviewData
+                review: insertedReview?.[0] || null
             }
         })
     } catch (err) {
-        next(new AppError('An error occurred while creating the review', 500))
+        console.error('Unexpected error during review creation:', err);
+        next(new AppError('An error occurred while creating the review', 500));
     }
 }
 
