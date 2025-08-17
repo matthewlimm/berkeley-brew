@@ -565,20 +565,20 @@ export default function Home() {
             </div>
             
             {/* Filter buttons */}
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="flex items-center gap-2 mt-3 flex-nowrap w-full justify-start sm:gap-2 sm:flex-wrap">
               {/* Open Now button */}
               <button 
                 onClick={() => setIsOpenNowActive(!isOpenNowActive)}
-                className={`w-[130px] px-3 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 whitespace-nowrap ${
+                className={`w-auto px-2 py-1.5 rounded-full text-xs sm:w-[130px] sm:px-3 sm:py-2 sm:text-sm font-medium flex items-center justify-center gap-1 sm:gap-1.5 filter-button transition-all duration-300 whitespace-nowrap ${
                   isOpenNowActive 
                     ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
                     : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
                 }`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Open Now
+                <span>Open Now</span>
               </button>
               
               {/* Price dropdown */}
@@ -588,23 +588,23 @@ export default function Home() {
                     setIsPriceDropdownOpen(!isPriceDropdownOpen);
                     setIsLocationDropdownOpen(false);
                   }}
-                  className={`w-[120px] px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 ${
+                  className={`w-auto px-2 py-1.5 rounded-full text-xs sm:w-[120px] sm:px-4 sm:py-2 sm:text-sm font-medium flex items-center justify-center gap-1 sm:gap-1.5 filter-button transition-all duration-300 ${
                     selectedPrice 
                       ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
                       : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className="truncate">{selectedPrice || 'Price'}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isPriceDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span>{selectedPrice || 'Price'}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 ${isPriceDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 
                 {isPriceDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 py-1 animate-fade-in-down">
+                  <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 bg-white rounded-lg shadow-lg overflow-visible z-50 border border-gray-200 py-1 animate-fade-in-down max-w-[calc(100vw-1rem)]">
                     <button 
                       onClick={() => {
                         setSelectedPrice('$');
@@ -656,24 +656,31 @@ export default function Home() {
                     setIsLocationDropdownOpen(!isLocationDropdownOpen);
                     setIsPriceDropdownOpen(false);
                   }}
-                  className={`w-[140px] px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 filter-button transition-all duration-300 ${
+                  className={`w-auto px-2 py-1.5 rounded-full text-xs sm:w-[140px] sm:px-4 sm:py-2 sm:text-sm font-medium flex items-center justify-center gap-1 sm:gap-1.5 filter-button transition-all duration-300 ${
                     selectedLocation 
                       ? 'bg-amber-500 text-white shadow-lg animate-pulse-glow' 
                       : 'bg-white border border-amber-300 text-gray-700 hover:bg-amber-50 hover:shadow-md'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span>{selectedLocation ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1) : 'Location'}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="sm:hidden">
+                    {selectedLocation === 'northside' ? 'North' :
+                     selectedLocation === 'southside' ? 'South' :
+                     selectedLocation === 'downtown' ? 'Downtown' :
+                     selectedLocation === 'campus' ? 'Campus' :
+                     selectedLocation === 'outer' ? 'Outer' : 'Location'}
+                  </span>
+                  <span className="hidden sm:inline">{selectedLocation ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1) : 'Location'}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 
                 {isLocationDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg overflow-hidden z-10 border border-gray-200 py-1 animate-fade-in-down">
+                  <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 bg-white rounded-lg shadow-lg overflow-visible z-50 border border-gray-200 py-1 animate-fade-in-down max-w-[calc(100vw-1rem)]">
                     <button 
                       onClick={() => {
                         setSelectedLocation('campus');
@@ -744,12 +751,12 @@ export default function Home() {
                     setSelectedPrice(null);
                     setSelectedLocation(null);
                   }}
-                  className="w-[140px] px-3 py-2 rounded-full text-sm font-medium flex items-center justify-center gap-1.5 transition-all bg-white border border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 shadow-sm whitespace-nowrap"
+                  className="inline-flex items-center justify-center rounded-full text-red-700 border border-red-300 bg-white hover:bg-red-50 hover:border-red-400 shadow-sm transition-all whitespace-nowrap h-8 w-8 sm:h-auto sm:w-auto sm:px-3 sm:py-2 text-xs sm:text-sm gap-0 sm:gap-1.5"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Clear filters">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Clear Filters
+                  <span className="hidden sm:inline">Clear</span>
                 </button>
               )}
             </div>
