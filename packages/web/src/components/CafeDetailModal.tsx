@@ -7,6 +7,12 @@ import { PopularTimesChart } from './PopularTimesChart';
 import { ReviewForm } from './ReviewForm';
 import { useAuth } from '@/contexts/AuthContext';
 import BookmarkButton from './BookmarkButton';
+import { 
+  GrindabilityTooltip, 
+  VibeTooltip, 
+  CoffeeQualityTooltip, 
+  StudentFriendlyTooltip 
+} from './MetricTooltips';
 
 // Extended cafe type to include API response fields
 interface ExtendedCafe {
@@ -51,147 +57,6 @@ interface TooltipProps {
   isVisible: boolean;
   iconRef: React.RefObject<SVGSVGElement>;
 }
-
-// Tooltip component that uses React Portal
-const Tooltip = ({ content, isVisible, iconRef }: TooltipProps) => {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  
-  useEffect(() => {
-    if (iconRef.current && isVisible) {
-      const rect = iconRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.top,
-        left: rect.right
-      });
-    }
-  }, [isVisible, iconRef]);
-
-  if (!isVisible) return null;
-
-  return ReactDOM.createPortal(
-    <div 
-      className="w-64 bg-white p-2 rounded shadow-lg text-xs text-gray-700 border border-gray-200 z-[9999]"
-      style={{
-        position: 'fixed',
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        transform: 'translateY(-100%)',
-      }}
-    >
-      {content}
-    </div>,
-    document.body
-  );
-};
-
-// Tooltip components for each rating category
-const GrindabilityTooltip = () => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const iconRef = useRef<SVGSVGElement>(null);
-  
-  return (
-    <div className="inline-block ml-1 relative">
-      <svg 
-        ref={iconRef}
-        xmlns="http://www.w3.org/2000/svg" 
-        className="h-4 w-4 text-blue-500 cursor-help" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <Tooltip 
-        content="How suitable the cafe is for studying or working. Considers factors like available seating, outlet access, WiFi quality, and noise level."
-        isVisible={showTooltip}
-        iconRef={iconRef}
-      />
-    </div>
-  );
-};
-
-const VibeTooltip = () => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const iconRef = useRef<SVGSVGElement>(null);
-  
-  return (
-    <div className="inline-block ml-1 relative">
-      <svg 
-        ref={iconRef}
-        xmlns="http://www.w3.org/2000/svg" 
-        className="h-4 w-4 text-pink-500 cursor-help" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <Tooltip 
-        content="The overall atmosphere and ambiance of the cafe. Includes decor, music, lighting, and the general feeling or energy of the space."
-        isVisible={showTooltip}
-        iconRef={iconRef}
-      />
-    </div>
-  );
-};
-
-const CoffeeQualityTooltip = () => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const iconRef = useRef<SVGSVGElement>(null);
-  
-  return (
-    <div className="inline-block ml-1 relative">
-      <svg 
-        ref={iconRef}
-        xmlns="http://www.w3.org/2000/svg" 
-        className="h-4 w-4 text-purple-500 cursor-help" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <Tooltip 
-        content="The taste, freshness, and overall quality of coffee and espresso drinks. Considers flavor profile, consistency, and variety of coffee options available."
-        isVisible={showTooltip}
-        iconRef={iconRef}
-      />
-    </div>
-  );
-};
-
-const StudentFriendlyTooltip = () => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const iconRef = useRef<SVGSVGElement>(null);
-  
-  return (
-    <div className="inline-block ml-1 relative">
-      <svg 
-        ref={iconRef}
-        xmlns="http://www.w3.org/2000/svg" 
-        className="h-4 w-4 text-green-500 cursor-help" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        stroke="currentColor"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <Tooltip 
-        content="How welcoming the cafe is to students. Includes staff friendliness, policies on laptop use, time limits for seating, and overall attitude toward student customers."
-        isVisible={showTooltip}
-        iconRef={iconRef}
-      />
-    </div>
-  );
-};
 
 export function CafeDetailModal({ 
   cafe, 
@@ -399,80 +264,60 @@ export function CafeDetailModal({
           </div>
           
           {/* Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-10">
             {/* Grindability Score */}
-            <div className="bg-blue-50 p-4 rounded-lg shadow-sm border-2 border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-blue-700">Grindability</span>
-                  <GrindabilityTooltip />
+            <div className="bg-blue-50 p-3 rounded-lg shadow-sm border border-blue-100">
+                            <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xs sm:text-sm font-semibold text-blue-800/90 tracking-wide whitespace-nowrap">Grindability</span>
+                    <GrindabilityTooltip position="bottom-right" />
+                  </div>
+                  <span className="hidden sm:block text-lg font-bold text-blue-700">{formatRating(getScoreValue(cafe, 'grindability_score'))}</span>
                 </div>
-                <span className="text-sm font-bold text-blue-700">
-                  {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'grindability_score')) : "N/A"}
-                </span>
-              </div>
-              <div className="w-full bg-blue-200 rounded-full h-2 mt-1.5">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full" 
-                  style={{ width: hasReviews(cafe) ? `${getScoreValue(cafe, 'grindability_score') * 20}%` : '0%' }}
-                ></div>
+                <span className="sm:hidden text-lg font-bold text-blue-700 mt-1">{formatRating(getScoreValue(cafe, 'grindability_score'))}</span>
               </div>
             </div>
-            
+
             {/* Vibe Score */}
-            <div className="bg-pink-50 p-4 rounded-lg shadow-sm border-2 border-pink-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-pink-700">Vibe</span>
-                  <VibeTooltip />
+            <div className="bg-pink-50 p-3 rounded-lg shadow-sm border border-pink-100">
+                            <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xs sm:text-sm font-semibold text-pink-800/90 tracking-wide whitespace-nowrap">Vibe</span>
+                    <VibeTooltip position="bottom-left" />
+                  </div>
+                  <span className="hidden sm:block text-lg font-bold text-pink-700">{formatRating(getScoreValue(cafe, 'vibe_score'))}</span>
                 </div>
-                <span className="text-sm font-bold text-pink-700">
-                  {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'vibe_score')) : "N/A"}
-                </span>
-              </div>
-              <div className="w-full bg-pink-200 rounded-full h-2 mt-1.5">
-                <div 
-                  className="bg-pink-600 h-2 rounded-full" 
-                  style={{ width: hasReviews(cafe) ? `${getScoreValue(cafe, 'vibe_score') * 20}%` : '0%' }}
-                ></div>
+                <span className="sm:hidden text-lg font-bold text-pink-700 mt-1">{formatRating(getScoreValue(cafe, 'vibe_score'))}</span>
               </div>
             </div>
-            
-            {/* Coffee Score */}
-            <div className="bg-purple-50 p-4 rounded-lg shadow-sm border-2 border-purple-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-purple-700">Coffee</span>
-                  <CoffeeQualityTooltip />
+
+            {/* Coffee Quality Score */}
+            <div className="bg-yellow-50 p-3 rounded-lg shadow-sm border border-yellow-100">
+                            <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-1">
+                                        <span className="text-xs sm:text-sm font-semibold text-yellow-800/90 tracking-wide whitespace-nowrap">Coffee Quality</span>
+                    <CoffeeQualityTooltip position="bottom-right" />
+                  </div>
+                                    <span className="hidden sm:block text-lg font-bold text-yellow-700">{formatRating(getScoreValue(cafe, 'coffee_quality_score'))}</span>
                 </div>
-                <span className="text-sm font-bold text-purple-700">
-                  {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'coffee_quality_score')) : "N/A"}
-                </span>
-              </div>
-              <div className="w-full bg-purple-200 rounded-full h-2 mt-1.5">
-                <div 
-                  className="bg-purple-600 h-2 rounded-full" 
-                  style={{ width: hasReviews(cafe) ? `${getScoreValue(cafe, 'coffee_quality_score') * 20}%` : '0%' }}
-                ></div>
+                                <span className="sm:hidden text-lg font-bold text-yellow-700 mt-1">{formatRating(getScoreValue(cafe, 'coffee_quality_score'))}</span>
               </div>
             </div>
-            
-            {/* Friendly Score */}
-            <div className="bg-green-50 p-4 rounded-lg shadow-sm border-2 border-green-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-green-700">Friendly</span>
-                  <StudentFriendlyTooltip />
+
+            {/* Student Friendliness Score */}
+            <div className="bg-green-50 p-3 rounded-lg shadow-sm border border-green-100">
+                            <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-1">
+                                        <span className="text-xs sm:text-sm font-semibold text-green-800/90 tracking-wide whitespace-nowrap">Student Friendly</span>
+                    <StudentFriendlyTooltip position="bottom-left" />
+                  </div>
+                                    <span className="hidden sm:block text-lg font-bold text-green-700">{formatRating(getScoreValue(cafe, 'student_friendliness_score'))}</span>
                 </div>
-                <span className="text-sm font-bold text-green-700">
-                  {hasReviews(cafe) ? formatRating(getScoreValue(cafe, 'student_friendliness_score')) : "N/A"}
-                </span>
-              </div>
-              <div className="w-full bg-green-200 rounded-full h-2 mt-1.5">
-                <div 
-                  className="bg-green-600 h-2 rounded-full" 
-                  style={{ width: hasReviews(cafe) ? `${getScoreValue(cafe, 'student_friendliness_score') * 20}%` : '0%' }}
-                ></div>
+                                <span className="sm:hidden text-lg font-bold text-green-700 mt-1">{formatRating(getScoreValue(cafe, 'student_friendliness_score'))}</span>
               </div>
             </div>
           </div>
@@ -481,13 +326,15 @@ export function CafeDetailModal({
           <div className="mb-6">
             <h3 className="text-2xl font-bold text-gray-800 mb-6">Popular Times</h3>
             <PopularTimesChart 
-              data={cafe.popular_times || null} 
+              data={cafe.popular_times || null}
+              mobileCompactLegend
+              legendStyle="gradient"
             />
           </div>
 
           {/* Reviews Section */}
           <div id="cafe-reviews-section" className="border-t border-gray-200 pt-8 mt-8">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-8 gap-3 flex-wrap">
               <h3 className="text-2xl font-bold text-gray-800">Reviews</h3>
               {user && !showReviewForm && !hasUserReviewedCafe ? (
                 <button 
@@ -500,7 +347,7 @@ export function CafeDetailModal({
                   Write a Review
                 </button>
               ) : user && !showReviewForm && hasUserReviewedCafe ? (
-                <div className="text-sm text-gray-600 italic px-4 py-2 bg-gray-50 rounded-md border border-gray-200">
+                <div className="text-sm text-gray-600 italic px-4 py-2 bg-gray-50 rounded-md border border-gray-200 mt-2 sm:mt-0 ml-0 sm:ml-4">
                   You've already reviewed this cafe
                 </div>
               ) : null}
@@ -508,8 +355,9 @@ export function CafeDetailModal({
             
             {showReviewForm && (
               <div className="mb-6 p-4 rounded-lg">
-                <ReviewForm 
+                                <ReviewForm 
                   cafeId={cafe.id} 
+                  onClose={() => setShowReviewForm(false)}
                   onSuccess={(reviewData) => {
                     setShowReviewForm(false);
                     
@@ -562,7 +410,7 @@ export function CafeDetailModal({
                     // Use the refreshCafeData function to update metrics and home page state
                     refreshCafeData({ action: 'add', cafeId: cafe.id, userId: user?.id });
                   }}
-                  onCancel={() => setShowReviewForm(false)}
+                  
                 />
               </div>
             )}

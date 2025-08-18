@@ -16,6 +16,10 @@ interface PopularTimesChartProps {
   data: any; // Accept any type from the database
   selectedDay?: number; // 0 = Monday, 1 = Tuesday, etc.
   hasLiveData?: boolean; // Whether live data is available
+  // Mobile-only adjustments: when true, use tighter, wrapped legend and padded caption
+  mobileCompactLegend?: boolean;
+  // Legend style: default "dots"; use "gradient" to show a gradient bar legend
+  legendStyle?: 'dots' | 'gradient';
 }
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -23,7 +27,9 @@ const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({ 
   data, 
   selectedDay: initialSelectedDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, // Default to current day (0 = Monday in our data)
-  hasLiveData = false
+  hasLiveData = false,
+  mobileCompactLegend = false,
+  legendStyle = 'gradient'
 }) => {
   // State for selected day
   const [selectedDay, setSelectedDay] = React.useState(initialSelectedDay);
@@ -209,28 +215,29 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
               </div>
             ))}
           </div>
-        </div>
-        
-        {/* Busyness indicators - same spacing as data version */}
-        <div className="flex justify-between mb-2 text-xs text-gray-600">
-          <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1 shadow-sm"></span>
-            <span>Not busy</span>
+
+          {/* Legend */}
+          <div className="w-full mb-1">
+            <div
+              className="h-2 rounded-full w-full"
+              style={{
+                background: 'linear-gradient(to right, #cbd5e1, #7dd3fc, #d8b4fe, #fcd34d, #fca5a5)'
+              }}
+            />
+            <div className="mt-1 flex justify-between text-[11px] sm:text-xs">
+              <span className="text-slate-600">Quiet</span>
+              <span className="text-cyan-600">Not busy</span>
+              <span className="text-purple-600">Getting busy</span>
+              <span className="text-amber-600">Very busy</span>
+              <span className="text-rose-600">Peak</span>
+            </div>
           </div>
-          <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1 shadow-sm"></span>
-            <span>Busy</span>
-          </div>
-          <div className="flex items-center">
-            <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1 shadow-sm"></span>
-            <span>Very busy</span>
+
+          <div className={`text-[11px] sm:text-xs text-gray-400 text-center italic pb-2 px-2`}>
+            Based on Google Maps popular times data
           </div>
         </div>
-        
-        <div className="text-xs text-gray-400 text-center italic">
-          Based on Google Maps popular times data
-        </div>
-        
+
         {/* Overlay for no data */}
         <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
           <div className="text-center">
@@ -409,30 +416,49 @@ export const PopularTimesChart: React.FC<PopularTimesChartProps> = ({
         </div>
       </div>
       
-      <div className="flex justify-between mb-2 text-xs text-gray-600">
-        <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-slate-500 rounded-full mr-1 shadow-sm"></span>
-          <span>Quiet</span>
+      {/* Legend */}
+      {legendStyle === 'gradient' ? (
+        <div className="w-full mb-1">
+          <div
+            className="h-2 rounded-full w-full"
+            style={{
+              background: 'linear-gradient(to right, #cbd5e1, #7dd3fc, #d8b4fe, #fcd34d, #fca5a5)'
+            }}
+          />
+          <div className="mt-1 flex justify-between text-[11px] sm:text-xs">
+            <span className="text-slate-600">Quiet</span>
+            <span className="text-cyan-600">Not busy</span>
+            <span className="text-purple-600">Getting busy</span>
+            <span className="text-amber-600">Very busy</span>
+            <span className="text-rose-600">Peak</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-cyan-500 rounded-full mr-1 shadow-sm"></span>
-          <span>Not busy</span>
+      ) : (
+        <div className={`${mobileCompactLegend ? 'flex flex-wrap justify-between gap-x-3 gap-y-1 mb-2 text-[11px] sm:text-xs text-gray-600 px-1 sm:px-0' : 'flex justify-between mb-2 text-xs text-gray-600'}`}>
+          <div className="flex items-center">
+            <span className="inline-block w-2 h-2 bg-slate-500 rounded-full mr-1 shadow-sm"></span>
+            <span>Quiet</span>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-block w-2 h-2 bg-cyan-500 rounded-full mr-1 shadow-sm"></span>
+            <span>Not busy</span>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-1 shadow-sm"></span>
+            <span>Getting busy</span>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1 shadow-sm"></span>
+            <span>Very busy</span>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-block w-2 h-2 bg-rose-600 rounded-full mr-1 shadow-sm"></span>
+            <span>Peak</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-1 shadow-sm"></span>
-          <span>Getting busy</span>
-        </div>
-        <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1 shadow-sm"></span>
-          <span>Very busy</span>
-        </div>
-        <div className="flex items-center">
-          <span className="inline-block w-2 h-2 bg-rose-600 rounded-full mr-1 shadow-sm"></span>
-          <span>Peak</span>
-        </div>
-      </div>
+      )}
       
-      <div className="text-xs text-gray-400 text-center italic">
+      <div className={`text-[11px] sm:text-xs text-gray-400 text-center italic pb-2 px-2`}>
         Based on Google Maps popular times data
       </div>
     </div>

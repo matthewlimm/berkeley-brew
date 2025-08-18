@@ -95,6 +95,13 @@ type BusinessHours = {
 };
 
 // Extended cafe type to include API response fields
+// Type for review change data
+interface ReviewChangeData {
+  action: 'add' | 'edit' | 'delete' | 'refresh';
+  cafeId: string;
+  userId?: string;
+}
+
 type ExtendedCafe = {
   average_rating?: number | null;
   latitude?: number | null;
@@ -156,7 +163,7 @@ export default function Home() {
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   
   // Function to handle review changes (edit/delete/add) and update cafe metrics
-  const handleReviewChange = async (reviewData: any) => {
+    const handleReviewChange = async (reviewData: ReviewChangeData) => {
     console.log('Review changed:', reviewData);
     
     // If a review was added, add the cafe to userReviewedCafes
@@ -751,7 +758,7 @@ export default function Home() {
                     setSelectedPrice(null);
                     setSelectedLocation(null);
                   }}
-                  className="inline-flex items-center justify-center rounded-full text-red-700 border border-red-300 bg-white hover:bg-red-50 hover:border-red-400 shadow-sm transition-all whitespace-nowrap h-8 w-8 sm:h-auto sm:w-auto sm:px-3 sm:py-2 text-xs sm:text-sm gap-0 sm:gap-1.5"
+                  className="inline-flex items-center justify-center rounded-full text-red-700 border border-red-300 bg-white hover:bg-red-50 hover:border-red-400 shadow-sm transition-all whitespace-nowrap h-9 w-9 sm:h-auto sm:w-auto sm:px-3 sm:py-2 text-xs sm:text-sm gap-0 sm:gap-1.5"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Clear filters">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -1209,13 +1216,17 @@ export default function Home() {
         
         {/* Write Review Modal */}
         {isWriteReviewModalOpen && currentReviewCafeId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto p-4 pt-10 sm:pt-12" onClick={() => {
             setIsWriteReviewModalOpen(false);
             setCurrentReviewCafeId('');
           }}>
-            <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
               <ReviewForm 
                 cafeId={currentReviewCafeId} 
+                onClose={() => {
+                  setIsWriteReviewModalOpen(false);
+                  setCurrentReviewCafeId('');
+                }}
                 onSuccess={(reviewData) => {
                   setIsWriteReviewModalOpen(false);
                   setUserReviewedCafes(prev => new Set([...Array.from(prev), currentReviewCafeId]));

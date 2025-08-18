@@ -5,10 +5,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useBookmarks } from '@/contexts/BookmarkContext'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CafeOpeningHours } from '@/components/CafeOpeningHours'
-import { CafeDetailModal } from '@/components/CafeDetailModal'
-import { PopularTimesChart } from '@/components/PopularTimesChart'
-import BookmarkButton from '@/components/BookmarkButton'
+import { CafeOpeningHours } from '@/components/CafeOpeningHours';
+import { CafeDetailModal } from '@/components/CafeDetailModal';
+import { PopularTimesChart } from '@/components/PopularTimesChart';
+import BookmarkButton from '@/components/BookmarkButton';
+
 
 interface Bookmark {
   id: string
@@ -431,83 +432,45 @@ export default function BookmarksPage() {
                   />
                 </div>
                 
-                {/* Metrics - with increased spacing from opening hours */}
-                <div className="mt-6 grid grid-cols-4 sm:grid-cols-2 gap-0.5 sm:gap-3 mb-4">
+                {/* Subscores Grid */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
                   {/* Grindability Score */}
-                  <div className="bg-blue-50 p-1 sm:p-3 rounded shadow-sm border border-blue-100">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm font-medium text-blue-700 leading-tight">
-                        <span className="sm:hidden">Grind</span>
-                        <span className="hidden sm:inline">Grindability</span>
-                      </span>
-                      <span className="text-xs sm:text-sm font-bold text-blue-700">
-                        {hasScore(bookmark.cafes, 'grindability_score') ? formatRating(getScoreValue(bookmark.cafes, 'grindability_score')) : "N/A"}
-                      </span>
-                    </div>
-                    <div className="w-full bg-blue-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
-                      <div 
-                        className="bg-blue-600 h-1 sm:h-2 rounded-full" 
-                        style={{ width: hasScore(bookmark.cafes, 'grindability_score') ? `${getScoreValue(bookmark.cafes, 'grindability_score') * 20}%` : '0%' }}
-                      ></div>
+                  <div className="bg-blue-50 p-3 rounded-lg shadow-sm border border-blue-100">
+                    <div className="flex flex-col items-start justify-center h-full">
+                      <span className="text-sm font-medium text-blue-700 leading-tight">Grindability</span>
+                      <span className="text-lg font-bold text-blue-700 mt-1">{formatRating(getScoreValue(bookmark.cafes, 'grindability_score'))}</span>
                     </div>
                   </div>
-                  
+
                   {/* Vibe Score */}
-                  <div className="bg-pink-50 p-1 sm:p-3 rounded shadow-sm border border-pink-100">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm font-medium text-pink-700 leading-tight">Vibe</span>
-                      <span className="text-xs sm:text-sm font-bold text-pink-700">
-                        {hasScore(bookmark.cafes, 'vibe_score') ? formatRating(getScoreValue(bookmark.cafes, 'vibe_score')) : "N/A"}
-                      </span>
-                    </div>
-                    <div className="w-full bg-pink-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
-                      <div 
-                        className="bg-pink-600 h-1 sm:h-2 rounded-full" 
-                        style={{ width: hasScore(bookmark.cafes, 'vibe_score') ? `${getScoreValue(bookmark.cafes, 'vibe_score') * 20}%` : '0%' }}
-                      ></div>
+                  <div className="bg-pink-50 p-3 rounded-lg shadow-sm border border-pink-100">
+                    <div className="flex flex-col items-start justify-center h-full">
+                      <span className="text-sm font-medium text-pink-700 leading-tight">Vibe</span>
+                      <span className="text-lg font-bold text-pink-700 mt-1">{formatRating(getScoreValue(bookmark.cafes, 'vibe_score'))}</span>
                     </div>
                   </div>
-                  
+
                   {/* Coffee Quality Score */}
-                  <div className="bg-amber-50 p-1 sm:p-3 rounded shadow-sm border border-amber-100">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm font-medium text-amber-700 leading-tight">Coffee</span>
-                      <span className="text-xs sm:text-sm font-bold text-amber-700">
-                        {hasScore(bookmark.cafes, 'coffee_quality_score') ? formatRating(getScoreValue(bookmark.cafes, 'coffee_quality_score')) : "N/A"}
-                      </span>
-                    </div>
-                    <div className="w-full bg-amber-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
-                      <div 
-                        className="bg-amber-600 h-1 sm:h-2 rounded-full" 
-                        style={{ width: hasScore(bookmark.cafes, 'coffee_quality_score') ? `${getScoreValue(bookmark.cafes, 'coffee_quality_score') * 20}%` : '0%' }}
-                      ></div>
+                  <div className="bg-yellow-50 p-3 rounded-lg shadow-sm border border-yellow-100">
+                    <div className="flex flex-col items-start justify-center h-full">
+                      <span className="text-sm font-medium text-yellow-700 leading-tight">Coffee Quality</span>
+                      <span className="text-lg font-bold text-yellow-700 mt-1">{formatRating(getScoreValue(bookmark.cafes, 'coffee_quality_score'))}</span>
                     </div>
                   </div>
-                  
+
                   {/* Student Friendliness Score */}
-                  <div className="bg-green-50 p-1 sm:p-3 rounded shadow-sm border border-green-100">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm font-medium text-green-700 leading-tight">
-                        <span className="sm:hidden">Friend</span>
-                        <span className="hidden sm:inline">Friendly</span>
-                      </span>
-                      <span className="text-xs sm:text-sm font-bold text-green-700">
-                        {hasScore(bookmark.cafes, 'student_friendliness_score') ? formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score')) : "N/A"}
-                      </span>
-                    </div>
-                    <div className="w-full bg-green-200 rounded-full h-1 sm:h-2 mt-0.5 sm:mt-1.5">
-                      <div 
-                        className="bg-green-600 h-1 sm:h-2 rounded-full" 
-                        style={{ width: hasScore(bookmark.cafes, 'student_friendliness_score') ? `${getScoreValue(bookmark.cafes, 'student_friendliness_score') * 20}%` : '0%' }}
-                      ></div>
+                  <div className="bg-green-50 p-3 rounded-lg shadow-sm border border-green-100">
+                    <div className="flex flex-col items-start justify-center h-full">
+                      <span className="text-sm font-medium text-green-700 leading-tight">Student Friendly</span>
+                      <span className="text-lg font-bold text-green-700 mt-1">{formatRating(getScoreValue(bookmark.cafes, 'student_friendliness_score'))}</span>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Popular Times Chart - moved after metrics */}
                 {bookmark.cafes.popular_times && (
-                  <div className="mt-6 mb-4"> {/* Reduced bottom margin from mb-16 to mb-4 */}
-                    <PopularTimesChart data={bookmark.cafes.popular_times} />
+                  <div className="mt-6 mb-4">
+                    <PopularTimesChart data={bookmark.cafes.popular_times} mobileCompactLegend legendStyle="gradient" />
                   </div>
                 )}
                 
