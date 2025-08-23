@@ -681,7 +681,7 @@ export const CafeReviews = forwardRef(({ cafeId, showAll = false, setShowAll, hi
       {isWriteReviewModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsWriteReviewModalOpen(false)}>
           <div className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <ReviewForm cafeId={cafeId} onSuccess={handleNewReviewSubmit} />
+            <ReviewForm cafeId={cafeId} onSuccess={handleNewReviewSubmit} onClose={() => setIsWriteReviewModalOpen(false)} />
           </div>
         </div>
       )}
