@@ -8,7 +8,6 @@ A hyperlocal coffee app designed for the UC Berkeley community, providing commun
 - 📖 Grindability - Study-friendliness metrics
 - 🎨 Vibes - Aesthetic and ambiance ratings
 - 🔥 Real-time updates for crowd levels and Wi-Fi availability
-- 🤖 AI-powered personalized recommendations
 
 ## Tech Stack
 
@@ -117,7 +116,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ## Contributing
 
-Please read our [Contributing Guidelines](./CONTRIBUTING.md) before submitting any pull requests.
+Please contact matthewlim@berkeley.edu.
 
 ## License
 
