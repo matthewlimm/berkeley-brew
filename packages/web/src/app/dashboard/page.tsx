@@ -61,14 +61,23 @@ export default function DashboardPage() {
   useEffect(() => {
     // Check if user just verified their email
     const verified = searchParams.get('verified');
-    if (verified === 'true') {
-      setShowVerificationBanner(true);
-      // Auto-hide banner after 8 seconds
-      setTimeout(() => {
-        setShowVerificationBanner(false);
-      }, 8000);
+    if (verified === 'true' && user) {
+      // Only show banner for users who signed up recently (within last 1 second)
+      // This prevents showing the banner for existing users who are just re-verifying
+      const userCreatedAt = new Date(user.created_at);
+      const now = new Date();
+      const timeDifference = now.getTime() - userCreatedAt.getTime();
+      const oneSecondInMs = 1000; // 1 second in milliseconds
+      
+      if (timeDifference <= oneSecondInMs) {
+        setShowVerificationBanner(true);
+        // Auto-hide banner after 8 seconds
+        setTimeout(() => {
+          setShowVerificationBanner(false);
+        }, 8000);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   useEffect(() => {
     const loadUserProfile = async () => {

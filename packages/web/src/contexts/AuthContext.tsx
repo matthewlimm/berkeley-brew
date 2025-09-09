@@ -21,6 +21,7 @@ type AuthContextType = {
   isLoading: boolean
   signUp: (email: string, password: string, name?: string, username?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateUserProfile: (data: { name?: string; username?: string; avatar_url?: string }) => Promise<void>
@@ -192,6 +193,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  const signInWithGoogle = async () => {
+    try {
+      setIsLoading(true)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      // Note: The redirect happens automatically, so we don't need to manually redirect here
+    } catch (error) {
+      console.error('Error signing in with Google:', error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const signOut = async () => {
     try {
       setIsLoading(true)
@@ -295,6 +319,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     updateUserProfile,

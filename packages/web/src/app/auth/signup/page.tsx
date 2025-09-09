@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -67,7 +68,24 @@ export default function SignupPage() {
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Google Sign In */}
+        <div className="mt-6">
+          <GoogleLoginButton text="Sign up with Google" />
+        </div>
+        
+        {/* Divider */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">Or continue with email</span>
+            </div>
+          </div>
+        </div>
+        
+        <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
           <input type="hidden" name="remember" defaultValue="true" />
           <div className="rounded-md shadow-sm space-y-3">
             <div>
