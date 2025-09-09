@@ -44,7 +44,7 @@ export const CafePlaceIdField: React.FC<CafePlaceIdFieldProps> = ({ cafeId, init
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>
@@ -80,7 +80,7 @@ export const CafePlaceIdField: React.FC<CafePlaceIdFieldProps> = ({ cafeId, init
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="ml-3 inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="ml-3 inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
         >
           Edit
         </button>
